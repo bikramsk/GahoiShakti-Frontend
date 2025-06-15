@@ -590,7 +590,17 @@ const Login = () => {
         <div className="bg-red-800 text-white p-4 sm:p-6 flex flex-col items-center justify-center w-full md:w-1/3">
           <div className="w-full flex flex-col justify-center items-center h-full py-2 sm:py-4">
             <div className="p-2 sm:p-4 rounded-xl inline-block">
-              <img src={pageData.logoUrl} alt={t('login.logoAlt')} className="w-32 sm:w-40 md:w-48 h-auto drop-shadow-lg" loading="lazy" />
+            {/* <img src={pageData.logoUrl} alt={t('login.logoAlt')} className="w-32 sm:w-40 md:w-48 h-auto drop-shadow-lg" loading="lazy" /> */}
+              <img 
+                src={pageData.logoUrl || '/logo.png'} 
+                alt={t('login.logoAlt')} 
+                className="w-32 sm:w-40 md:w-48 h-auto drop-shadow-lg" 
+                loading="lazy"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = '/logo.png';
+                }}
+              />
             </div>
             <h2 className="text-white text-base sm:text-xl font-semibold text-center mt-2 sm:mt-1">{t('login.welcomeMessage')}</h2>
             <p className="text-white/80 text-center mt-1 sm:mt-2 text-xs">{t('login.slogan')}</p>
