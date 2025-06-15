@@ -12,7 +12,7 @@ const API_BASE = import.meta.env.MODE === 'production'
 
 const sendWhatsAppOTP = async (mobileNumber) => {
   try {
-    const response = await fetch('https://api.gahoishakti.in/api/send-whatsapp-otp', {
+    const response = await fetch('https://api2.gahoishakti.in/api/send-whatsapp-otp', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -42,7 +42,7 @@ const sendWhatsAppOTP = async (mobileNumber) => {
 
 const verifyOTP = async (mobileNumber, otp) => {
   try {
-    const response = await fetch('https://api.gahoishakti.in/api/verify-otp', {
+    const response = await fetch('https://api2.gahoishakti.in/api/verify-otp', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
