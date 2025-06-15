@@ -4,15 +4,11 @@ import { Helmet } from "react-helmet-async";
 import { useTranslation } from "react-i18next";
 import { getLoginPageData } from "../../data/loader";
 
-console.log('Environment Variables:', {
-  MODE: import.meta.env.MODE
-});
 
 const API_BASE = import.meta.env.MODE === 'production' 
-  ? 'https://api.gahoishakti.in'
+  ? 'https://api2.gahoishakti.in'
   : 'http://localhost:1337'; 
 
-console.log('Using API BASE:', API_BASE);
 
 const sendWhatsAppOTP = async (mobileNumber) => {
   try {
