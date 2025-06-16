@@ -12,7 +12,7 @@ const API_BASE = import.meta.env.MODE === 'production'
 
 const sendWhatsAppOTP = async (mobileNumber) => {
   try {
-    const response = await fetch('https://api2.gahoishakti.in/api/send-whatsapp-otp', {
+    const response = await fetch(`${import.meta.env.VITE_PUBLIC_STRAPI_API_URL}/api/send-whatsapp-otp`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -25,7 +25,6 @@ const sendWhatsAppOTP = async (mobileNumber) => {
       throw new Error(data.message || 'Failed to send OTP');
     }
 
-   
     if (import.meta.env.MODE === 'development' && data.otp) {
       console.log('Development OTP:', data.otp);
       sessionStorage.setItem('currentOTP', data.otp);
@@ -42,7 +41,7 @@ const sendWhatsAppOTP = async (mobileNumber) => {
 
 const verifyOTP = async (mobileNumber, otp) => {
   try {
-    const response = await fetch('https://api2.gahoishakti.in/api/verify-otp', {
+    const response = await fetch(`${import.meta.env.VITE_PUBLIC_STRAPI_API_URL}/api/verify-otp`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

@@ -1062,7 +1062,7 @@ const RegistrationForm = () => {
       formData.append('number', mobileNumber);
       formData.append('message', 'Hi! You’re invited to join us at Gahoishakti. Click here to log in and get started: https://www.gahoishakti.in/login');
   
-      const res = await fetch('https://api2.gahoishakti.in/api/whatsapp/send', {
+      const res = await fetch(`${import.meta.env.VITE_PUBLIC_STRAPI_API_URL}/api/whatsapp/send`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
@@ -1456,7 +1456,7 @@ const RegistrationForm = () => {
         const numberWithCountryCode = mobileNumber.startsWith('91') ? mobileNumber : `91${mobileNumber}`;
         
         
-        const response = await fetch('https://api2.gahoishakti.in/api/send-sms', {
+        const response = await fetch(`${import.meta.env.VITE_PUBLIC_STRAPI_API_URL}/api/send-sms`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
