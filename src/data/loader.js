@@ -2,7 +2,7 @@ import qs from "qs";
 // import { getStrapiURL } from "../lib/utils";
 
 
-const baseUrl = "https://api.gahoishakti.in";
+const baseUrl = "https://api2.gahoishakti.in";
 
 export async function fetchData(url, authToken) {
   const headers = {
