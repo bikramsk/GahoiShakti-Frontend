@@ -53,19 +53,38 @@ export async function getAboutUsPageData() {
   return await fetchData(url.href);
 }
 
-// Fetch global data
-// export async function getGlobalPageData() {
-//   const url = new URL("/api/global", baseUrl);
-//   url.search = qs.stringify({
-//     populate: [
-//       "header.logo",       
-//       "footer.privacyPolicy" 
-//     ],
-//   });
 
-//   return await fetchData(url.href);
-// }
+// Fetch latest news
+export async function getLatestNews() {
+  const url = new URL("api/latest-news-items", baseUrl);
+  url.search = qs.stringify({
+    populate: ["Title", "Description", "Images"]
+  });
+  return await fetchData(url.href);
+}
 
+// Fetch banner images
+export async function getBannerImages() {
+  const url = new URL("api/banner-images", baseUrl);
+  url.search = qs.stringify({
+    populate: "*",
+    filters: {
+      isActive: {
+        $eq: true
+      }
+    },
+    sort: ["order:asc"]
+  });
+  return await fetchData(url.href);
+}
 
+// Fetch supported students
+export async function getSupportedStudents() {
+  const url = new URL("api/supported-students", baseUrl);
+  url.search = qs.stringify({
+    populate: "*"
+  });
+  return await fetchData(url.href);
+}
 
   
