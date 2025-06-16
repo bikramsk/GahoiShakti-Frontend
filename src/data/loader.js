@@ -2,7 +2,7 @@ import qs from "qs";
 // import { getStrapiURL } from "../lib/utils";
 
 
-const baseUrl = "https://api2.gahoishakti.in";
+const baseUrl = "https://admin.gahoishakti.in";
 
 export async function fetchData(url, authToken) {
   const headers = {
@@ -26,7 +26,7 @@ export async function fetchData(url, authToken) {
 
 // Fetch data
 export async function getLoginPageData() {
-  const url = new URL("/api/login-pages", baseUrl);
+  const url = new URL("api/login-pages", baseUrl);
   url.search = qs.stringify({
     populate: {
         logo: {
@@ -41,7 +41,7 @@ export async function getLoginPageData() {
 
 // Fetch about us page data
 export async function getAboutUsPageData() {
-  const url = new URL("/api/about", baseUrl);
+  const url = new URL("api/about", baseUrl);
   url.search = qs.stringify({
     populate: {
         content: {
