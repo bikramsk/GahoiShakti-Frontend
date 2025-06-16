@@ -6,13 +6,13 @@ import { getLoginPageData } from "../../data/loader";
 
 
 const API_BASE = import.meta.env.MODE === 'production' 
-  ? 'https://api2.gahoishakti.in'
+  ? 'https://admin.gahoishakti.in'
   : 'http://localhost:1337'; 
 
 
 const sendWhatsAppOTP = async (mobileNumber) => {
   try {
-    const response = await fetch(`${import.meta.env.VITE_PUBLIC_STRAPI_API_URL}/api/send-whatsapp-otp`, {
+     const response = await fetch('https://admin.gahoishakti.in/api/send-whatsapp-otp', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -41,7 +41,7 @@ const sendWhatsAppOTP = async (mobileNumber) => {
 
 const verifyOTP = async (mobileNumber, otp) => {
   try {
-    const response = await fetch(`${import.meta.env.VITE_PUBLIC_STRAPI_API_URL}/api/verify-otp`, {
+   const response = await fetch('https://api2.gahoishakti.in/api/verify-otp', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
