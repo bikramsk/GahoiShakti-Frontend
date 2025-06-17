@@ -602,7 +602,7 @@ export const formatFormData = (data, displayPictureId = null) => {
       full_name: data.name ?? "",
       village: data.village ?? "",
       mobile_number: data.mobileNumber ?? "",
-      email_address: data.email || null,
+      email_address: data.email ?? "",
       display_picture: displayPictureId,
       Gender: data.gender ?? "",
       nationality: data.nationality ?? "",
