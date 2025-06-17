@@ -41,7 +41,7 @@ const sendWhatsAppOTP = async (mobileNumber) => {
 
 const verifyOTP = async (mobileNumber, otp) => {
   try {
-   const response = await fetch('https://api2.gahoishakti.in/api/verify-otp', {
+   const response = await fetch('https://admin.gahoishakti.in/api/verify-otp', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
