@@ -1381,7 +1381,8 @@ const RegistrationForm = () => {
       );
 
       const response = await fetch(
-        `${import.meta.env.VITE_PUBLIC_STRAPI_API_URL}/api/registration-pages`,
+        // `${import.meta.env.VITE_PUBLIC_STRAPI_API_URL}/api/registration-pages`,
+        `${API_BASE}/api/registration-pages`,
         {
           method: "POST",
           headers: {
