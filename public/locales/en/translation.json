@@ -722,6 +722,10 @@
       "appRating": "Rated 4+",
       "installButton": "Install",
       "aboutApp": "About this app"
+    },
+    "testimonials": {
+      "title": "Our Testimonials",
+      "description": "What do people say about our team"
     }
   },
   "privacyPolicy": {
