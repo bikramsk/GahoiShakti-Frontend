@@ -45,10 +45,10 @@ const LatestNewsSection = ({ newsData = [] }) => {
                   <span className={languageFontClass}>{news.date}</span>
                 </div>
                 <h3 className={`text-xl font-semibold text-gray-900 mb-4 line-clamp-2 ${languageFontClass}`}>
-                  {news.title[i18n.language] || news.title.hi}
+                {t('home.news.items.' + index + '.title')}
                 </h3>
                 <p className={`text-gray-600 mb-6 line-clamp-3 ${languageFontClass}`}>
-                  {news.description[i18n.language] || news.description.hi}
+                {t('home.news.items.' + index + '.excerpt')}
                 </p>
                 <Link 
                   to="/LatestNews"
