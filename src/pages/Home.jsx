@@ -227,10 +227,7 @@ const Home = () => {
         <CowSevaSection />
       </SectionWrapper>
 
-      {/* Our Testimonials Section */}
-      <SectionWrapper name="OurTestimonialsSection">
-        <OurTestimonialsSection />
-      </SectionWrapper>
+ 
 
        {/* Latest News & Events */}
       <SectionWrapper name="LatestNewsSection">
@@ -242,7 +239,11 @@ const Home = () => {
         <SuccessStories />
       </SectionWrapper>
 
-  
+       {/* Our Testimonials Section */}
+      <SectionWrapper name="OurTestimonialsSection">
+        <OurTestimonialsSection />
+      </SectionWrapper>
+      
     </div>
   );
 };
