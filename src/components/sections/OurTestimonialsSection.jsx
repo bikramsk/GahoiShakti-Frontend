@@ -5,7 +5,7 @@ import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
 import { FaStar, FaQuoteLeft, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 
-const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:1340';
+const API_URL = import.meta.env.VITE_PUBLIC_STRAPI_API_URL;
 
 // Custom Arrow 
 const PrevArrow = (props) => (
