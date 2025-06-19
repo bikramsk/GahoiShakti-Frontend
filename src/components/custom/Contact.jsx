@@ -303,7 +303,7 @@ const Contact = () => {
                 <div className="flex justify-center items-center">
                   <div className="relative w-48 h-48 md:w-64 md:h-64">
                     <img
-                      src="/gahoishakti-qr.webp"
+                      src="/gahoishakti-qr.png"
                       alt="Gahoi Shakti QR Code"
                       className="w-full h-full object-contain rounded-lg shadow-md"
                     />
