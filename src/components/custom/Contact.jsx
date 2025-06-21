@@ -18,9 +18,15 @@ const Contact = () => {
   // Language-specific font class
   const languageFontClass = i18n.language === "hi" ? "font-hindi" : "font-english";
 
-  const API_URL = import.meta.env.VITE_PUBLIC_STRAPI_API_URL;
+  // const API_URL = import.meta.env.VITE_PUBLIC_STRAPI_API_URL;
 
- 
+  const API_URL = import.meta.env.MODE === 'production' 
+  ? 'https://admin.gahoishakti.in'
+  : 'http://localhost:1337'; 
+
+
+  const WHATSAPP_API_URL = 'https://admin.gahoishakti.in/api/whatsapp/send';
+
   const contact1 = {
     // name: t('contact.addresses.primary.name'),
     address1: t('contact.addresses.primary.address1'),
@@ -60,7 +66,7 @@ const Contact = () => {
     }
     if (!formData.mobile.trim()) {
       newErrors.mobile = t('contact.form.mobile.error');
-    } else if (!/^[0-9]{10}$/.test(formData.mobile)) {
+    } else if (!/^[0-9]{10}$/.test(formData.mobile.replace(/\D/g, ''))) {
       newErrors.mobile = t('contact.form.mobile.invalidError');
     }
     if (!formData.email.trim()) {
@@ -79,6 +85,50 @@ const Contact = () => {
     return Object.keys(newErrors).length === 0;
   };
 
+  const sendToWhatsApp = async (formData) => {
+    try {
+      const message = `*New Contact Form Submission*\n\n*Name:* ${formData.name}\n*Mobile:* ${formData.mobile}\n*Email:* ${formData.email}\n*Subject:* ${formData.subject}\n\n*Message:*\n${formData.message}`;
+      
+      // Format number 
+      const adminNumber = '7049004444'.replace(/\D/g, '').slice(-10);
+      
+      console.log('Sending WhatsApp message to:', adminNumber);
+
+      const formUrlEncoded = new URLSearchParams();
+      formUrlEncoded.append('number', adminNumber);
+      formUrlEncoded.append('message', message);
+      formUrlEncoded.append('route', '1');
+      formUrlEncoded.append('token', 'HVW5LEKQ81BPR3SJU6F7TCMYZ'); 
+
+      const response = await fetch(WHATSAPP_API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Accept': 'application/json'
+        },
+        body: formUrlEncoded
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('WhatsApp API error response:', errorText);
+        throw new Error('Failed to send WhatsApp message');
+      }
+
+      const data = await response.json();
+      console.log('WhatsApp API Response:', data);
+
+      if (!data.status) {
+        throw new Error(data.message || 'Failed to send WhatsApp message');
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error sending to WhatsApp:', error);
+      throw error; 
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) return;
@@ -87,7 +137,8 @@ const Contact = () => {
     setSubmitStatus({ type: '', message: '' });
 
     try {
-      const response = await fetch(`${API_URL}/api/contacts`, {
+      // Send to Strapi
+      const strapiResponse = await fetch(`${API_URL}/api/contacts`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -95,11 +146,25 @@ const Contact = () => {
         body: JSON.stringify({ data: formData })
       });
 
-      if (!response.ok) {
-        throw new Error();
+      if (!strapiResponse.ok) {
+        throw new Error('Failed to submit to Strapi');
       }
 
-      // Reset form
+      // Send to WhatsApp
+      try {
+        await sendToWhatsApp(formData);
+      } catch (whatsappError) {
+        console.error('WhatsApp error:', whatsappError);
+       
+        setSubmitStatus({
+          type: 'warning',
+          message: t('contact.form.success') + ' ' + t('contact.form.whatsappError')
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Reset form on complete success
       setFormData({
         name: "",
         mobile: "",
@@ -108,12 +173,12 @@ const Contact = () => {
         message: ""
       });
 
-   
       setSubmitStatus({
         type: 'success',
         message: t('contact.form.success')
       });
-    } catch {
+    } catch (error) {
+      console.error('Submission error:', error);
       setSubmitStatus({
         type: 'error',
         message: t('contact.form.error')
