@@ -1087,5 +1087,19 @@
       "contact": "संपर्क",
       "email": "ईमेल"
     }
+  },
+  "gallery": {
+    "title": "गैलरी",
+    "subtitle": "हमारे सामुदायिक कार्यक्रमों और समारोहों की झलक",
+    "viewGallery": "गैलरी देखें",
+    "photos": "तस्वीरें",
+    "loginRequired": "लॉगिन आवश्यक है",
+    "loginToView": "तस्वीरें देखने के लिए लॉगिन करें",
+    "lightbox": {
+      "close": "बंद करें",
+      "previous": "पिछला",
+      "next": "अगला",
+      "imageOf": "तस्वीर {{current}} / {{total}}"
+    }
   }
 } 

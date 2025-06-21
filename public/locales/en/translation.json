@@ -935,5 +935,19 @@
       "contact": "Contact",
       "email": "Email"
     }
+  },
+  "gallery": {
+    "title": "Gallery",
+    "subtitle": "Explore our community events and celebrations",
+    "viewGallery": "View Gallery",
+    "photos": "Photos",
+    "loginRequired": "Login Required",
+    "loginToView": "Login to View Images",
+    "lightbox": {
+      "close": "Close",
+      "previous": "Previous",
+      "next": "Next",
+      "imageOf": "Image {{current}} of {{total}}"
+    }
   }
 } 
