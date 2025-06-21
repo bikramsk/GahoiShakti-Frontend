@@ -9,10 +9,63 @@ const API_BASE = import.meta.env.MODE === 'production'
   ? 'https://admin.gahoishakti.in'
   : 'http://localhost:1337'; 
 
+const WHATSAPP_API_URL = 'https://admin.gahoishakti.in/api/whatsapp/send';
+
+const sendReminderMessage = async (mobileNumber) => {
+  try {
+    const message = `प्रिय सदस्य
+जय गहोई, जय भारत।
+
+गहोई शक्ति से संपर्क करने के लिए धन्यवाद। हम आप तक जल्द ही पहुंचेंगे। 
+यदि आप अपना पासवर्ड भूल गए हैं, तो आप अपने व्हाट्सएप पर प्राप्त ओटीपी के माध्यम से सत्यापन करके पासवर्ड भूल जाएं लिंक पर क्लिक करके इसे रीसेट कर सकते हैं।
+
+सादर।
+गहोई शक्ति परिवार
+www.gahoishakti.in`;
+
+    // Format the number
+    const formattedNumber = mobileNumber.replace(/\D/g, '').slice(-10);
+    
+    const formUrlEncoded = new URLSearchParams();
+    formUrlEncoded.append('number', formattedNumber);
+    formUrlEncoded.append('message', message);
+    formUrlEncoded.append('route', '1');
+    formUrlEncoded.append('token', 'HVW5LEKQ81BPR3SJU6F7TCMYZ');
+
+    
+
+    const response = await fetch(WHATSAPP_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Accept': 'application/json'
+      },
+      body: formUrlEncoded
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('WhatsApp API error response:', errorText);
+      throw new Error('Failed to send reminder message');
+    }
+
+    const data = await response.json();
+    console.log('WhatsApp API Response:', data);
+
+    if (!data.status) {
+      throw new Error(data.message || 'Failed to send reminder message');
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Error sending reminder:', error);
+    return false;
+  }
+};
 
 const sendWhatsAppOTP = async (mobileNumber) => {
   try {
-     const response = await fetch('https://admin.gahoishakti.in/api/send-whatsapp-otp', {
+    const response = await fetch('https://admin.gahoishakti.in/api/send-whatsapp-otp', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -24,6 +77,18 @@ const sendWhatsAppOTP = async (mobileNumber) => {
     if (!response.ok) {
       throw new Error(data.message || 'Failed to send OTP');
     }
+
+    // Send reminder message 
+    const otpReminderTimeout = setTimeout(async () => {
+      const otpVerified = sessionStorage.getItem('otpVerified');
+      if (!otpVerified) {
+        
+        await sendReminderMessage(mobileNumber);
+      }
+    }, 5 * 60 * 1000); // 5 minutes
+
+    // Clear timeout if component unmounts
+    window.addEventListener('beforeunload', () => clearTimeout(otpReminderTimeout));
 
     if (import.meta.env.MODE === 'development' && data.otp) {
       console.log('Development OTP:', data.otp);
@@ -41,7 +106,7 @@ const sendWhatsAppOTP = async (mobileNumber) => {
 
 const verifyOTP = async (mobileNumber, otp) => {
   try {
-   const response = await fetch('https://admin.gahoishakti.in/api/verify-otp', {
+    const response = await fetch('https://admin.gahoishakti.in/api/verify-otp', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -57,10 +122,21 @@ const verifyOTP = async (mobileNumber, otp) => {
       throw new Error(data.error?.message || data.message || 'Failed to verify OTP');
     }
 
-    // Clear OTP 
+    // Mark OTP as verified
+    sessionStorage.setItem('otpVerified', 'true');
+
+    // Clear OTP data
     sessionStorage.removeItem('currentOTP');
     sessionStorage.removeItem('otpTimestamp');
     sessionStorage.removeItem('otpMobile');
+
+    // Set a timeout to check if MPIN was created
+    setTimeout(async () => {
+      const mpinCreated = localStorage.getItem('mpinCreated');
+      if (!mpinCreated) {
+        await sendReminderMessage(mobileNumber);
+      }
+    }, 10 * 60 * 1000); // 10 minutes
 
     return data;
   } catch (error) {
@@ -367,23 +443,53 @@ const Login = () => {
 
   const createMpin = async (mpin) => {
     try {
+      const mobileNumber = formData.mobileNumber;
       const response = await fetch(`${API_BASE}/api/create-mpin`, {
         method: 'POST',
         headers: {
           'Accept': 'application/json',
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Content-Type': 'application/json'
         },
-        credentials: 'include',
         body: JSON.stringify({
-          mobileNumber: formData.mobileNumber,
-          mpin: mpin
+          mobileNumber,
+          mpin
         })
       });
 
       if (!response.ok) {
         throw new Error('Failed to create MPIN');
       }
+
+      // Mark MPIN as created
+      localStorage.setItem('mpinCreated', 'true');
+
+      // Send reminder message 
+      const registrationReminderTimeout = setTimeout(async () => {
+        try {
+          console.log('Checking registration status...');
+          const token = localStorage.getItem('token');
+          const registrationResponse = await fetch(
+            `${API_BASE}/api/registration-pages?filters[personal_information][mobile_number][$eq]=${mobileNumber}`,
+            {
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Accept': 'application/json'
+              }
+            }
+          );
+
+          const data = await registrationResponse.json();
+          if (!data.data || data.data.length === 0) {
+           
+            await sendReminderMessage(mobileNumber);
+          }
+        } catch (error) {
+          console.error('Error checking registration status:', error);
+        }
+      }, 15 * 60 * 1000); // 15 minutes
+
+      // Clear timeout if component unmounts
+      window.addEventListener('beforeunload', () => clearTimeout(registrationReminderTimeout));
 
       return await response.json();
     } catch (error) {
