@@ -212,7 +212,8 @@
     "address": "12, Tarun Vihar Colony, Thatipur, Gwalior-474011 (M.P.)",
     "email": "Email: gahloishakti@gmail.com",
     "phone": "Phone: +91 7049004444",
-    "copyright": "© Gahoi Shakti Jan Kalyan Samiti India 2025"
+    "copyright": "© Gahoi Shakti Jan Kalyan Samiti India 2025",
+    "gallery": "Gallery"
   },
   "cowSeva": {
     "title": "Cow Seva",
@@ -938,11 +939,17 @@
   },
   "gallery": {
     "title": "Gallery",
-    "subtitle": "Explore our community events and celebrations",
-    "viewGallery": "View Gallery",
+    "subtitle": "Explore our community events and memories",
+    "loginRequired": "Please login to view gallery images",
+    "loginToView": "Login to View",
+    "pleaseLogin": "Please login to view gallery images.",
     "photos": "Photos",
-    "loginRequired": "Login Required",
-    "loginToView": "Login to View Images",
+    "viewGallery": "View Gallery",
+    "enterMpin": "Enter MPIN",
+    "mpinLabel": "MPIN",
+    "mpinError": "Invalid MPIN",
+    "mpinLengthError": "MPIN must be 4 digits",
+    "mpinVerificationError": "Failed to verify MPIN",
     "lightbox": {
       "close": "Close",
       "previous": "Previous",
