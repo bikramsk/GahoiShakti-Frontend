@@ -153,10 +153,10 @@ const HeroSection = () => {
   const imagePath = isMobile ? currentBanner.mobile : currentBanner.desktop;
 
   return (
-    <section className="relative h-[40vh] sm:h-[50vh] md:h-[80vh] lg:h-screen w-full overflow-hidden">
+    <section className="relative h-[40vh] sm:h-[50vh] md:h-[80vh] lg:h-[80vh] w-full overflow-hidden">
       {/* Background Image */}
       <div 
-        className="absolute inset-0 bg-center bg-no-repeat transition-all duration-1000 ease-in-out"
+        className="absolute inset-0 bg-center bg-no-repeat mt-20"
         style={{ 
           backgroundImage: `url("${imagePath}")`,
           backgroundSize: 'cover',
