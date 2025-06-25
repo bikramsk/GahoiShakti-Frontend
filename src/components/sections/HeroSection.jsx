@@ -156,7 +156,7 @@ const HeroSection = () => {
     <section className="relative h-[40vh] sm:h-[50vh] md:h-[80vh] lg:h-[80vh] w-full overflow-hidden">
       {/* Background Image */}
       <div 
-        className="absolute inset-0 bg-center bg-no-repeat mt-20"
+        className="absolute inset-0 bg-center bg-no-repeat mt-32"
         style={{ 
           backgroundImage: `url("${imagePath}")`,
           backgroundSize: 'cover',
