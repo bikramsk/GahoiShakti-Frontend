@@ -114,7 +114,7 @@ const HeroSection = () => {
       setCurrentImageIndex((prevIndex) => 
         prevIndex === bannerImages.length - 1 ? 0 : prevIndex + 1
       );
-    }, 5000);
+    }, 7000);
 
     return () => clearInterval(timer);
   }, [bannerImages.length]);
@@ -156,9 +156,8 @@ const HeroSection = () => {
     <section className="relative h-[40vh] sm:h-[50vh] md:h-[80vh] lg:h-[80vh] w-full overflow-hidden">
       {/* Background Image */}
       <div 
-        className="absolute inset-0 bg-center bg-no-repeat lg:mt-32"
+        className="absolute inset-0 bg-center bg-no-repeat mt-24 lg:mt-32"
         style={{ 
-          marginTop: '126px',
           backgroundImage: `url("${imagePath}")`,
           backgroundSize: 'cover',
           backgroundPosition: 'center'
