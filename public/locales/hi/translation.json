@@ -602,7 +602,8 @@
     "setMpin": "एमपिन सेट करें",
     "setting": "एमपिन सेट हो रहा है...",
     "fullName": "पूरा नाम",
-    "namePlaceholder": "अपना पूरा नाम दर्ज करें"
+    "namePlaceholder": "अपना पूरा नाम दर्ज करें",
+    "verifying": "सबमिट करें"
   },
   "latestNews": {
     "meta": {
