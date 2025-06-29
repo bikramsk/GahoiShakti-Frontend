@@ -533,7 +533,7 @@
     "subtitle": "अपने खाते में लॉगिन करें",
     "mobileNumber": "मोबाइल नंबर",
     "enterOtp": "OTP दर्ज करें",
-    "sendOtp": "OTP भेजें",
+    "sendOtp": "अगला",
     "verifyOtp": "OTP सत्यापित करें",
     "resendOtp": "OTP पुनः भेजें",
     "waitMessage": "नया OTP अनुरोध करने से पहले कृपया {{seconds}} सेकंड प्रतीक्षा करें",
@@ -600,7 +600,9 @@
     "confirmMpinPlaceholder": "एमपिन दोबारा दर्ज करें",
     "useWhatsAppOtp": "व्हाट्सएप ओटीपी का उपयोग करें",
     "setMpin": "एमपिन सेट करें",
-    "setting": "एमपिन सेट हो रहा है..."
+    "setting": "एमपिन सेट हो रहा है...",
+    "fullName": "पूरा नाम",
+    "namePlaceholder": "अपना पूरा नाम दर्ज करें"
   },
   "latestNews": {
     "meta": {
