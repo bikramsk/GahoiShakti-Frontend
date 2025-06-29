@@ -596,8 +596,8 @@ export const formatFormData = (data, displayPictureId = null) => {
     biographical_details: {
       is_married: data.isMarried || "Unmarried",
       marriage_to_another_caste: data.marriageCommunity === "other" ? "Married to Another Caste" : "Same Caste Marriage",
-      Gotra: data.spouseGotra ?? "",
-      Aakna: data.spouseAakna ?? "",
+      Gotra: data.spouseGotra || null,
+      Aakna: data.spouseAakna || null,
       consider_second_marriage: data.considerSecondMarriage || false
     },
     personal_information: {
