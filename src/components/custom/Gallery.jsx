@@ -808,138 +808,154 @@ const Gallery = () => {
 
       {/* Registration Modal */}
       {showRegistrationModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm overflow-y-auto">
-          <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full p-6 my-8">
-            <div className="flex justify-between items-center mb-6">
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm overflow-y-auto"
+          onClick={(e) => {
+            // Close modal when clicking the backdrop
+            if (e.target === e.currentTarget) {
+              setShowRegistrationModal(false);
+            }
+          }}
+        >
+          <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full p-6 my-8 relative">
+            {/* Close button */}
+            <button
+              onClick={() => setShowRegistrationModal(false)}
+              className="absolute top-4 right-4 p-2 hover:bg-gray-100 rounded-full transition-colors duration-200 group"
+              aria-label="Close modal"
+            >
+              <X className="w-6 h-6 text-gray-400 group-hover:text-gray-600" />
+            </button>
+
+            {/* Header */}
+            <div className="border-b border-gray-200 pb-4 mb-6">
               <h3 className="text-2xl font-bold text-gray-900">Quick Registration</h3>
-              <button
-                onClick={() => setShowRegistrationModal(false)}
-                className="p-2 hover:bg-gray-100 rounded-full"
-              >
-                <X className="w-6 h-6" />
-              </button>
+              <p className="text-gray-500 mt-1">Please fill in your details to access the gallery</p>
             </div>
 
             <form onSubmit={handleRegistrationSubmit} className="space-y-6">
               {/* Basic Information */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Name *</label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={registrationForm.name}
-                    onChange={handleRegistrationInputChange}
-                    className={`mt-1 block w-full rounded-md border ${
-                      formErrors.name ? 'border-red-500' : 'border-gray-300'
-                    } px-3 py-2`}
-                  />
-                  {formErrors.name && (
-                    <p className="mt-1 text-sm text-red-600">{formErrors.name}</p>
-                  )}
-                </div>
+              <div className="bg-gray-50 rounded-xl p-6 space-y-6">
+                <h4 className="text-lg font-semibold text-gray-900 mb-4">Basic Information</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
+                    <input
+                      type="text"
+                      name="name"
+                      value={registrationForm.name}
+                      onChange={handleRegistrationInputChange}
+                      className={`mt-1 block w-full rounded-lg shadow-sm ${
+                        formErrors.name ? 'border-red-500 ring-red-500' : 'border-gray-300 focus:ring-red-500 focus:border-red-500'
+                      } px-4 py-2`}
+                      placeholder="Enter your full name"
+                    />
+                    {formErrors.name && (
+                      <p className="mt-1 text-sm text-red-600">{formErrors.name}</p>
+                    )}
+                  </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Mobile Number *</label>
-                  <input
-                    type="tel"
-                    name="mobileNumber"
-                    value={registrationForm.mobileNumber}
-                    onChange={handleRegistrationInputChange}
-                    maxLength={10}
-                    className={`mt-1 block w-full rounded-md border ${
-                      formErrors.mobileNumber ? 'border-red-500' : 'border-gray-300'
-                    } px-3 py-2`}
-                  />
-                  {formErrors.mobileNumber && (
-                    <p className="mt-1 text-sm text-red-600">{formErrors.mobileNumber}</p>
-                  )}
-                </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Mobile Number *</label>
+                    <input
+                      type="tel"
+                      name="mobileNumber"
+                      value={registrationForm.mobileNumber}
+                      onChange={handleRegistrationInputChange}
+                      maxLength={10}
+                      className={`mt-1 block w-full rounded-lg shadow-sm ${
+                        formErrors.mobileNumber ? 'border-red-500 ring-red-500' : 'border-gray-300 focus:ring-red-500 focus:border-red-500'
+                      } px-4 py-2`}
+                      placeholder="Enter 10-digit mobile number"
+                    />
+                    {formErrors.mobileNumber && (
+                      <p className="mt-1 text-sm text-red-600">{formErrors.mobileNumber}</p>
+                    )}
+                  </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Gender *</label>
-                  <select
-                    name="gender"
-                    value={registrationForm.gender}
-                    onChange={handleRegistrationInputChange}
-                    className={`mt-1 block w-full rounded-md border ${
-                      formErrors.gender ? 'border-red-500' : 'border-gray-300'
-                    } px-3 py-2`}
-                  >
-                    <option value="">Select Gender</option>
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
-                  </select>
-                  {formErrors.gender && (
-                    <p className="mt-1 text-sm text-red-600">{formErrors.gender}</p>
-                  )}
-                </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Gender *</label>
+                    <select
+                      name="gender"
+                      value={registrationForm.gender}
+                      onChange={handleRegistrationInputChange}
+                      className={`mt-1 block w-full rounded-lg shadow-sm ${
+                        formErrors.gender ? 'border-red-500 ring-red-500' : 'border-gray-300 focus:ring-red-500 focus:border-red-500'
+                      } px-4 py-2`}
+                    >
+                      <option value="">Select Gender</option>
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
+                    </select>
+                    {formErrors.gender && (
+                      <p className="mt-1 text-sm text-red-600">{formErrors.gender}</p>
+                    )}
+                  </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Nationality *</label>
-                  <select
-                    name="nationality"
-                    value={registrationForm.nationality}
-                    onChange={handleRegistrationInputChange}
-                    className={`mt-1 block w-full rounded-md border ${
-                      formErrors.nationality ? 'border-red-500' : 'border-gray-300'
-                    } px-3 py-2`}
-                  >
-                    <option value="">Select Nationality</option>
-                    <option value="Indian">Indian</option>
-                    <option value="Non-Indian">Non-Indian</option>
-                  </select>
-                  {formErrors.nationality && (
-                    <p className="mt-1 text-sm text-red-600">{formErrors.nationality}</p>
-                  )}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Nationality *</label>
+                    <select
+                      name="nationality"
+                      value={registrationForm.nationality}
+                      onChange={handleRegistrationInputChange}
+                      className={`mt-1 block w-full rounded-lg shadow-sm ${
+                        formErrors.nationality ? 'border-red-500 ring-red-500' : 'border-gray-300 focus:ring-red-500 focus:border-red-500'
+                      } px-4 py-2`}
+                    >
+                      <option value="">Select Nationality</option>
+                      <option value="Indian">Indian</option>
+                      <option value="Non-Indian">Non-Indian</option>
+                    </select>
+                    {formErrors.nationality && (
+                      <p className="mt-1 text-sm text-red-600">{formErrors.nationality}</p>
+                    )}
+                  </div>
                 </div>
               </div>
 
               {/* Community Information */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Gotra</label>
-                  <select
-                    name="gotra"
-                    value={registrationForm.gotra}
-                    onChange={handleRegistrationInputChange}
-                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-                  >
-                    <option value="">Select Gotra</option>
-                    {Object.keys(gotraAaknaMap).map((gotra) => (
-                      <option key={gotra} value={gotra}>
-                        {gotra}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+              <div className="bg-gray-50 rounded-xl p-6 space-y-6">
+                <h4 className="text-lg font-semibold text-gray-900 mb-4">Community Information</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Gotra</label>
+                    <select
+                      name="gotra"
+                      value={registrationForm.gotra}
+                      onChange={handleRegistrationInputChange}
+                      className="mt-1 block w-full rounded-lg shadow-sm border-gray-300 focus:ring-red-500 focus:border-red-500 px-4 py-2"
+                    >
+                      <option value="">Select Gotra</option>
+                      {Object.keys(gotraAaknaMap).map((gotra) => (
+                        <option key={gotra} value={gotra}>{gotra}</option>
+                      ))}
+                    </select>
+                  </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Aakna</label>
-                  <select
-                    name="aakna"
-                    value={registrationForm.aakna}
-                    onChange={handleRegistrationInputChange}
-                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-                    disabled={!registrationForm.gotra}
-                  >
-                    <option value="">Select Aakna</option>
-                    {getAaknaOptions().map((aakna) => (
-                      <option key={aakna} value={aakna}>
-                        {aakna}
-                      </option>
-                    ))}
-                  </select>
-                  {!registrationForm.gotra && (
-                    <p className="text-gray-500 text-xs mt-2 ml-1 italic">
-                      Select a Gotra first to see available Aakna options
-                    </p>
-                  )}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Aakna</label>
+                    <select
+                      name="aakna"
+                      value={registrationForm.aakna}
+                      onChange={handleRegistrationInputChange}
+                      className="mt-1 block w-full rounded-lg shadow-sm border-gray-300 focus:ring-red-500 focus:border-red-500 px-4 py-2"
+                      disabled={!registrationForm.gotra}
+                    >
+                      <option value="">Select Aakna</option>
+                      {getAaknaOptions().map((aakna) => (
+                        <option key={aakna} value={aakna}>{aakna}</option>
+                      ))}
+                    </select>
+                    {!registrationForm.gotra && (
+                      <p className="text-gray-500 text-xs mt-2 ml-1 italic">Select a Gotra first to see available Aakna options</p>
+                    )}
+                  </div>
                 </div>
               </div>
 
               {/* Location Information */}
-              <div className="space-y-4">
+              <div className="bg-gray-50 rounded-xl p-6 space-y-6">
+                <h4 className="text-lg font-semibold text-gray-900 mb-4">Location Information</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700">State *</label>
@@ -947,9 +963,9 @@ const Gallery = () => {
                       name="state"
                       value={registrationForm.state}
                       onChange={handleRegistrationInputChange}
-                      className={`mt-1 block w-full rounded-md border ${
-                        formErrors.state ? 'border-red-500' : 'border-gray-300'
-                      } px-3 py-2`}
+                      className={`mt-1 block w-full rounded-lg shadow-sm ${
+                        formErrors.state ? 'border-red-500 ring-red-500' : 'border-gray-300 focus:ring-red-500 focus:border-red-500'
+                      } px-4 py-2`}
                     >
                       <option value="">Select State</option>
                       {STATES.map(state => (
@@ -967,9 +983,9 @@ const Gallery = () => {
                       name="district"
                       value={registrationForm.district}
                       onChange={handleRegistrationInputChange}
-                      className={`mt-1 block w-full rounded-md border ${
-                        formErrors.district ? 'border-red-500' : 'border-gray-300'
-                      } px-3 py-2`}
+                      className={`mt-1 block w-full rounded-lg shadow-sm ${
+                        formErrors.district ? 'border-red-500 ring-red-500' : 'border-gray-300 focus:ring-red-500 focus:border-red-500'
+                      } px-4 py-2`}
                       disabled={!registrationForm.state}
                     >
                       <option value="">Select District</option>
@@ -988,9 +1004,9 @@ const Gallery = () => {
                       name="localBody"
                       value={registrationForm.localBody}
                       onChange={handleRegistrationInputChange}
-                      className={`mt-1 block w-full rounded-md border ${
-                        formErrors.localBody ? 'border-red-500' : 'border-gray-300'
-                      } px-3 py-2`}
+                      className={`mt-1 block w-full rounded-lg shadow-sm ${
+                        formErrors.localBody ? 'border-red-500 ring-red-500' : 'border-gray-300 focus:ring-red-500 focus:border-red-500'
+                      } px-4 py-2`}
                       disabled={!registrationForm.district}
                     >
                       <option value="">Select Local Body</option>
@@ -1011,9 +1027,9 @@ const Gallery = () => {
                       value={registrationForm.gramPanchayat}
                       onChange={handleRegistrationInputChange}
                       placeholder="Enter Gram Panchayat"
-                      className={`mt-1 block w-full rounded-md border ${
-                        formErrors.gramPanchayat ? 'border-red-500' : 'border-gray-300'
-                      } px-3 py-2`}
+                      className={`mt-1 block w-full rounded-lg shadow-sm ${
+                        formErrors.gramPanchayat ? 'border-red-500 ring-red-500' : 'border-gray-300 focus:ring-red-500 focus:border-red-500'
+                      } px-4 py-2`}
                       disabled={!registrationForm.district || !registrationForm.localBody}
                     />
                     {formErrors.gramPanchayat && (
@@ -1035,9 +1051,9 @@ const Gallery = () => {
                       value={registrationForm.regionalAssembly}
                       onChange={handleRegistrationInputChange}
                       placeholder="Enter Regional Assembly"
-                      className={`mt-1 block w-full rounded-md border ${
-                        formErrors.regionalAssembly ? 'border-red-500' : 'border-gray-300'
-                      } px-3 py-2`}
+                      className={`mt-1 block w-full rounded-lg shadow-sm ${
+                        formErrors.regionalAssembly ? 'border-red-500 ring-red-500' : 'border-gray-300 focus:ring-red-500 focus:border-red-500'
+                      } px-4 py-2`}
                     />
                     {formErrors.regionalAssembly && (
                       <p className="mt-1 text-sm text-red-600">{formErrors.regionalAssembly}</p>
@@ -1052,9 +1068,9 @@ const Gallery = () => {
                       value={registrationForm.localPanchayatTrust}
                       onChange={handleRegistrationInputChange}
                       placeholder="Enter Local Panchayat Trust"
-                      className={`mt-1 block w-full rounded-md border ${
-                        formErrors.localPanchayatTrust ? 'border-red-500' : 'border-gray-300'
-                      } px-3 py-2`}
+                      className={`mt-1 block w-full rounded-lg shadow-sm ${
+                        formErrors.localPanchayatTrust ? 'border-red-500 ring-red-500' : 'border-gray-300 focus:ring-red-500 focus:border-red-500'
+                      } px-4 py-2`}
                     />
                     {formErrors.localPanchayatTrust && (
                       <p className="mt-1 text-sm text-red-600">{formErrors.localPanchayatTrust}</p>
@@ -1069,9 +1085,9 @@ const Gallery = () => {
                       value={registrationForm.localPanchayatName}
                       onChange={handleRegistrationInputChange}
                       placeholder="Enter Local Panchayat Name"
-                      className={`mt-1 block w-full rounded-md border ${
-                        formErrors.localPanchayatName ? 'border-red-500' : 'border-gray-300'
-                      } px-3 py-2`}
+                      className={`mt-1 block w-full rounded-lg shadow-sm ${
+                        formErrors.localPanchayatName ? 'border-red-500 ring-red-500' : 'border-gray-300 focus:ring-red-500 focus:border-red-500'
+                      } px-4 py-2`}
                     />
                     {formErrors.localPanchayatName && (
                       <p className="mt-1 text-sm text-red-600">{formErrors.localPanchayatName}</p>
@@ -1086,9 +1102,9 @@ const Gallery = () => {
                       value={registrationForm.subLocalPanchayat}
                       onChange={handleRegistrationInputChange}
                       placeholder="Enter Sub Local Panchayat"
-                      className={`mt-1 block w-full rounded-md border ${
-                        formErrors.subLocalPanchayat ? 'border-red-500' : 'border-gray-300'
-                      } px-3 py-2`}
+                      className={`mt-1 block w-full rounded-lg shadow-sm ${
+                        formErrors.subLocalPanchayat ? 'border-red-500 ring-red-500' : 'border-gray-300 focus:ring-red-500 focus:border-red-500'
+                      } px-4 py-2`}
                     />
                     {formErrors.subLocalPanchayat && (
                       <p className="mt-1 text-sm text-red-600">{formErrors.subLocalPanchayat}</p>
@@ -1098,21 +1114,23 @@ const Gallery = () => {
               </div>
 
               {formErrors.submit && (
-                <p className="text-red-600 text-sm">{formErrors.submit}</p>
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                  <p className="text-red-600 text-sm">{formErrors.submit}</p>
+                </div>
               )}
 
-              <div className="flex gap-4 justify-end">
+              <div className="flex gap-4 justify-end pt-4 border-t border-gray-200">
                 <button
                   type="button"
                   onClick={() => setShowRegistrationModal(false)}
-                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                  className="px-6 py-2.5 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors duration-200"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-4 py-2 text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center min-w-[100px]"
+                  className="px-6 py-2.5 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-200 flex items-center justify-center min-w-[100px] disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSubmitting ? (
                     <span className="inline-block w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></span>
