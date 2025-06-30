@@ -536,7 +536,11 @@ const Login = () => {
         if (response.jwt) {
           localStorage.setItem('token', response.jwt);
           localStorage.setItem('verifiedMobile', formData.mobileNumber);
-          navigate('/my-account');
+          // Add a small delay before navigation to ensure storage is set
+          setTimeout(() => {
+            navigate('/my-account', { replace: true });
+          }, 100);
+          return;
         }
       } catch (error) {
         setErrors({
