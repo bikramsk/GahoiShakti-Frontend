@@ -170,10 +170,11 @@ const getLocalBodies = (district) => {
   if (!localBodies) return [];
 
   // Safely combine NAGAR_PALIKA and JANPAD_PANCHAYAT arrays
-  const nagarPalika = localBodies?.NAGAR_PALIKA || [];
-  const janpadPanchayat = localBodies?.JANPAD_PANCHAYAT || [];
+  const nagarPalika = Array.isArray(localBodies?.NAGAR_PALIKA) ? localBodies.NAGAR_PALIKA : [];
+  const janpadPanchayat = Array.isArray(localBodies?.JANPAD_PANCHAYAT) ? localBodies.JANPAD_PANCHAYAT : [];
   
-  return [...nagarPalika, ...janpadPanchayat];
+
+  return [...new Set([...nagarPalika, ...janpadPanchayat])];
 };
 
 // Helper function to get gram panchayats based on district
