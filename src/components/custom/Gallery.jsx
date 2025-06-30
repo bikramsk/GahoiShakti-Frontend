@@ -2,7 +2,109 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { X, ChevronLeft, ChevronRight, Calendar, Image, Maximize2, Lock } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { STATES, STATE_TO_DISTRICTS, DISTRICT_TO_CITIES } from '../../constants/locationData';
+import { 
+  STATES, 
+  STATE_TO_DISTRICTS, 
+  DISTRICT_TO_CITIES,
+  ASHOKNAGAR_LOCAL_BODIES,
+  ALIRAJPUR_LOCAL_BODIES,
+  ANUPPUR_LOCAL_BODIES,
+  BALAGHAT_LOCAL_BODIES,
+  BARWANI_LOCAL_BODIES,
+  BETUL_LOCAL_BODIES,
+  BHIND_LOCAL_BODIES,
+  BHOPAL_LOCAL_BODIES,
+  BURHANPUR_LOCAL_BODIES,
+  CHHATARPUR_LOCAL_BODIES,
+  CHHINDWARA_LOCAL_BODIES,
+  DAMOH_LOCAL_BODIES,
+  DATIA_LOCAL_BODIES,
+  DEWAS_LOCAL_BODIES,
+  DHAR_LOCAL_BODIES,
+  DINDORI_LOCAL_BODIES,
+  GUNA_LOCAL_BODIES,
+  GWALIOR_LOCAL_BODIES,
+  HARDA_LOCAL_BODIES,
+  INDORE_LOCAL_BODIES,
+  JABALPUR_LOCAL_BODIES,
+  JHABUA_LOCAL_BODIES,
+  KATNI_LOCAL_BODIES,
+  KHANDWA_LOCAL_BODIES,
+  KHARGONE_LOCAL_BODIES,
+  MANDLA_LOCAL_BODIES,
+  MANDSAUR_LOCAL_BODIES,
+  MORENA_LOCAL_BODIES,
+  NARSINGHPUR_LOCAL_BODIES,
+  NEEMUCH_LOCAL_BODIES,
+  PANNA_LOCAL_BODIES,
+  RAISEN_LOCAL_BODIES,
+  RAJGARH_LOCAL_BODIES,
+  RATLAM_LOCAL_BODIES,
+  REWA_LOCAL_BODIES,
+  SAGAR_LOCAL_BODIES,
+  SATNA_LOCAL_BODIES,
+  SEHORE_LOCAL_BODIES,
+  SEONI_LOCAL_BODIES,
+  SHAHDOL_LOCAL_BODIES,
+  SHAJAPUR_LOCAL_BODIES,
+  SHEOPUR_LOCAL_BODIES,
+  SHIVPURI_LOCAL_BODIES,
+  SIDHI_LOCAL_BODIES,
+  SINGRAULI_LOCAL_BODIES,
+  TIKAMGARH_LOCAL_BODIES,
+  UJJAIN_LOCAL_BODIES,
+  UMARIYA_LOCAL_BODIES,
+  VIDISHA_LOCAL_BODIES,
+  ASHOKNAGAR_GRAM_PANCHAYATS,
+  ALIRAJPUR_GRAM_PANCHAYATS,
+  ANUPPUR_GRAM_PANCHAYATS,
+  BALAGHAT_GRAM_PANCHAYATS,
+  BARWANI_GRAM_PANCHAYATS,
+  BETUL_GRAM_PANCHAYATS,
+  BHIND_GRAM_PANCHAYATS,
+  BHOPAL_GRAM_PANCHAYATS,
+  BURHANPUR_GRAM_PANCHAYATS,
+  CHHATARPUR_GRAM_PANCHAYATS,
+  CHHINDWARA_GRAM_PANCHAYATS,
+  DAMOH_GRAM_PANCHAYATS,
+  DATIA_GRAM_PANCHAYATS,
+  DEWAS_GRAM_PANCHAYATS,
+  DHAR_GRAM_PANCHAYATS,
+  DINDORI_GRAM_PANCHAYATS,
+  GUNA_GRAM_PANCHAYATS,
+  GWALIOR_GRAM_PANCHAYATS,
+  HARDA_GRAM_PANCHAYATS,
+  INDORE_GRAM_PANCHAYATS,
+  JABALPUR_GRAM_PANCHAYATS,
+  JHABUA_GRAM_PANCHAYATS,
+  KATNI_GRAM_PANCHAYATS,
+  KHANDWA_GRAM_PANCHAYATS,
+  KHARGONE_GRAM_PANCHAYATS,
+  MANDLA_GRAM_PANCHAYATS,
+  MANDSAUR_GRAM_PANCHAYATS,
+  MORENA_GRAM_PANCHAYATS,
+  NARSINGHPUR_GRAM_PANCHAYATS,
+  NEEMUCH_GRAM_PANCHAYATS,
+  PANNA_GRAM_PANCHAYATS,
+  RAISEN_GRAM_PANCHAYATS,
+  RAJGARH_GRAM_PANCHAYATS,
+  RATLAM_GRAM_PANCHAYATS,
+  REWA_GRAM_PANCHAYATS,
+  SAGAR_GRAM_PANCHAYATS,
+  SATNA_GRAM_PANCHAYATS,
+  SEHORE_GRAM_PANCHAYATS,
+  SEONI_GRAM_PANCHAYATS,
+  SHAHDOL_GRAM_PANCHAYATS,
+  SHAJAPUR_GRAM_PANCHAYATS,
+  SHEOPUR_GRAM_PANCHAYATS,
+  SHIVPURI_GRAM_PANCHAYATS,
+  SIDHI_GRAM_PANCHAYATS,
+  SINGRAULI_GRAM_PANCHAYATS,
+  TIKAMGARH_GRAM_PANCHAYATS,
+  UJJAIN_GRAM_PANCHAYATS,
+  UMARIYA_GRAM_PANCHAYATS,
+  VIDISHA_GRAM_PANCHAYATS
+} from '../../constants/locationData';
 import { STATE_TO_ASSEMBLIES } from '../../constants/formConstants';
 import { formatFormData } from '../../utils/form/formUtils';
 
@@ -10,24 +112,161 @@ const API_URL = import.meta.env.MODE === 'production'
   ? 'https://admin.gahoishakti.in'
   : 'http://localhost:1337';
 
-// Import constants from Registration component
-const LOCAL_PANCHAYATS = {
-  "Chambal Regional Assembly": ["Morena", "Bhind", "Gwalior"],
-  "Central Malwa Regional Assembly": ["Indore", "Dewas", "Ujjain", "Bhopal", "Vidisha", "Raisen"],
-  "Mahakaushal Regional Assembly": ["Jabalpur", "Katni", "Rewa"],
-  "Vindhya Regional Assembly": ["Satna", "Shahdol", "Sidhi", "Chhatarpur", "Panna", "Rewa"],
-  "Bundelkhand Regional Assembly": ["Sagar", "Damoh", "Chhatarpur"],
-  "Chaurasi Regional Assembly": ["Bhopal", "Vidisha", "Raisen"],
-  "Southern Regional Assembly": ["Pune", "Mumbai", "Nagpur", "Amravati", "Chalisgaon", "Dhuliya"]
+// Helper function to get local bodies based on district
+const getLocalBodies = (district) => {
+  const districtMap = {
+    'Ashoknagar': ASHOKNAGAR_LOCAL_BODIES,
+    'Alirajpur': ALIRAJPUR_LOCAL_BODIES,
+    'Anuppur': ANUPPUR_LOCAL_BODIES,
+    'Balaghat': BALAGHAT_LOCAL_BODIES,
+    'Barwani': BARWANI_LOCAL_BODIES,
+    'Betul': BETUL_LOCAL_BODIES,
+    'Bhind': BHIND_LOCAL_BODIES,
+    'Bhopal': BHOPAL_LOCAL_BODIES,
+    'Burhanpur': BURHANPUR_LOCAL_BODIES,
+    'Chhatarpur': CHHATARPUR_LOCAL_BODIES,
+    'Chhindwara': CHHINDWARA_LOCAL_BODIES,
+    'Damoh': DAMOH_LOCAL_BODIES,
+    'Datia': DATIA_LOCAL_BODIES,
+    'Dewas': DEWAS_LOCAL_BODIES,
+    'Dhar': DHAR_LOCAL_BODIES,
+    'Dindori': DINDORI_LOCAL_BODIES,
+    'Guna': GUNA_LOCAL_BODIES,
+    'Gwalior': GWALIOR_LOCAL_BODIES,
+    'Harda': HARDA_LOCAL_BODIES,
+    'Indore': INDORE_LOCAL_BODIES,
+    'Jabalpur': JABALPUR_LOCAL_BODIES,
+    'Jhabua': JHABUA_LOCAL_BODIES,
+    'Katni': KATNI_LOCAL_BODIES,
+    'Khandwa': KHANDWA_LOCAL_BODIES,
+    'Khargone': KHARGONE_LOCAL_BODIES,
+    'Mandla': MANDLA_LOCAL_BODIES,
+    'Mandsaur': MANDSAUR_LOCAL_BODIES,
+    'Morena': MORENA_LOCAL_BODIES,
+    'Narsinghpur': NARSINGHPUR_LOCAL_BODIES,
+    'Neemuch': NEEMUCH_LOCAL_BODIES,
+    'Panna': PANNA_LOCAL_BODIES,
+    'Raisen': RAISEN_LOCAL_BODIES,
+    'Rajgarh': RAJGARH_LOCAL_BODIES,
+    'Ratlam': RATLAM_LOCAL_BODIES,
+    'Rewa': REWA_LOCAL_BODIES,
+    'Sagar': SAGAR_LOCAL_BODIES,
+    'Satna': SATNA_LOCAL_BODIES,
+    'Sehore': SEHORE_LOCAL_BODIES,
+    'Seoni': SEONI_LOCAL_BODIES,
+    'Shahdol': SHAHDOL_LOCAL_BODIES,
+    'Shajapur': SHAJAPUR_LOCAL_BODIES,
+    'Sheopur': SHEOPUR_LOCAL_BODIES,
+    'Shivpuri': SHIVPURI_LOCAL_BODIES,
+    'Sidhi': SIDHI_LOCAL_BODIES,
+    'Singrauli': SINGRAULI_LOCAL_BODIES,
+    'Tikamgarh': TIKAMGARH_LOCAL_BODIES,
+    'Ujjain': UJJAIN_LOCAL_BODIES,
+    'Umariya': UMARIYA_LOCAL_BODIES,
+    'Vidisha': VIDISHA_LOCAL_BODIES
+  };
+
+  const localBodies = districtMap[district];
+  if (!localBodies) return [];
+
+  return [...localBodies.NAGAR_PALIKA, ...localBodies.JANPAD_PANCHAYAT];
 };
 
-const SUB_LOCAL_PANCHAYATS = {
-  "Bhind": ["Bhind", "Ater", "Lahar", "Daboh", "Tharet", "Mihona", "Aswar", "Lahar", "Gohad", "Machhand", "Raun"],
-  "Gwalior": ["Gwalior", "Dabra", "Madhavganj", "Khasgi Bazaar", "Daulatganj", "Kampoo", "Lohia Bazaar", "Phalka Bazaar", "Lohamandi", "Bahodapur", "Naka Chandravadni", "Harishankarpuram", "Thatipur", "Morar", "Dabra", "Pichhore Dabra", "Behat"],
-  "Shivpuri": ["Malhawani", "Pipara", "Semri", "Bamore Damaroun", "Manpura", "Pichhore", "Karera", "Bhonti"],
-  "Ashok Nagar": ["Ashok Nagar", "Bamore Kala", "Dinara", "Guna"],
-  "Guna": ["Guna"],
-  "Ahmedabad": ["Gandhi Nagar"]
+// Helper function to get gram panchayats based on district
+const getGramPanchayats = (district) => {
+  const districtMap = {
+    'Ashoknagar': ASHOKNAGAR_GRAM_PANCHAYATS,
+    'Alirajpur': ALIRAJPUR_GRAM_PANCHAYATS,
+    'Anuppur': ANUPPUR_GRAM_PANCHAYATS,
+    'Balaghat': BALAGHAT_GRAM_PANCHAYATS,
+    'Barwani': BARWANI_GRAM_PANCHAYATS,
+    'Betul': BETUL_GRAM_PANCHAYATS,
+    'Bhind': BHIND_GRAM_PANCHAYATS,
+    'Bhopal': BHOPAL_GRAM_PANCHAYATS,
+    'Burhanpur': BURHANPUR_GRAM_PANCHAYATS,
+    'Chhatarpur': CHHATARPUR_GRAM_PANCHAYATS,
+    'Chhindwara': CHHINDWARA_GRAM_PANCHAYATS,
+    'Damoh': DAMOH_GRAM_PANCHAYATS,
+    'Datia': DATIA_GRAM_PANCHAYATS,
+    'Dewas': DEWAS_GRAM_PANCHAYATS,
+    'Dhar': DHAR_GRAM_PANCHAYATS,
+    'Dindori': DINDORI_GRAM_PANCHAYATS,
+    'Guna': GUNA_GRAM_PANCHAYATS,
+    'Gwalior': GWALIOR_GRAM_PANCHAYATS,
+    'Harda': HARDA_GRAM_PANCHAYATS,
+    'Indore': INDORE_GRAM_PANCHAYATS,
+    'Jabalpur': JABALPUR_GRAM_PANCHAYATS,
+    'Jhabua': JHABUA_GRAM_PANCHAYATS,
+    'Katni': KATNI_GRAM_PANCHAYATS,
+    'Khandwa': KHANDWA_GRAM_PANCHAYATS,
+    'Khargone': KHARGONE_GRAM_PANCHAYATS,
+    'Mandla': MANDLA_GRAM_PANCHAYATS,
+    'Mandsaur': MANDSAUR_GRAM_PANCHAYATS,
+    'Morena': MORENA_GRAM_PANCHAYATS,
+    'Narsinghpur': NARSINGHPUR_GRAM_PANCHAYATS,
+    'Neemuch': NEEMUCH_GRAM_PANCHAYATS,
+    'Panna': PANNA_GRAM_PANCHAYATS,
+    'Raisen': RAISEN_GRAM_PANCHAYATS,
+    'Rajgarh': RAJGARH_GRAM_PANCHAYATS,
+    'Ratlam': RATLAM_GRAM_PANCHAYATS,
+    'Rewa': REWA_GRAM_PANCHAYATS,
+    'Sagar': SAGAR_GRAM_PANCHAYATS,
+    'Satna': SATNA_GRAM_PANCHAYATS,
+    'Sehore': SEHORE_GRAM_PANCHAYATS,
+    'Seoni': SEONI_GRAM_PANCHAYATS,
+    'Shahdol': SHAHDOL_GRAM_PANCHAYATS,
+    'Shajapur': SHAJAPUR_GRAM_PANCHAYATS,
+    'Sheopur': SHEOPUR_GRAM_PANCHAYATS,
+    'Shivpuri': SHIVPURI_GRAM_PANCHAYATS,
+    'Sidhi': SIDHI_GRAM_PANCHAYATS,
+    'Singrauli': SINGRAULI_GRAM_PANCHAYATS,
+    'Tikamgarh': TIKAMGARH_GRAM_PANCHAYATS,
+    'Ujjain': UJJAIN_GRAM_PANCHAYATS,
+    'Umariya': UMARIYA_GRAM_PANCHAYATS,
+    'Vidisha': VIDISHA_GRAM_PANCHAYATS
+  };
+
+  return districtMap[district] || [];
+};
+
+// Import constants from Registration component
+const LOCAL_PANCHAYATS = {
+  "Chambal Regional Assembly": {
+    "Morena": ["Morena", "Ambah", "Porsa"],
+    "Bhind": ["Bhind", "Ater", "Lahar", "Daboh", "Tharet", "Mihona", "Aswar", "Lahar", "Gohad", "Machhand", "Raun"],
+    "Gwalior": ["Gwalior", "Dabra", "Madhavganj", "Khasgi Bazaar", "Daulatganj", "Kampoo", "Lohia Bazaar", "Phalka Bazaar", "Lohamandi", "Bahodapur", "Naka Chandravadni", "Harishankarpuram", "Thatipur", "Morar", "Dabra", "Pichhore Dabra", "Behat"]
+  },
+  "Central Malwa Regional Assembly": {
+    "Indore": ["Indore"],
+    "Dewas": ["Dewas"],
+    "Ujjain": ["Ujjain"],
+    "Bhopal": ["Bhopal"],
+    "Vidisha": ["Vidisha"],
+    "Raisen": ["Raisen"]
+  },
+  "Mahakaushal Regional Assembly": {
+    "Jabalpur": ["Jabalpur"],
+    "Katni": ["Katni"],
+    "Rewa": ["Rewa"]
+  },
+  "Vindhya Regional Assembly": {
+    "Satna": ["Satna"],
+    "Shahdol": ["Shahdol"],
+    "Sidhi": ["Sidhi"],
+    "Chhatarpur": ["Chhatarpur"],
+    "Panna": ["Panna"],
+    "Rewa": ["Rewa"]
+  },
+  "Bundelkhand Regional Assembly": {
+    "Sagar": ["Sagar"],
+    "Damoh": ["Damoh"],
+    "Chhatarpur": ["Chhatarpur"]
+  },
+  "Chaurasi Regional Assembly": {
+    "Bhopal": ["Bhopal"],
+    "Vidisha": ["Vidisha"],
+    "Raisen": ["Raisen"]
+  }
 };
 
 const LOCAL_PANCHAYAT_NAMES = [
@@ -52,6 +291,10 @@ const LOCAL_PANCHAYAT_NAMES = [
   "Shri Gahoi Vaishya Association"
 ];
 
+const getSubLocalPanchayats = (regionalAssembly, district) => {
+  return LOCAL_PANCHAYATS[regionalAssembly]?.[district] || [];
+};
+
 const Gallery = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -72,9 +315,6 @@ const Gallery = () => {
     mobileNumber: '',
     gender: '',
     nationality: '',
-    isGahoi: 'Yes',
-    gotra: '',
-    aakna: '',
     state: '',
     district: '',
     localBody: '',
@@ -370,12 +610,40 @@ const Gallery = () => {
     });
   };
 
+  // Add helper functions for dropdowns
+  const getFilteredLocalPanchayats = (regionalAssembly) => {
+    return regionalAssembly ? LOCAL_PANCHAYATS[regionalAssembly] || [] : [];
+  };
+
   const handleRegistrationInputChange = (e) => {
     const { name, value } = e.target;
-    setRegistrationForm(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setRegistrationForm(prev => {
+      const newForm = { ...prev, [name]: value };
+
+      // Reset dependent fields when parent field changes
+      if (name === 'state') {
+        newForm.district = '';
+        newForm.localBody = '';
+        newForm.gramPanchayat = '';
+        newForm.regionalAssembly = '';
+        newForm.localPanchayatTrust = '';
+        newForm.localPanchayatName = '';
+        newForm.subLocalPanchayat = '';
+      } else if (name === 'district') {
+        newForm.localBody = '';
+        newForm.gramPanchayat = '';
+        newForm.subLocalPanchayat = '';
+      } else if (name === 'localBody') {
+        newForm.gramPanchayat = '';
+      } else if (name === 'regionalAssembly') {
+        newForm.localPanchayatTrust = '';
+        newForm.localPanchayatName = '';
+        newForm.subLocalPanchayat = '';
+      }
+
+      return newForm;
+    });
+
     // Clear error when user types
     if (formErrors[name]) {
       setFormErrors(prev => ({
@@ -782,12 +1050,33 @@ const Gallery = () => {
                       disabled={!registrationForm.district}
                     >
                       <option value="">Select Local Body</option>
-                      {registrationForm.district && DISTRICT_TO_CITIES[registrationForm.district]?.map(city => (
-                        <option key={city} value={city}>{city}</option>
+                      {registrationForm.district && getLocalBodies(registrationForm.district).map(lb => (
+                        <option key={lb} value={lb}>{lb}</option>
                       ))}
                     </select>
                     {formErrors.localBody && (
                       <p className="mt-1 text-sm text-red-600">{formErrors.localBody}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Gram Panchayat *</label>
+                    <select
+                      name="gramPanchayat"
+                      value={registrationForm.gramPanchayat}
+                      onChange={handleRegistrationInputChange}
+                      className={`mt-1 block w-full rounded-md border ${
+                        formErrors.gramPanchayat ? 'border-red-500' : 'border-gray-300'
+                      } px-3 py-2`}
+                      disabled={!registrationForm.localBody}
+                    >
+                      <option value="">Select Gram Panchayat</option>
+                      {registrationForm.localBody && getGramPanchayats(registrationForm.district).map(gp => (
+                        <option key={gp} value={gp}>{gp}</option>
+                      ))}
+                    </select>
+                    {formErrors.gramPanchayat && (
+                      <p className="mt-1 text-sm text-red-600">{formErrors.gramPanchayat}</p>
                     )}
                   </div>
 
@@ -800,17 +1089,9 @@ const Gallery = () => {
                       className={`mt-1 block w-full rounded-md border ${
                         formErrors.regionalAssembly ? 'border-red-500' : 'border-gray-300'
                       } px-3 py-2`}
-                      disabled={!registrationForm.state || !STATE_TO_ASSEMBLIES[registrationForm.state]}
                     >
-                      <option value="">
-                        {!registrationForm.state 
-                          ? "Select State First"
-                          : !STATE_TO_ASSEMBLIES[registrationForm.state]
-                          ? "No Regional Assembly for Selected State"
-                          : "Select Regional Assembly"
-                        }
-                      </option>
-                      {registrationForm.state && STATE_TO_ASSEMBLIES[registrationForm.state]?.map(assembly => (
+                      <option value="">Select Regional Assembly</option>
+                      {Object.keys(LOCAL_PANCHAYATS).map(assembly => (
                         <option key={assembly} value={assembly}>{assembly}</option>
                       ))}
                     </select>
@@ -831,8 +1112,8 @@ const Gallery = () => {
                       disabled={!registrationForm.regionalAssembly}
                     >
                       <option value="">Select Local Panchayat Trust</option>
-                      {registrationForm.regionalAssembly && LOCAL_PANCHAYATS[registrationForm.regionalAssembly]?.map(panchayat => (
-                        <option key={panchayat} value={panchayat}>{panchayat}</option>
+                      {getFilteredLocalPanchayats(registrationForm.regionalAssembly).map(trust => (
+                        <option key={trust} value={trust}>{trust}</option>
                       ))}
                     </select>
                     {formErrors.localPanchayatTrust && (
@@ -869,12 +1150,14 @@ const Gallery = () => {
                       className={`mt-1 block w-full rounded-md border ${
                         formErrors.subLocalPanchayat ? 'border-red-500' : 'border-gray-300'
                       } px-3 py-2`}
-                      disabled={!registrationForm.localPanchayatTrust}
+                      disabled={!registrationForm.regionalAssembly || !registrationForm.district}
                     >
                       <option value="">Select Sub Local Panchayat</option>
-                      {registrationForm.localPanchayatTrust && SUB_LOCAL_PANCHAYATS[registrationForm.localPanchayatTrust]?.map(subPanchayat => (
-                        <option key={subPanchayat} value={subPanchayat}>{subPanchayat}</option>
-                      ))}
+                      {registrationForm.regionalAssembly && registrationForm.district && 
+                        getSubLocalPanchayats(registrationForm.regionalAssembly, registrationForm.district).map(slp => (
+                          <option key={slp} value={slp}>{slp}</option>
+                        ))
+                      }
                     </select>
                     {formErrors.subLocalPanchayat && (
                       <p className="mt-1 text-sm text-red-600">{formErrors.subLocalPanchayat}</p>
