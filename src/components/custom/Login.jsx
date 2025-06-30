@@ -173,7 +173,10 @@ const verifyMPIN = async (mobileNumber, mpin) => {
       throw new Error(errorMessage);
     }
 
-    return JSON.parse(responseText);
+    const data = JSON.parse(responseText);
+    // Store verified mobile number
+    localStorage.setItem('verifiedMobile', mobileNumber);
+    return data;
   } catch (error) {
     console.error('Error verifying MPIN:', error);
     throw error;
