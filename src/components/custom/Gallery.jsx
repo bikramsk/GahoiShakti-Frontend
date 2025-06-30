@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { X, ChevronLeft, ChevronRight, Calendar, Image, Maximize2, Lock } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { STATES, STATE_TO_DISTRICTS, DISTRICT_TO_CITIES } from '../../constants/locationConstants';
+import { STATES, STATE_TO_DISTRICTS, DISTRICT_TO_CITIES } from '../../constants/locationData';
 import { formatFormData } from '../../utils/form/formUtils';
 
 const API_URL = import.meta.env.MODE === 'production' 
