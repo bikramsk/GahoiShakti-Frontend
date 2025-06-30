@@ -238,6 +238,16 @@ const getGramPanchayats = (district) => {
 
   try {
     const gramPanchayats = districtMap[district];
+    if (!gramPanchayats) return [];
+
+ 
+    if (gramPanchayats && typeof gramPanchayats === 'object') {
+      const nagarPalika = Array.isArray(gramPanchayats.NAGAR_PALIKA) ? gramPanchayats.NAGAR_PALIKA : [];
+      const janpadPanchayat = Array.isArray(gramPanchayats.JANPAD_PANCHAYAT) ? gramPanchayats.JANPAD_PANCHAYAT : [];
+      return [...new Set([...nagarPalika, ...janpadPanchayat])];
+    }
+
+   
     return Array.isArray(gramPanchayats) ? gramPanchayats : [];
   } catch (error) {
     console.error('Error in getGramPanchayats:', error);
@@ -1090,15 +1100,23 @@ const Gallery = () => {
                       className={`mt-1 block w-full rounded-md border ${
                         formErrors.gramPanchayat ? 'border-red-500' : 'border-gray-300'
                       } px-3 py-2`}
-                      disabled={!registrationForm.localBody}
+                      disabled={!registrationForm.district || !registrationForm.localBody}
                     >
                       <option value="">Select Gram Panchayat</option>
-                      {registrationForm.localBody && getGramPanchayats(registrationForm.district).map(gp => (
-                        <option key={gp} value={gp}>{gp}</option>
-                      ))}
+                      {registrationForm.district && registrationForm.localBody && 
+                        getGramPanchayats(registrationForm.district).map(gp => (
+                          <option key={gp} value={gp}>{gp}</option>
+                        ))
+                      }
                     </select>
                     {formErrors.gramPanchayat && (
                       <p className="mt-1 text-sm text-red-600">{formErrors.gramPanchayat}</p>
+                    )}
+                    {!registrationForm.district && (
+                      <p className="text-gray-500 text-xs mt-1">Please select a district first</p>
+                    )}
+                    {registrationForm.district && !registrationForm.localBody && (
+                      <p className="text-gray-500 text-xs mt-1">Please select a local body first</p>
                     )}
                   </div>
 
