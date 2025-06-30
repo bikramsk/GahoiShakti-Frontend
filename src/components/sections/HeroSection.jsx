@@ -159,7 +159,7 @@ const HeroSection = () => {
       {currentImageIndex === 0 ? (
   <Link to="/gahoi-sammelan">
     <div 
-      className="absolute inset-0 bg-center bg-no-repeat mt-24 lg:mt-32 cursor-pointer"
+      className="absolute inset-0 bg-center bg-no-repeat cursor-pointer"
       style={{ 
         backgroundImage: `url("${imagePath}")`,
         backgroundSize: 'cover',
