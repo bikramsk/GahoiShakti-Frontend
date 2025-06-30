@@ -716,6 +716,20 @@ const Gallery = () => {
     }
   };
 
+  const getRegionalAssemblies = () => {
+    return Object.keys(LOCAL_PANCHAYATS);
+  };
+
+  const getLocalPanchayatsByRegionalAssembly = (regionalAssembly) => {
+    if (!regionalAssembly) return [];
+    return Object.keys(LOCAL_PANCHAYATS[regionalAssembly] || {});
+  };
+
+  const getSubLocalPanchayats = (regionalAssembly, localPanchayatTrust) => {
+    if (!regionalAssembly || !localPanchayatTrust) return [];
+    return LOCAL_PANCHAYATS[regionalAssembly]?.[localPanchayatTrust] || [];
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-red-50 to-rose-100">
       {/* Hero Section - Always visible */}
@@ -1014,17 +1028,70 @@ const Gallery = () => {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Gram Panchayat *</label>
-                    <input
-                      type="text"
+                    <select
                       name="gramPanchayat"
                       value={registrationForm.gramPanchayat}
                       onChange={handleRegistrationInputChange}
-                      placeholder="Enter Gram Panchayat"
                       className={`block w-full rounded-lg shadow-sm ${
                         formErrors.gramPanchayat ? 'border-red-500' : 'border-gray-300'
                       } px-3 py-2 text-sm focus:ring-red-500 focus:border-red-500`}
                       disabled={!registrationForm.district || !registrationForm.localBody}
-                    />
+                    >
+                      <option value="">Select Gram Panchayat</option>
+                      {registrationForm.district && registrationForm.localBody && (
+                        (registrationForm.district === 'Ashoknagar' && ASHOKNAGAR_GRAM_PANCHAYATS) ||
+                        (registrationForm.district === 'Alirajpur' && ALIRAJPUR_GRAM_PANCHAYATS) ||
+                        (registrationForm.district === 'Anuppur' && ANUPPUR_GRAM_PANCHAYATS) ||
+                        (registrationForm.district === 'Balaghat' && BALAGHAT_GRAM_PANCHAYATS) ||
+                        (registrationForm.district === 'Barwani' && BARWANI_GRAM_PANCHAYATS) ||
+                        (registrationForm.district === 'Betul' && BETUL_GRAM_PANCHAYATS) ||
+                        (registrationForm.district === 'Bhind' && BHIND_GRAM_PANCHAYATS) ||
+                        (registrationForm.district === 'Bhopal' && BHOPAL_GRAM_PANCHAYATS) ||
+                        (registrationForm.district === 'Burhanpur' && BURHANPUR_GRAM_PANCHAYATS) ||
+                        (registrationForm.district === 'Chhatarpur' && CHHATARPUR_GRAM_PANCHAYATS) ||
+                        (registrationForm.district === 'Chhindwara' && CHHINDWARA_GRAM_PANCHAYATS) ||
+                        (registrationForm.district === 'Damoh' && DAMOH_GRAM_PANCHAYATS) ||
+                        (registrationForm.district === 'Datia' && DATIA_GRAM_PANCHAYATS) ||
+                        (registrationForm.district === 'Dewas' && DEWAS_GRAM_PANCHAYATS) ||
+                        (registrationForm.district === 'Dhar' && DHAR_GRAM_PANCHAYATS) ||
+                        (registrationForm.district === 'Dindori' && DINDORI_GRAM_PANCHAYATS) ||
+                        (registrationForm.district === 'Guna' && GUNA_GRAM_PANCHAYATS) ||
+                        (registrationForm.district === 'Gwalior' && GWALIOR_GRAM_PANCHAYATS) ||
+                        (registrationForm.district === 'Harda' && HARDA_GRAM_PANCHAYATS) ||
+                        (registrationForm.district === 'Indore' && INDORE_GRAM_PANCHAYATS) ||
+                        (registrationForm.district === 'Jabalpur' && JABALPUR_GRAM_PANCHAYATS) ||
+                        (registrationForm.district === 'Jhabua' && JHABUA_GRAM_PANCHAYATS) ||
+                        (registrationForm.district === 'Katni' && KATNI_GRAM_PANCHAYATS) ||
+                        (registrationForm.district === 'Khandwa' && KHANDWA_GRAM_PANCHAYATS) ||
+                        (registrationForm.district === 'Khargone' && KHARGONE_GRAM_PANCHAYATS) ||
+                        (registrationForm.district === 'Mandla' && MANDLA_GRAM_PANCHAYATS) ||
+                        (registrationForm.district === 'Mandsaur' && MANDSAUR_GRAM_PANCHAYATS) ||
+                        (registrationForm.district === 'Morena' && MORENA_GRAM_PANCHAYATS) ||
+                        (registrationForm.district === 'Narsinghpur' && NARSINGHPUR_GRAM_PANCHAYATS) ||
+                        (registrationForm.district === 'Neemuch' && NEEMUCH_GRAM_PANCHAYATS) ||
+                        (registrationForm.district === 'Panna' && PANNA_GRAM_PANCHAYATS) ||
+                        (registrationForm.district === 'Raisen' && RAISEN_GRAM_PANCHAYATS) ||
+                        (registrationForm.district === 'Rajgarh' && RAJGARH_GRAM_PANCHAYATS) ||
+                        (registrationForm.district === 'Ratlam' && RATLAM_GRAM_PANCHAYATS) ||
+                        (registrationForm.district === 'Rewa' && REWA_GRAM_PANCHAYATS) ||
+                        (registrationForm.district === 'Sagar' && SAGAR_GRAM_PANCHAYATS) ||
+                        (registrationForm.district === 'Satna' && SATNA_GRAM_PANCHAYATS) ||
+                        (registrationForm.district === 'Sehore' && SEHORE_GRAM_PANCHAYATS) ||
+                        (registrationForm.district === 'Seoni' && SEONI_GRAM_PANCHAYATS) ||
+                        (registrationForm.district === 'Shahdol' && SHAHDOL_GRAM_PANCHAYATS) ||
+                        (registrationForm.district === 'Shajapur' && SHAJAPUR_GRAM_PANCHAYATS) ||
+                        (registrationForm.district === 'Sheopur' && SHEOPUR_GRAM_PANCHAYATS) ||
+                        (registrationForm.district === 'Shivpuri' && SHIVPURI_GRAM_PANCHAYATS) ||
+                        (registrationForm.district === 'Sidhi' && SIDHI_GRAM_PANCHAYATS) ||
+                        (registrationForm.district === 'Singrauli' && SINGRAULI_GRAM_PANCHAYATS) ||
+                        (registrationForm.district === 'Tikamgarh' && TIKAMGARH_GRAM_PANCHAYATS) ||
+                        (registrationForm.district === 'Ujjain' && UJJAIN_GRAM_PANCHAYATS) ||
+                        (registrationForm.district === 'Umariya' && UMARIYA_GRAM_PANCHAYATS) ||
+                        (registrationForm.district === 'Vidisha' && VIDISHA_GRAM_PANCHAYATS) || []
+                      ).map(panchayat => (
+                        <option key={panchayat} value={panchayat}>{panchayat}</option>
+                      ))}
+                    </select>
                     {formErrors.gramPanchayat && (
                       <p className="mt-1 text-xs text-red-600">{formErrors.gramPanchayat}</p>
                     )}
@@ -1034,16 +1101,19 @@ const Gallery = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Regional Assembly *</label>
-                    <input
-                      type="text"
+                    <select
                       name="regionalAssembly"
                       value={registrationForm.regionalAssembly}
                       onChange={handleRegistrationInputChange}
-                      placeholder="Enter Regional Assembly"
                       className={`block w-full rounded-lg shadow-sm ${
                         formErrors.regionalAssembly ? 'border-red-500' : 'border-gray-300'
                       } px-3 py-2 text-sm focus:ring-red-500 focus:border-red-500`}
-                    />
+                    >
+                      <option value="">Select Regional Assembly</option>
+                      {getRegionalAssemblies().map(assembly => (
+                        <option key={assembly} value={assembly}>{assembly}</option>
+                      ))}
+                    </select>
                     {formErrors.regionalAssembly && (
                       <p className="mt-1 text-xs text-red-600">{formErrors.regionalAssembly}</p>
                     )}
@@ -1051,16 +1121,20 @@ const Gallery = () => {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Local Panchayat Trust *</label>
-                    <input
-                      type="text"
+                    <select
                       name="localPanchayatTrust"
                       value={registrationForm.localPanchayatTrust}
                       onChange={handleRegistrationInputChange}
-                      placeholder="Enter Local Panchayat Trust"
                       className={`block w-full rounded-lg shadow-sm ${
                         formErrors.localPanchayatTrust ? 'border-red-500' : 'border-gray-300'
                       } px-3 py-2 text-sm focus:ring-red-500 focus:border-red-500`}
-                    />
+                      disabled={!registrationForm.regionalAssembly}
+                    >
+                      <option value="">Select Local Panchayat Trust</option>
+                      {getLocalPanchayatsByRegionalAssembly(registrationForm.regionalAssembly).map(trust => (
+                        <option key={trust} value={trust}>{trust}</option>
+                      ))}
+                    </select>
                     {formErrors.localPanchayatTrust && (
                       <p className="mt-1 text-xs text-red-600">{formErrors.localPanchayatTrust}</p>
                     )}
@@ -1070,16 +1144,19 @@ const Gallery = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Local Panchayat Name *</label>
-                    <input
-                      type="text"
+                    <select
                       name="localPanchayatName"
                       value={registrationForm.localPanchayatName}
                       onChange={handleRegistrationInputChange}
-                      placeholder="Enter Local Panchayat Name"
                       className={`block w-full rounded-lg shadow-sm ${
                         formErrors.localPanchayatName ? 'border-red-500' : 'border-gray-300'
                       } px-3 py-2 text-sm focus:ring-red-500 focus:border-red-500`}
-                    />
+                    >
+                      <option value="">Select Local Panchayat Name</option>
+                      {LOCAL_PANCHAYAT_NAMES.map(name => (
+                        <option key={name} value={name}>{name}</option>
+                      ))}
+                    </select>
                     {formErrors.localPanchayatName && (
                       <p className="mt-1 text-xs text-red-600">{formErrors.localPanchayatName}</p>
                     )}
@@ -1087,16 +1164,20 @@ const Gallery = () => {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Sub Local Panchayat *</label>
-                    <input
-                      type="text"
+                    <select
                       name="subLocalPanchayat"
                       value={registrationForm.subLocalPanchayat}
                       onChange={handleRegistrationInputChange}
-                      placeholder="Enter Sub Local Panchayat"
                       className={`block w-full rounded-lg shadow-sm ${
                         formErrors.subLocalPanchayat ? 'border-red-500' : 'border-gray-300'
                       } px-3 py-2 text-sm focus:ring-red-500 focus:border-red-500`}
-                    />
+                      disabled={!registrationForm.regionalAssembly || !registrationForm.localPanchayatTrust}
+                    >
+                      <option value="">Select Sub Local Panchayat</option>
+                      {getSubLocalPanchayats(registrationForm.regionalAssembly, registrationForm.localPanchayatTrust).map(subPanchayat => (
+                        <option key={subPanchayat} value={subPanchayat}>{subPanchayat}</option>
+                      ))}
+                    </select>
                     {formErrors.subLocalPanchayat && (
                       <p className="mt-1 text-xs text-red-600">{formErrors.subLocalPanchayat}</p>
                     )}
