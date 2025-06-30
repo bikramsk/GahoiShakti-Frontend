@@ -44,28 +44,30 @@ const UserProfile = () => {
         const mobileNumber = localStorage.getItem('verifiedMobile');
         const token = localStorage.getItem('token');
 
+        console.log('Auth check:', { hasMobile: !!mobileNumber, hasToken: !!token }); // Debug log
+
         if (!mobileNumber || !token) {
-          console.log('Missing auth data:', { mobileNumber: !!mobileNumber, token: !!token });
           setError('Please login again to continue');
           localStorage.removeItem('token');
           localStorage.removeItem('verifiedMobile');
-          setTimeout(() => {
-            navigate('/login', { replace: true });
-          }, 2000);
+          setTimeout(() => navigate('/login'), 2000);
           return;
         }
 
-        // Only use the registration-pages endpoint since that's where our user data is
         const apiUrl = `${API_BASE}/api/registration-pages?filters[personal_information][mobile_number][$eq]=${mobileNumber}&populate=*`;
+
+        console.log('Making API request with token:', token); // Debug log
 
         const profileResponse = await fetch(apiUrl, {
           method: 'GET',
           headers: {
-            'Authorization': `Bearer ${token}`,
+            'Authorization': token, // Token already includes 'Bearer '
             'Accept': 'application/json',
             'Content-Type': 'application/json'
           }
         });
+
+        console.log('API response status:', profileResponse.status); // Debug log
 
         if (!profileResponse.ok) {
           if (profileResponse.status === 401 || profileResponse.status === 403) {
@@ -73,26 +75,23 @@ const UserProfile = () => {
             localStorage.removeItem('token');
             localStorage.removeItem('verifiedMobile');
             setError('Session expired. Please login again.');
-            setTimeout(() => {
-              navigate('/login', { replace: true });
-            }, 2000);
+            setTimeout(() => navigate('/login'), 2000);
             return;
           }
           throw new Error(`Failed to fetch profile data: ${profileResponse.status}`);
         }
 
         const profileData = await profileResponse.json();
+        console.log('Profile data:', profileData); // Debug log
 
         if (!profileData.data || profileData.data.length === 0) {
-          console.log('No profile data found');
           setError('Please complete your registration first.');
           setTimeout(() => {
             navigate('/registration', { 
               state: { 
                 mobileNumber,
                 fromLogin: true 
-              },
-              replace: true
+              } 
             });
           }, 2000);
           return;

@@ -174,8 +174,7 @@ const verifyMPIN = async (mobileNumber, mpin) => {
     }
 
     const data = JSON.parse(responseText);
-    // Store verified mobile number
-    localStorage.setItem('verifiedMobile', mobileNumber);
+    console.log('MPIN verification response:', data); // Debug log
     return data;
   } catch (error) {
     console.error('Error verifying MPIN:', error);
@@ -533,16 +532,15 @@ const Login = () => {
       setLoading(true);
       try {
         const response = await verifyMPIN(formData.mobileNumber, formData.mpin);
+        console.log('Login response:', response); // Debug log
         if (response.jwt) {
-          localStorage.setItem('token', response.jwt);
+          // Store the complete token with 'Bearer ' prefix
+          localStorage.setItem('token', `Bearer ${response.jwt}`);
           localStorage.setItem('verifiedMobile', formData.mobileNumber);
-          // Add a small delay before navigation to ensure storage is set
-          setTimeout(() => {
-            navigate('/my-account', { replace: true });
-          }, 100);
-          return;
+          navigate('/my-account');
         }
       } catch (error) {
+        console.error('Login error:', error); // Debug log
         setErrors({
           mpin: error.message || 'Invalid MPIN'
         });
