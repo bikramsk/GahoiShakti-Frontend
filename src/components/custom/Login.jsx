@@ -534,42 +534,12 @@ const Login = () => {
         console.log('MPIN verification response:', response);
         
         if (response.jwt) {
-          // Store token
+          // Store token and mobile number
           localStorage.setItem('token', response.jwt);
           localStorage.setItem('verifiedMobile', formData.mobileNumber);
           
-          // Verify token immediately with registration-pages endpoint only
-          try {
-            const verifyResponse = await fetch(`${API_BASE}/api/registration-pages?filters[personal_information][mobile_number][$eq]=${formData.mobileNumber}&populate=*`, {
-              method: 'GET',
-              headers: {
-                'Authorization': `Bearer ${response.jwt}`,
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-              },
-              credentials: 'include'
-            });
-
-            const verifyData = await verifyResponse.text();
-            console.log('Token verification response:', {
-              status: verifyResponse.status,
-              data: verifyData
-            });
-
-            if (!verifyResponse.ok) {
-              throw new Error('Token verification failed');
-            }
-
-            // Token works, navigate to my-account
-            navigate('/my-account');
-          } catch (verifyError) {
-            console.error('Token verification failed:', verifyError);
-            setErrors({
-              mpin: 'Login failed. Please try again.'
-            });
-            localStorage.removeItem('token');
-            localStorage.removeItem('verifiedMobile');
-          }
+          // Redirect immediately after successful MPIN verification
+          navigate('/my-account');
         }
       } catch (error) {
         console.error('Login error:', error);
