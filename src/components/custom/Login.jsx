@@ -534,8 +534,8 @@ const Login = () => {
         const response = await verifyMPIN(formData.mobileNumber, formData.mpin);
         console.log('Login response:', response); // Debug log
         if (response.jwt) {
-          // Store the complete token with 'Bearer ' prefix
-          localStorage.setItem('token', `Bearer ${response.jwt}`);
+          // Store just the JWT token without Bearer prefix
+          localStorage.setItem('token', response.jwt);
           localStorage.setItem('verifiedMobile', formData.mobileNumber);
           navigate('/my-account');
         }

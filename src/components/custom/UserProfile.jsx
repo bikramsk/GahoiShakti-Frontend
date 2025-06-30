@@ -56,12 +56,12 @@ const UserProfile = () => {
 
         const apiUrl = `${API_BASE}/api/registration-pages?filters[personal_information][mobile_number][$eq]=${mobileNumber}&populate=*`;
 
-        console.log('Making API request with token:', token); // Debug log
+        console.log('Making API request...'); // Debug log
 
         const profileResponse = await fetch(apiUrl, {
           method: 'GET',
           headers: {
-            'Authorization': token, // Token already includes 'Bearer '
+            'Authorization': `Bearer ${token}`, // Add Bearer prefix here
             'Accept': 'application/json',
             'Content-Type': 'application/json'
           }
@@ -70,6 +70,9 @@ const UserProfile = () => {
         console.log('API response status:', profileResponse.status); // Debug log
 
         if (!profileResponse.ok) {
+          const responseText = await profileResponse.text();
+          console.log('API error response:', responseText); // Debug log
+
           if (profileResponse.status === 401 || profileResponse.status === 403) {
             console.log('Auth error:', profileResponse.status);
             localStorage.removeItem('token');
@@ -82,9 +85,10 @@ const UserProfile = () => {
         }
 
         const profileData = await profileResponse.json();
-        console.log('Profile data:', profileData); // Debug log
+        console.log('Profile data received:', !!profileData); // Debug log
 
         if (!profileData.data || profileData.data.length === 0) {
+          console.log('No profile data found for user'); // Debug log
           setError('Please complete your registration first.');
           setTimeout(() => {
             navigate('/registration', { 
