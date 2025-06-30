@@ -182,72 +182,6 @@ const getLocalBodies = (district) => {
   }
 };
 
-// Helper function to get gram panchayats based on district
-const getGramPanchayats = (district) => {
-  const districtMap = {
-    'Ashoknagar': ASHOKNAGAR_GRAM_PANCHAYATS,
-    'Alirajpur': ALIRAJPUR_GRAM_PANCHAYATS,
-    'Anuppur': ANUPPUR_GRAM_PANCHAYATS,
-    'Balaghat': BALAGHAT_GRAM_PANCHAYATS,
-    'Barwani': BARWANI_GRAM_PANCHAYATS,
-    'Betul': BETUL_GRAM_PANCHAYATS,
-    'Bhind': BHIND_GRAM_PANCHAYATS,
-    'Bhopal': BHOPAL_GRAM_PANCHAYATS,
-    'Burhanpur': BURHANPUR_GRAM_PANCHAYATS,
-    'Chhatarpur': CHHATARPUR_GRAM_PANCHAYATS,
-    'Chhindwara': CHHINDWARA_GRAM_PANCHAYATS,
-    'Damoh': DAMOH_GRAM_PANCHAYATS,
-    'Datia': DATIA_GRAM_PANCHAYATS,
-    'Dewas': DEWAS_GRAM_PANCHAYATS,
-    'Dhar': DHAR_GRAM_PANCHAYATS,
-    'Dindori': DINDORI_GRAM_PANCHAYATS,
-    'Guna': GUNA_GRAM_PANCHAYATS,
-    'Gwalior': GWALIOR_GRAM_PANCHAYATS,
-    'Harda': HARDA_GRAM_PANCHAYATS,
-    'Indore': INDORE_GRAM_PANCHAYATS,
-    'Jabalpur': JABALPUR_GRAM_PANCHAYATS,
-    'Jhabua': JHABUA_GRAM_PANCHAYATS,
-    'Katni': KATNI_GRAM_PANCHAYATS,
-    'Khandwa': KHANDWA_GRAM_PANCHAYATS,
-    'Khargone': KHARGONE_GRAM_PANCHAYATS,
-    'Mandla': MANDLA_GRAM_PANCHAYATS,
-    'Mandsaur': MANDSAUR_GRAM_PANCHAYATS,
-    'Morena': MORENA_GRAM_PANCHAYATS,
-    'Narsinghpur': NARSINGHPUR_GRAM_PANCHAYATS,
-    'Neemuch': NEEMUCH_GRAM_PANCHAYATS,
-    'Panna': PANNA_GRAM_PANCHAYATS,
-    'Raisen': RAISEN_GRAM_PANCHAYATS,
-    'Rajgarh': RAJGARH_GRAM_PANCHAYATS,
-    'Ratlam': RATLAM_GRAM_PANCHAYATS,
-    'Rewa': REWA_GRAM_PANCHAYATS,
-    'Sagar': SAGAR_GRAM_PANCHAYATS,
-    'Satna': SATNA_GRAM_PANCHAYATS,
-    'Sehore': SEHORE_GRAM_PANCHAYATS,
-    'Seoni': SEONI_GRAM_PANCHAYATS,
-    'Shahdol': SHAHDOL_GRAM_PANCHAYATS,
-    'Shajapur': SHAJAPUR_GRAM_PANCHAYATS,
-    'Sheopur': SHEOPUR_GRAM_PANCHAYATS,
-    'Shivpuri': SHIVPURI_GRAM_PANCHAYATS,
-    'Sidhi': SIDHI_GRAM_PANCHAYATS,
-    'Singrauli': SINGRAULI_GRAM_PANCHAYATS,
-    'Tikamgarh': TIKAMGARH_GRAM_PANCHAYATS,
-    'Ujjain': UJJAIN_GRAM_PANCHAYATS,
-    'Umariya': UMARIYA_GRAM_PANCHAYATS,
-    'Vidisha': VIDISHA_GRAM_PANCHAYATS
-  };
-
-  try {
-    const gramPanchayats = districtMap[district];
-    if (!gramPanchayats) return [];
-
-    // Simply return the array if it exists
-    return Array.isArray(gramPanchayats) ? gramPanchayats : [];
-  } catch (error) {
-    console.error('Error in getGramPanchayats:', error);
-    return [];
-  }
-};
-
 // Import constants from Registration component
 const LOCAL_PANCHAYATS = {
   "Chambal Regional Assembly": {
@@ -309,16 +243,6 @@ const LOCAL_PANCHAYAT_NAMES = [
   "Gahoi Vaishya Vikas Sansthan",
   "Shri Gahoi Vaishya Association"
 ];
-
-const getSubLocalPanchayats = (regionalAssembly, district) => {
-  try {
-    if (!regionalAssembly || !district || !LOCAL_PANCHAYATS[regionalAssembly]) return [];
-    return LOCAL_PANCHAYATS[regionalAssembly][district] || [];
-  } catch (error) {
-    console.error('Error in getSubLocalPanchayats:', error);
-    return [];
-  }
-};
 
 const Gallery = () => {
   const { t } = useTranslation();
@@ -633,17 +557,6 @@ const Gallery = () => {
       month: 'long',
       day: 'numeric'
     });
-  };
-
-  // Add helper functions for dropdowns
-  const getFilteredLocalPanchayats = (regionalAssembly) => {
-    try {
-      if (!regionalAssembly || !LOCAL_PANCHAYATS[regionalAssembly]) return [];
-      return Object.keys(LOCAL_PANCHAYATS[regionalAssembly]);
-    } catch (error) {
-      console.error('Error in getFilteredLocalPanchayats:', error);
-      return [];
-    }
   };
 
   const handleRegistrationInputChange = (e) => {
@@ -1092,22 +1005,17 @@ const Gallery = () => {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Gram Panchayat *</label>
-                    <select
+                    <input
+                      type="text"
                       name="gramPanchayat"
                       value={registrationForm.gramPanchayat}
                       onChange={handleRegistrationInputChange}
+                      placeholder="Enter Gram Panchayat"
                       className={`mt-1 block w-full rounded-md border ${
                         formErrors.gramPanchayat ? 'border-red-500' : 'border-gray-300'
                       } px-3 py-2`}
                       disabled={!registrationForm.district || !registrationForm.localBody}
-                    >
-                      <option value="">Select Gram Panchayat</option>
-                      {registrationForm.district && registrationForm.localBody && 
-                        getGramPanchayats(registrationForm.district).map((gp, index) => (
-                          <option key={`${gp}-${index}`} value={gp}>{gp}</option>
-                        ))
-                      }
-                    </select>
+                    />
                     {formErrors.gramPanchayat && (
                       <p className="mt-1 text-sm text-red-600">{formErrors.gramPanchayat}</p>
                     )}
@@ -1121,19 +1029,16 @@ const Gallery = () => {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Regional Assembly *</label>
-                    <select
+                    <input
+                      type="text"
                       name="regionalAssembly"
                       value={registrationForm.regionalAssembly}
                       onChange={handleRegistrationInputChange}
+                      placeholder="Enter Regional Assembly"
                       className={`mt-1 block w-full rounded-md border ${
                         formErrors.regionalAssembly ? 'border-red-500' : 'border-gray-300'
                       } px-3 py-2`}
-                    >
-                      <option value="">Select Regional Assembly</option>
-                      {Object.keys(LOCAL_PANCHAYATS || {}).map(assembly => (
-                        <option key={assembly} value={assembly}>{assembly}</option>
-                      ))}
-                    </select>
+                    />
                     {formErrors.regionalAssembly && (
                       <p className="mt-1 text-sm text-red-600">{formErrors.regionalAssembly}</p>
                     )}
@@ -1141,45 +1046,33 @@ const Gallery = () => {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Local Panchayat Trust *</label>
-                    <select
+                    <input
+                      type="text"
                       name="localPanchayatTrust"
                       value={registrationForm.localPanchayatTrust}
                       onChange={handleRegistrationInputChange}
+                      placeholder="Enter Local Panchayat Trust"
                       className={`mt-1 block w-full rounded-md border ${
                         formErrors.localPanchayatTrust ? 'border-red-500' : 'border-gray-300'
                       } px-3 py-2`}
-                      disabled={!registrationForm.regionalAssembly}
-                    >
-                      <option value="">Select Local Panchayat Trust</option>
-                      {registrationForm.regionalAssembly && 
-                        getFilteredLocalPanchayats(registrationForm.regionalAssembly).map((trust, index) => (
-                          <option key={`${trust}-${index}`} value={trust}>{trust}</option>
-                        ))
-                      }
-                    </select>
+                    />
                     {formErrors.localPanchayatTrust && (
                       <p className="mt-1 text-sm text-red-600">{formErrors.localPanchayatTrust}</p>
-                    )}
-                    {!registrationForm.regionalAssembly && (
-                      <p className="text-gray-500 text-xs mt-1">Please select a regional assembly first</p>
                     )}
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Local Panchayat Name *</label>
-                    <select
+                    <input
+                      type="text"
                       name="localPanchayatName"
                       value={registrationForm.localPanchayatName}
                       onChange={handleRegistrationInputChange}
+                      placeholder="Enter Local Panchayat Name"
                       className={`mt-1 block w-full rounded-md border ${
                         formErrors.localPanchayatName ? 'border-red-500' : 'border-gray-300'
                       } px-3 py-2`}
-                    >
-                      <option value="">Select Local Panchayat Name</option>
-                      {LOCAL_PANCHAYAT_NAMES.map(name => (
-                        <option key={name} value={name}>{name}</option>
-                      ))}
-                    </select>
+                    />
                     {formErrors.localPanchayatName && (
                       <p className="mt-1 text-sm text-red-600">{formErrors.localPanchayatName}</p>
                     )}
@@ -1187,22 +1080,16 @@ const Gallery = () => {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Sub Local Panchayat *</label>
-                    <select
+                    <input
+                      type="text"
                       name="subLocalPanchayat"
                       value={registrationForm.subLocalPanchayat}
                       onChange={handleRegistrationInputChange}
+                      placeholder="Enter Sub Local Panchayat"
                       className={`mt-1 block w-full rounded-md border ${
                         formErrors.subLocalPanchayat ? 'border-red-500' : 'border-gray-300'
                       } px-3 py-2`}
-                      disabled={!registrationForm.regionalAssembly || !registrationForm.district}
-                    >
-                      <option value="">Select Sub Local Panchayat</option>
-                      {registrationForm.regionalAssembly && registrationForm.district && 
-                        getSubLocalPanchayats(registrationForm.regionalAssembly, registrationForm.district).map(slp => (
-                          <option key={slp} value={slp}>{slp}</option>
-                        ))
-                      }
-                    </select>
+                    />
                     {formErrors.subLocalPanchayat && (
                       <p className="mt-1 text-sm text-red-600">{formErrors.subLocalPanchayat}</p>
                     )}
