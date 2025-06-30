@@ -43,10 +43,8 @@ export const FORM_STEPS = [
 
 export const REQUIRED_FIELDS = [
   "name", 
-  "mobileNumber", 
-  "bloodGroup",
+  "mobileNumber",
   "birthDate", 
-  "education", 
   "gender",
   "nationality",
   "state", 
