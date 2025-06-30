@@ -35,7 +35,9 @@
     "ongoingSupport": "वर्तमान सहायता",
     "contributors": "योगदानकर्ता",
     "requests": "सहायता अनुरोध",
-    "team": "हमारी टीम"
+    "team": "हमारी टीम",
+    "myProfile": "मेरी प्रोफाइल",
+    "logout": "लॉग आउट"
   },
   "errors": {
     "required": "यह फ़ील्ड आवश्यक है",

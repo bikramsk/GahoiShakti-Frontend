@@ -37,7 +37,9 @@
     "ongoingSupport": "Ongoing Support",
     "contributors": "Contributors",
     "requests": "Fund Requests",
-    "team": "Our Team"
+    "team": "Our Team",
+    "myProfile": "My Profile",
+    "logout": "Logout"
   },
   "errors": {
     "required": "This field is required",
