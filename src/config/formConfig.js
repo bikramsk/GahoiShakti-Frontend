@@ -49,6 +49,8 @@ export const REQUIRED_FIELDS = [
   "nationality",
   "state",
   "district",
+  "local_body",
+  "gramPanchayat",
   "localPanchayat",
   "subLocalPanchayat",
   "workType"
