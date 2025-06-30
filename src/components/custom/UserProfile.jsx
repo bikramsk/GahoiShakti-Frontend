@@ -44,9 +44,10 @@ const UserProfile = () => {
         const mobileNumber = localStorage.getItem('verifiedMobile');
         const token = localStorage.getItem('token');
 
-        console.log('Auth check:', { hasMobile: !!mobileNumber, hasToken: !!token }); // Debug log
+        console.log('Auth check:', { hasMobile: !!mobileNumber, hasToken: !!token });
 
         if (!mobileNumber || !token) {
+          console.log('Missing auth data');
           setError('Please login again to continue');
           localStorage.removeItem('token');
           localStorage.removeItem('verifiedMobile');
@@ -54,27 +55,29 @@ const UserProfile = () => {
           return;
         }
 
+        // Only use registration-pages endpoint
         const apiUrl = `${API_BASE}/api/registration-pages?filters[personal_information][mobile_number][$eq]=${mobileNumber}&populate=*`;
 
-        console.log('Making API request...'); // Debug log
+        console.log('Making API request to registration-pages');
 
         const profileResponse = await fetch(apiUrl, {
           method: 'GET',
           headers: {
-            'Authorization': `Bearer ${token}`, // Add Bearer prefix here
+            'Authorization': `Bearer ${token}`,
             'Accept': 'application/json',
             'Content-Type': 'application/json'
-          }
+          },
+          credentials: 'include'
         });
 
-        console.log('API response status:', profileResponse.status); // Debug log
-
         if (!profileResponse.ok) {
-          const responseText = await profileResponse.text();
-          console.log('API error response:', responseText); // Debug log
+          const errorText = await profileResponse.text();
+          console.log('API error:', {
+            status: profileResponse.status,
+            response: errorText
+          });
 
           if (profileResponse.status === 401 || profileResponse.status === 403) {
-            console.log('Auth error:', profileResponse.status);
             localStorage.removeItem('token');
             localStorage.removeItem('verifiedMobile');
             setError('Session expired. Please login again.');
@@ -85,10 +88,9 @@ const UserProfile = () => {
         }
 
         const profileData = await profileResponse.json();
-        console.log('Profile data received:', !!profileData); // Debug log
 
         if (!profileData.data || profileData.data.length === 0) {
-          console.log('No profile data found for user'); // Debug log
+          console.log('No profile data found');
           setError('Please complete your registration first.');
           setTimeout(() => {
             navigate('/registration', { 
@@ -109,7 +111,7 @@ const UserProfile = () => {
         }
 
         const attrs = profile.attributes;
-        const transformedData = {
+        setUserData({
           personal_information: attrs.personal_information || {},
           family_details: attrs.family_details || {},
           biographical_details: attrs.biographical_details || {},
@@ -122,9 +124,7 @@ const UserProfile = () => {
           createdAt: attrs.createdAt,
           updatedAt: attrs.updatedAt,
           publishedAt: attrs.publishedAt
-        };
-
-        setUserData(transformedData);
+        });
         setLoading(false);
         setError(null);
       } catch (error) {

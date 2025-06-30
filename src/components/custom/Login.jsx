@@ -174,7 +174,6 @@ const verifyMPIN = async (mobileNumber, mpin) => {
     }
 
     const data = JSON.parse(responseText);
-    console.log('MPIN verification response:', data); // Debug log
     return data;
   } catch (error) {
     console.error('Error verifying MPIN:', error);
@@ -532,15 +531,48 @@ const Login = () => {
       setLoading(true);
       try {
         const response = await verifyMPIN(formData.mobileNumber, formData.mpin);
-        console.log('Login response:', response); // Debug log
+        console.log('MPIN verification response:', response);
+        
         if (response.jwt) {
-          // Store just the JWT token without Bearer prefix
+          // Store token
           localStorage.setItem('token', response.jwt);
           localStorage.setItem('verifiedMobile', formData.mobileNumber);
-          navigate('/my-account');
+          
+          // Verify token immediately with registration-pages endpoint only
+          try {
+            const verifyResponse = await fetch(`${API_BASE}/api/registration-pages?filters[personal_information][mobile_number][$eq]=${formData.mobileNumber}&populate=*`, {
+              method: 'GET',
+              headers: {
+                'Authorization': `Bearer ${response.jwt}`,
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+              },
+              credentials: 'include'
+            });
+
+            const verifyData = await verifyResponse.text();
+            console.log('Token verification response:', {
+              status: verifyResponse.status,
+              data: verifyData
+            });
+
+            if (!verifyResponse.ok) {
+              throw new Error('Token verification failed');
+            }
+
+            // Token works, navigate to my-account
+            navigate('/my-account');
+          } catch (verifyError) {
+            console.error('Token verification failed:', verifyError);
+            setErrors({
+              mpin: 'Login failed. Please try again.'
+            });
+            localStorage.removeItem('token');
+            localStorage.removeItem('verifiedMobile');
+          }
         }
       } catch (error) {
-        console.error('Login error:', error); // Debug log
+        console.error('Login error:', error);
         setErrors({
           mpin: error.message || 'Invalid MPIN'
         });
