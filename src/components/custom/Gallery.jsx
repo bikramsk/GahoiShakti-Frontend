@@ -263,15 +263,11 @@ const Gallery = () => {
     name: '',
     mobileNumber: '',
     gender: '',
-    nationality: '',
     state: '',
     district: '',
     localBody: '',
-    gramPanchayat: '',
-    regionalAssembly: '',
-    localPanchayatTrust: '',
-    localPanchayatName: '',
-    subLocalPanchayat: ''
+    gotra: '',
+    aakna: ''
   });
   const [formErrors, setFormErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -568,21 +564,8 @@ const Gallery = () => {
       if (name === 'state') {
         newForm.district = '';
         newForm.localBody = '';
-        newForm.gramPanchayat = '';
-        newForm.regionalAssembly = '';
-        newForm.localPanchayatTrust = '';
-        newForm.localPanchayatName = '';
-        newForm.subLocalPanchayat = '';
       } else if (name === 'district') {
         newForm.localBody = '';
-        newForm.gramPanchayat = '';
-        newForm.subLocalPanchayat = '';
-      } else if (name === 'localBody') {
-        newForm.gramPanchayat = '';
-      } else if (name === 'regionalAssembly') {
-        newForm.localPanchayatTrust = '';
-        newForm.localPanchayatName = '';
-        newForm.subLocalPanchayat = '';
       }
 
       return newForm;
@@ -605,15 +588,11 @@ const Gallery = () => {
       errors.mobileNumber = 'Invalid mobile number';
     }
     if (!registrationForm.gender) errors.gender = 'Gender is required';
-    if (!registrationForm.nationality) errors.nationality = 'Nationality is required';
     if (!registrationForm.state) errors.state = 'State is required';
     if (!registrationForm.district) errors.district = 'District is required';
     if (!registrationForm.localBody) errors.localBody = 'Local Body is required';
-    if (!registrationForm.gramPanchayat) errors.gramPanchayat = 'Gram Panchayat is required';
-    if (!registrationForm.regionalAssembly) errors.regionalAssembly = 'Regional Assembly is required';
-    if (!registrationForm.localPanchayatTrust) errors.localPanchayatTrust = 'Local Panchayat Trust is required';
-    if (!registrationForm.localPanchayatName) errors.localPanchayatName = 'Local Panchayat Name is required';
-    if (!registrationForm.subLocalPanchayat) errors.subLocalPanchayat = 'Sub Local Panchayat is required';
+    if (!registrationForm.gotra) errors.gotra = 'Gotra is required';
+    if (!registrationForm.aakna) errors.aakna = 'Aakna is required';
     
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -640,11 +619,6 @@ const Gallery = () => {
           state: registrationForm.state,
           district: registrationForm.district,
           local_body: registrationForm.localBody,
-          gram_panchayat: registrationForm.gramPanchayat,
-          regional_assembly: registrationForm.regionalAssembly,
-          local_panchayat_trust: registrationForm.localPanchayatTrust,
-          local_panchayat_name: registrationForm.localPanchayatName,
-          sub_local_panchayat: registrationForm.subLocalPanchayat
         }
       });
 
@@ -716,20 +690,6 @@ const Gallery = () => {
     }
   };
 
-  const getRegionalAssemblies = () => {
-    return Object.keys(LOCAL_PANCHAYATS);
-  };
-
-  const getLocalPanchayatsByRegionalAssembly = (regionalAssembly) => {
-    if (!regionalAssembly) return [];
-    return Object.keys(LOCAL_PANCHAYATS[regionalAssembly] || {});
-  };
-
-  const getSubLocalPanchayats = (regionalAssembly, localPanchayatTrust) => {
-    if (!regionalAssembly || !localPanchayatTrust) return [];
-    return LOCAL_PANCHAYATS[regionalAssembly]?.[localPanchayatTrust] || [];
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-red-50 to-rose-100">
       {/* Hero Section - Always visible */}
@@ -738,15 +698,15 @@ const Gallery = () => {
         <div className="absolute inset-0 bg-[url('/gallery-bg.webp')] bg-cover bg-center opacity-20"></div>
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/20 to-black/40"></div>
         
-        <div className="relative pt-32 pb-24 px-4">
+        <div className="relative pt-16 pb-12 px-4">
           <div className="max-w-7xl mx-auto text-center">
-            <div className="inline-flex items-center justify-center w-24 h-24 bg-white/20 backdrop-blur-sm rounded-full mb-8 shadow-xl">
-              <Image className="w-12 h-12 text-white" />
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full mb-6 shadow-xl">
+              <Image className="w-8 h-8 text-white" />
             </div>
-            <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 tracking-tight">
+            <h1 className="text-4xl md:text-6xl font-bold text-white mb-4 tracking-tight">
               {t('gallery.title')}
             </h1>
-            <p className="text-xl md:text-2xl text-white/90 max-w-4xl mx-auto leading-relaxed">
+            <p className="text-lg md:text-xl text-white/90 max-w-4xl mx-auto leading-relaxed">
               {t('gallery.subtitle')}
             </p>
           </div>
@@ -843,12 +803,12 @@ const Gallery = () => {
             {/* Form Header */}
             <div className="bg-red-600 text-white px-6 py-4 rounded-t-xl">
               <h3 className="text-xl font-semibold">Quick Registration</h3>
-              <p className="text-sm text-red-100 mt-1">Please fill in your details to access the gallery</p>
+              <p className="text-sm text-red-100 mt-1">Please fill in your basic details to access the gallery</p>
             </div>
 
-            <form onSubmit={handleRegistrationSubmit} className="px-6 py-4 max-h-[80vh] overflow-y-auto">
-              {/* Basic Information */}
+            <form onSubmit={handleRegistrationSubmit} className="px-6 py-4">
               <div className="space-y-4">
+                {/* Basic Information */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
@@ -907,26 +867,70 @@ const Gallery = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Nationality *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">State *</label>
                     <select
-                      name="nationality"
-                      value={registrationForm.nationality}
+                      name="state"
+                      value={registrationForm.state}
                       onChange={handleRegistrationInputChange}
                       className={`block w-full rounded-lg shadow-sm ${
-                        formErrors.nationality ? 'border-red-500' : 'border-gray-300'
+                        formErrors.state ? 'border-red-500' : 'border-gray-300'
                       } px-3 py-2 text-sm focus:ring-red-500 focus:border-red-500`}
                     >
-                      <option value="">Select Nationality</option>
-                      <option value="Indian">Indian</option>
-                      <option value="Non-Indian">Non-Indian</option>
+                      <option value="">Select State</option>
+                      {STATES.map(state => (
+                        <option key={state} value={state}>{state}</option>
+                      ))}
                     </select>
-                    {formErrors.nationality && (
-                      <p className="mt-1 text-xs text-red-600">{formErrors.nationality}</p>
+                    {formErrors.state && (
+                      <p className="mt-1 text-xs text-red-600">{formErrors.state}</p>
                     )}
                   </div>
                 </div>
 
-                {/* Community Information */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">District *</label>
+                    <select
+                      name="district"
+                      value={registrationForm.district}
+                      onChange={handleRegistrationInputChange}
+                      className={`block w-full rounded-lg shadow-sm ${
+                        formErrors.district ? 'border-red-500' : 'border-gray-300'
+                      } px-3 py-2 text-sm focus:ring-red-500 focus:border-red-500`}
+                      disabled={!registrationForm.state}
+                    >
+                      <option value="">Select District</option>
+                      {registrationForm.state && STATE_TO_DISTRICTS[registrationForm.state]?.map(district => (
+                        <option key={district} value={district}>{district}</option>
+                      ))}
+                    </select>
+                    {formErrors.district && (
+                      <p className="mt-1 text-xs text-red-600">{formErrors.district}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Local Body *</label>
+                    <select
+                      name="localBody"
+                      value={registrationForm.localBody}
+                      onChange={handleRegistrationInputChange}
+                      className={`block w-full rounded-lg shadow-sm ${
+                        formErrors.localBody ? 'border-red-500' : 'border-gray-300'
+                      } px-3 py-2 text-sm focus:ring-red-500 focus:border-red-500`}
+                      disabled={!registrationForm.district}
+                    >
+                      <option value="">Select Local Body</option>
+                      {registrationForm.district && getLocalBodies(registrationForm.district).map(lb => (
+                        <option key={lb} value={lb}>{lb}</option>
+                      ))}
+                    </select>
+                    {formErrors.localBody && (
+                      <p className="mt-1 text-xs text-red-600">{formErrors.localBody}</p>
+                    )}
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Gotra</label>
@@ -957,230 +961,6 @@ const Gallery = () => {
                         <option key={aakna} value={aakna}>{aakna}</option>
                       ))}
                     </select>
-                  </div>
-                </div>
-
-                {/* Location Information */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">State *</label>
-                    <select
-                      name="state"
-                      value={registrationForm.state}
-                      onChange={handleRegistrationInputChange}
-                      className={`block w-full rounded-lg shadow-sm ${
-                        formErrors.state ? 'border-red-500' : 'border-gray-300'
-                      } px-3 py-2 text-sm focus:ring-red-500 focus:border-red-500`}
-                    >
-                      <option value="">Select State</option>
-                      {STATES.map(state => (
-                        <option key={state} value={state}>{state}</option>
-                      ))}
-                    </select>
-                    {formErrors.state && (
-                      <p className="mt-1 text-xs text-red-600">{formErrors.state}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">District *</label>
-                    <select
-                      name="district"
-                      value={registrationForm.district}
-                      onChange={handleRegistrationInputChange}
-                      className={`block w-full rounded-lg shadow-sm ${
-                        formErrors.district ? 'border-red-500' : 'border-gray-300'
-                      } px-3 py-2 text-sm focus:ring-red-500 focus:border-red-500`}
-                      disabled={!registrationForm.state}
-                    >
-                      <option value="">Select District</option>
-                      {registrationForm.state && STATE_TO_DISTRICTS[registrationForm.state]?.map(district => (
-                        <option key={district} value={district}>{district}</option>
-                      ))}
-                    </select>
-                    {formErrors.district && (
-                      <p className="mt-1 text-xs text-red-600">{formErrors.district}</p>
-                    )}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Local Body *</label>
-                    <select
-                      name="localBody"
-                      value={registrationForm.localBody}
-                      onChange={handleRegistrationInputChange}
-                      className={`block w-full rounded-lg shadow-sm ${
-                        formErrors.localBody ? 'border-red-500' : 'border-gray-300'
-                      } px-3 py-2 text-sm focus:ring-red-500 focus:border-red-500`}
-                      disabled={!registrationForm.district}
-                    >
-                      <option value="">Select Local Body</option>
-                      {registrationForm.district && getLocalBodies(registrationForm.district).map(lb => (
-                        <option key={lb} value={lb}>{lb}</option>
-                      ))}
-                    </select>
-                    {formErrors.localBody && (
-                      <p className="mt-1 text-xs text-red-600">{formErrors.localBody}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Gram Panchayat *</label>
-                    <select
-                      name="gramPanchayat"
-                      value={registrationForm.gramPanchayat}
-                      onChange={handleRegistrationInputChange}
-                      className={`block w-full rounded-lg shadow-sm ${
-                        formErrors.gramPanchayat ? 'border-red-500' : 'border-gray-300'
-                      } px-3 py-2 text-sm focus:ring-red-500 focus:border-red-500`}
-                      disabled={!registrationForm.district || !registrationForm.localBody}
-                    >
-                      <option value="">Select Gram Panchayat</option>
-                      {registrationForm.district && registrationForm.localBody && (
-                        (registrationForm.district === 'Ashoknagar' && ASHOKNAGAR_GRAM_PANCHAYATS) ||
-                        (registrationForm.district === 'Alirajpur' && ALIRAJPUR_GRAM_PANCHAYATS) ||
-                        (registrationForm.district === 'Anuppur' && ANUPPUR_GRAM_PANCHAYATS) ||
-                        (registrationForm.district === 'Balaghat' && BALAGHAT_GRAM_PANCHAYATS) ||
-                        (registrationForm.district === 'Barwani' && BARWANI_GRAM_PANCHAYATS) ||
-                        (registrationForm.district === 'Betul' && BETUL_GRAM_PANCHAYATS) ||
-                        (registrationForm.district === 'Bhind' && BHIND_GRAM_PANCHAYATS) ||
-                        (registrationForm.district === 'Bhopal' && BHOPAL_GRAM_PANCHAYATS) ||
-                        (registrationForm.district === 'Burhanpur' && BURHANPUR_GRAM_PANCHAYATS) ||
-                        (registrationForm.district === 'Chhatarpur' && CHHATARPUR_GRAM_PANCHAYATS) ||
-                        (registrationForm.district === 'Chhindwara' && CHHINDWARA_GRAM_PANCHAYATS) ||
-                        (registrationForm.district === 'Damoh' && DAMOH_GRAM_PANCHAYATS) ||
-                        (registrationForm.district === 'Datia' && DATIA_GRAM_PANCHAYATS) ||
-                        (registrationForm.district === 'Dewas' && DEWAS_GRAM_PANCHAYATS) ||
-                        (registrationForm.district === 'Dhar' && DHAR_GRAM_PANCHAYATS) ||
-                        (registrationForm.district === 'Dindori' && DINDORI_GRAM_PANCHAYATS) ||
-                        (registrationForm.district === 'Guna' && GUNA_GRAM_PANCHAYATS) ||
-                        (registrationForm.district === 'Gwalior' && GWALIOR_GRAM_PANCHAYATS) ||
-                        (registrationForm.district === 'Harda' && HARDA_GRAM_PANCHAYATS) ||
-                        (registrationForm.district === 'Indore' && INDORE_GRAM_PANCHAYATS) ||
-                        (registrationForm.district === 'Jabalpur' && JABALPUR_GRAM_PANCHAYATS) ||
-                        (registrationForm.district === 'Jhabua' && JHABUA_GRAM_PANCHAYATS) ||
-                        (registrationForm.district === 'Katni' && KATNI_GRAM_PANCHAYATS) ||
-                        (registrationForm.district === 'Khandwa' && KHANDWA_GRAM_PANCHAYATS) ||
-                        (registrationForm.district === 'Khargone' && KHARGONE_GRAM_PANCHAYATS) ||
-                        (registrationForm.district === 'Mandla' && MANDLA_GRAM_PANCHAYATS) ||
-                        (registrationForm.district === 'Mandsaur' && MANDSAUR_GRAM_PANCHAYATS) ||
-                        (registrationForm.district === 'Morena' && MORENA_GRAM_PANCHAYATS) ||
-                        (registrationForm.district === 'Narsinghpur' && NARSINGHPUR_GRAM_PANCHAYATS) ||
-                        (registrationForm.district === 'Neemuch' && NEEMUCH_GRAM_PANCHAYATS) ||
-                        (registrationForm.district === 'Panna' && PANNA_GRAM_PANCHAYATS) ||
-                        (registrationForm.district === 'Raisen' && RAISEN_GRAM_PANCHAYATS) ||
-                        (registrationForm.district === 'Rajgarh' && RAJGARH_GRAM_PANCHAYATS) ||
-                        (registrationForm.district === 'Ratlam' && RATLAM_GRAM_PANCHAYATS) ||
-                        (registrationForm.district === 'Rewa' && REWA_GRAM_PANCHAYATS) ||
-                        (registrationForm.district === 'Sagar' && SAGAR_GRAM_PANCHAYATS) ||
-                        (registrationForm.district === 'Satna' && SATNA_GRAM_PANCHAYATS) ||
-                        (registrationForm.district === 'Sehore' && SEHORE_GRAM_PANCHAYATS) ||
-                        (registrationForm.district === 'Seoni' && SEONI_GRAM_PANCHAYATS) ||
-                        (registrationForm.district === 'Shahdol' && SHAHDOL_GRAM_PANCHAYATS) ||
-                        (registrationForm.district === 'Shajapur' && SHAJAPUR_GRAM_PANCHAYATS) ||
-                        (registrationForm.district === 'Sheopur' && SHEOPUR_GRAM_PANCHAYATS) ||
-                        (registrationForm.district === 'Shivpuri' && SHIVPURI_GRAM_PANCHAYATS) ||
-                        (registrationForm.district === 'Sidhi' && SIDHI_GRAM_PANCHAYATS) ||
-                        (registrationForm.district === 'Singrauli' && SINGRAULI_GRAM_PANCHAYATS) ||
-                        (registrationForm.district === 'Tikamgarh' && TIKAMGARH_GRAM_PANCHAYATS) ||
-                        (registrationForm.district === 'Ujjain' && UJJAIN_GRAM_PANCHAYATS) ||
-                        (registrationForm.district === 'Umariya' && UMARIYA_GRAM_PANCHAYATS) ||
-                        (registrationForm.district === 'Vidisha' && VIDISHA_GRAM_PANCHAYATS) || []
-                      ).map(panchayat => (
-                        <option key={panchayat} value={panchayat}>{panchayat}</option>
-                      ))}
-                    </select>
-                    {formErrors.gramPanchayat && (
-                      <p className="mt-1 text-xs text-red-600">{formErrors.gramPanchayat}</p>
-                    )}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Regional Assembly *</label>
-                    <select
-                      name="regionalAssembly"
-                      value={registrationForm.regionalAssembly}
-                      onChange={handleRegistrationInputChange}
-                      className={`block w-full rounded-lg shadow-sm ${
-                        formErrors.regionalAssembly ? 'border-red-500' : 'border-gray-300'
-                      } px-3 py-2 text-sm focus:ring-red-500 focus:border-red-500`}
-                    >
-                      <option value="">Select Regional Assembly</option>
-                      {getRegionalAssemblies().map(assembly => (
-                        <option key={assembly} value={assembly}>{assembly}</option>
-                      ))}
-                    </select>
-                    {formErrors.regionalAssembly && (
-                      <p className="mt-1 text-xs text-red-600">{formErrors.regionalAssembly}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Local Panchayat Trust *</label>
-                    <select
-                      name="localPanchayatTrust"
-                      value={registrationForm.localPanchayatTrust}
-                      onChange={handleRegistrationInputChange}
-                      className={`block w-full rounded-lg shadow-sm ${
-                        formErrors.localPanchayatTrust ? 'border-red-500' : 'border-gray-300'
-                      } px-3 py-2 text-sm focus:ring-red-500 focus:border-red-500`}
-                      disabled={!registrationForm.regionalAssembly}
-                    >
-                      <option value="">Select Local Panchayat Trust</option>
-                      {getLocalPanchayatsByRegionalAssembly(registrationForm.regionalAssembly).map(trust => (
-                        <option key={trust} value={trust}>{trust}</option>
-                      ))}
-                    </select>
-                    {formErrors.localPanchayatTrust && (
-                      <p className="mt-1 text-xs text-red-600">{formErrors.localPanchayatTrust}</p>
-                    )}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Local Panchayat Name *</label>
-                    <select
-                      name="localPanchayatName"
-                      value={registrationForm.localPanchayatName}
-                      onChange={handleRegistrationInputChange}
-                      className={`block w-full rounded-lg shadow-sm ${
-                        formErrors.localPanchayatName ? 'border-red-500' : 'border-gray-300'
-                      } px-3 py-2 text-sm focus:ring-red-500 focus:border-red-500`}
-                    >
-                      <option value="">Select Local Panchayat Name</option>
-                      {LOCAL_PANCHAYAT_NAMES.map(name => (
-                        <option key={name} value={name}>{name}</option>
-                      ))}
-                    </select>
-                    {formErrors.localPanchayatName && (
-                      <p className="mt-1 text-xs text-red-600">{formErrors.localPanchayatName}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Sub Local Panchayat *</label>
-                    <select
-                      name="subLocalPanchayat"
-                      value={registrationForm.subLocalPanchayat}
-                      onChange={handleRegistrationInputChange}
-                      className={`block w-full rounded-lg shadow-sm ${
-                        formErrors.subLocalPanchayat ? 'border-red-500' : 'border-gray-300'
-                      } px-3 py-2 text-sm focus:ring-red-500 focus:border-red-500`}
-                      disabled={!registrationForm.regionalAssembly || !registrationForm.localPanchayatTrust}
-                    >
-                      <option value="">Select Sub Local Panchayat</option>
-                      {getSubLocalPanchayats(registrationForm.regionalAssembly, registrationForm.localPanchayatTrust).map(subPanchayat => (
-                        <option key={subPanchayat} value={subPanchayat}>{subPanchayat}</option>
-                      ))}
-                    </select>
-                    {formErrors.subLocalPanchayat && (
-                      <p className="mt-1 text-xs text-red-600">{formErrors.subLocalPanchayat}</p>
-                    )}
                   </div>
                 </div>
               </div>
