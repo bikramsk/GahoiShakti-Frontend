@@ -892,7 +892,7 @@ const GahoiSammelanPage = () => {
                     {t('gahoiSammelan.form.submit')}
                   </button>
                   <p className="text-gray-500 text-sm text-center">
-                    {t('gahoiSammelan.form.footer.note')}
+                    {t('gahoiSammelan.footer.note')}
                   </p>
                 </div>
               </form>
