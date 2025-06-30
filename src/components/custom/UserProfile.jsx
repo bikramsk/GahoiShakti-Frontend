@@ -55,10 +55,9 @@ const UserProfile = () => {
           return;
         }
 
-        // Only use registration-pages endpoint
-        const apiUrl = `${API_BASE}/api/registration-pages?filters[personal_information][mobile_number][$eq]=${mobileNumber}&populate=*`;
-
-        console.log('Making API request to registration-pages');
+        // First try to get all registration entries and filter client-side
+        const apiUrl = `${API_BASE}/api/registration-pages?populate=*`;
+        console.log('Making API request to get all registrations');
 
         const profileResponse = await fetch(apiUrl, {
           method: 'GET',
@@ -88,8 +87,14 @@ const UserProfile = () => {
         }
 
         const profileData = await profileResponse.json();
+        console.log('Got registration data:', profileData);
 
-        if (!profileData.data || profileData.data.length === 0) {
+        // Find the entry matching the mobile number
+        const userProfile = profileData.data?.find(entry => 
+          entry.attributes?.personal_information?.mobile_number === mobileNumber
+        );
+
+        if (!userProfile) {
           console.log('No profile data found');
           setError('Please complete your registration first.');
           setTimeout(() => {
@@ -103,14 +108,7 @@ const UserProfile = () => {
           return;
         }
 
-        const profile = profileData.data[0];
-        if (!profile || !profile.attributes) {
-          setError('Profile not found or incomplete.');
-          setLoading(false);
-          return;
-        }
-
-        const attrs = profile.attributes;
+        const attrs = userProfile.attributes;
         setUserData({
           personal_information: attrs.personal_information || {},
           family_details: attrs.family_details || {},
@@ -120,7 +118,7 @@ const UserProfile = () => {
           child_name: attrs.child_name || [],
           your_suggestions: attrs.your_suggestions || {},
           gahoi_code: attrs.gahoi_code || '',
-          documentId: profile.id,
+          documentId: userProfile.id,
           createdAt: attrs.createdAt,
           updatedAt: attrs.updatedAt,
           publishedAt: attrs.publishedAt
