@@ -526,15 +526,21 @@ export const formatFormData = (data, displayPictureId = null) => {
   const genderCode = generateGenderCode(data.gender);
   const nationalityCode = generateNationalityCode(data.nationality);
   const isGahoiCode = generateGahoiCode(data.isGahoi);
-  const gotraCode = FIXED_CODES.gotra[data.gotra] 
-    ? FIXED_CODES.gotra[data.gotra].padStart(2, '0')  // Ensure two digits
-    : "01"; // Default to Vasar/Vastil/Vasal instead of "00"
-  const aaknaCode = FIXED_CODES.aakna[data.aakna] || "00";
-  const regionalAssemblyCode = data.state && STATE_TO_ASSEMBLIES[data.state] && data.regionalAssembly 
+  const gotraCode = FIXED_CODES.gotra && FIXED_CODES.gotra[data.gotra]
+    ? FIXED_CODES.gotra[data.gotra].padStart(2, '0')
+    : "01"; // Default code for code generation
+  const aaknaCode = FIXED_CODES.aakna && FIXED_CODES.aakna[data.aakna]
+    ? FIXED_CODES.aakna[data.aakna]
+    : "00";
+  const regionalAssemblyCode = FIXED_CODES.regionalAssembly && FIXED_CODES.regionalAssembly[data.regionalAssembly]
     ? FIXED_CODES.regionalAssembly[data.regionalAssembly].padStart(2, '0')
-    : "06";
-  const localPanchayatCode = FIXED_CODES.localPanchayat[data.localPanchayat] || "55";
-  const subLocalPanchayatCode = FIXED_CODES.subLocalPanchayat[data.subLocalPanchayat] || "80";
+    : "06"; // Default code
+  const localPanchayatCode = FIXED_CODES.localPanchayat && FIXED_CODES.localPanchayat[data.localPanchayat]
+    ? FIXED_CODES.localPanchayat[data.localPanchayat]
+    : "55"; // Default code
+  const subLocalPanchayatCode = FIXED_CODES.subLocalPanchayat && FIXED_CODES.subLocalPanchayat[data.subLocalPanchayat]
+    ? FIXED_CODES.subLocalPanchayat[data.subLocalPanchayat]
+    : "80"; // Default code
   const fullName = data.name || "";
 
   const generatedGahoiCode = `${fullName ? fullName + '-' : ''}${genderCode}${nationalityCode}${isGahoiCode}${gotraCode}${aaknaCode}${regionalAssemblyCode}${localPanchayatCode}${subLocalPanchayatCode}`;
@@ -570,8 +576,8 @@ export const formatFormData = (data, displayPictureId = null) => {
       mother_mobile: data.familyDetails?.[1]?.mobileNumber ?? "",
       spouse_name: data.spouseName || data.familyDetails?.[2]?.name || "",
       spouse_mobile: data.spouseMobile || data.familyDetails?.[2]?.mobileNumber || "",
-      gotra: data.gotra ?? "",
-      aakna: data.aakna ?? "",
+      gotra: data.gotra ?? "", // Store user value
+      aakna: data.aakna ?? "", // Store user value
       siblingDetails: (data.familyDetails || [])
         .filter(member => member?.relation === "Sibling")
         .map((sibling) => ({
@@ -608,6 +614,10 @@ export const formatFormData = (data, displayPictureId = null) => {
       Gender: data.gender ?? "",
       nationality: data.nationality ?? "",
       is_gahoi: data.isGahoi ?? "Yes",
+      gotra: data.gotra ?? "", // Store user value
+      regionalAssembly: data.regionalAssembly ?? "", // Store user value
+      localPanchayat: data.localPanchayat ?? "", // Store user value
+      subLocalPanchayat: data.subLocalPanchayat ?? "", // Store user value
     },
     work_information: {
       industrySector: data.industrySector ?? "",
@@ -626,7 +636,7 @@ export const formatFormData = (data, displayPictureId = null) => {
     your_suggestions: {
       suggestions: data.suggestions ?? "",
     },
-    gahoi_code: generatedGahoiCode
+    gahoi_code: generatedGahoiCode // Use code for internal logic
   };
 };
 
