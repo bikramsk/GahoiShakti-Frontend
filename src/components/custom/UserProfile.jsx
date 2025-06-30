@@ -51,18 +51,18 @@ const UserProfile = () => {
           setError('Please login again to continue');
           localStorage.removeItem('token');
           localStorage.removeItem('verifiedMobile');
-          setTimeout(() => navigate('/login'), 2000);
+          setTimeout(() => navigate('/login', { replace: true }), 2000);
           return;
         }
 
-        // First try to get all registration entries and filter client-side
-        const apiUrl = `${API_BASE}/api/registration-pages?populate=*`;
-        console.log('Making API request to get all registrations');
+        // Get registration data with mobile number filter
+        const apiUrl = `${API_BASE}/api/registration-pages?filters[personal_information][mobile_number][$eq]=${mobileNumber}&populate=*`;
+        console.log('Making API request:', apiUrl);
 
         const profileResponse = await fetch(apiUrl, {
           method: 'GET',
           headers: {
-            'Authorization': `Bearer ${token}`,
+            'Authorization': token,
             'Accept': 'application/json',
             'Content-Type': 'application/json'
           },
@@ -77,10 +77,11 @@ const UserProfile = () => {
           });
 
           if (profileResponse.status === 401 || profileResponse.status === 403) {
+            console.log('Auth error - clearing token and redirecting');
             localStorage.removeItem('token');
             localStorage.removeItem('verifiedMobile');
             setError('Session expired. Please login again.');
-            setTimeout(() => navigate('/login'), 2000);
+            setTimeout(() => navigate('/login', { replace: true }), 2000);
             return;
           }
           throw new Error(`Failed to fetch profile data: ${profileResponse.status}`);
@@ -96,15 +97,8 @@ const UserProfile = () => {
 
         if (!userProfile) {
           console.log('No profile data found');
-          setError('Please complete your registration first.');
-          setTimeout(() => {
-            navigate('/registration', { 
-              state: { 
-                mobileNumber,
-                fromLogin: true 
-              } 
-            });
-          }, 2000);
+          setError('No profile data found. Please complete your registration.');
+          setLoading(false);
           return;
         }
 

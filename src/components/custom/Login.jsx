@@ -534,12 +534,12 @@ const Login = () => {
         console.log('MPIN verification response:', response);
         
         if (response.jwt) {
-          // Store token and mobile number
-          localStorage.setItem('token', response.jwt);
+          // Store token and mobile number with Bearer prefix
+          localStorage.setItem('token', `Bearer ${response.jwt}`);
           localStorage.setItem('verifiedMobile', formData.mobileNumber);
           
           // Redirect immediately after successful MPIN verification
-          navigate('/my-account');
+          navigate('/my-account', { replace: true });
         }
       } catch (error) {
         console.error('Login error:', error);
@@ -578,7 +578,7 @@ const Login = () => {
       try {
         const response = await verifyOTP(formData.mobileNumber, formData.otp);
         if (response.jwt) {
-          localStorage.setItem('token', response.jwt);
+          localStorage.setItem('token', `Bearer ${response.jwt}`);
           localStorage.setItem('verifiedMobile', formData.mobileNumber);
           // New user must create MPIN
           setShowMpinCreation(true);
