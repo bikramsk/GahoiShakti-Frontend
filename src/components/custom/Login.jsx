@@ -534,12 +534,14 @@ const Login = () => {
         console.log('MPIN verification response:', response);
         
         if (response.jwt) {
-          // Store token and mobile number with Bearer prefix
+          
           localStorage.setItem('token', `Bearer ${response.jwt}`);
           localStorage.setItem('verifiedMobile', formData.mobileNumber);
           
-          // Redirect immediately after successful MPIN verification
-          navigate('/my-account', { replace: true });
+          // Redirect to homepage 
+          console.log('MPIN verified, redirecting to homepage');
+          navigate('/', { replace: true });
+          return;
         }
       } catch (error) {
         console.error('Login error:', error);

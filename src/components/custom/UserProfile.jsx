@@ -97,7 +97,7 @@ const UserProfile = () => {
 
         if (!userProfile) {
           console.log('No profile data found');
-          setError('No profile data found. Please complete your registration.');
+          setError('No profile data found.');
           setLoading(false);
           return;
         }
