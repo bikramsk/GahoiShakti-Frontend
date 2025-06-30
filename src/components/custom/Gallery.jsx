@@ -240,14 +240,7 @@ const getGramPanchayats = (district) => {
     const gramPanchayats = districtMap[district];
     if (!gramPanchayats) return [];
 
- 
-    if (gramPanchayats && typeof gramPanchayats === 'object') {
-      const nagarPalika = Array.isArray(gramPanchayats.NAGAR_PALIKA) ? gramPanchayats.NAGAR_PALIKA : [];
-      const janpadPanchayat = Array.isArray(gramPanchayats.JANPAD_PANCHAYAT) ? gramPanchayats.JANPAD_PANCHAYAT : [];
-      return [...new Set([...nagarPalika, ...janpadPanchayat])];
-    }
-
-   
+    // Simply return the array if it exists
     return Array.isArray(gramPanchayats) ? gramPanchayats : [];
   } catch (error) {
     console.error('Error in getGramPanchayats:', error);
@@ -319,8 +312,8 @@ const LOCAL_PANCHAYAT_NAMES = [
 
 const getSubLocalPanchayats = (regionalAssembly, district) => {
   try {
-    const subPanchayats = LOCAL_PANCHAYATS[regionalAssembly]?.[district] || [];
-    return Array.isArray(subPanchayats) ? subPanchayats : [];
+    if (!regionalAssembly || !district || !LOCAL_PANCHAYATS[regionalAssembly]) return [];
+    return LOCAL_PANCHAYATS[regionalAssembly][district] || [];
   } catch (error) {
     console.error('Error in getSubLocalPanchayats:', error);
     return [];
@@ -432,7 +425,7 @@ const Gallery = () => {
   const getAaknaOptions = () => {
     return registrationForm.gotra ? gotraAaknaMap[registrationForm.gotra] || [] : [];
   };
-
+ 
   useEffect(() => {
     const checkAuth = () => {
       const token = localStorage.getItem('token');
@@ -644,7 +637,13 @@ const Gallery = () => {
 
   // Add helper functions for dropdowns
   const getFilteredLocalPanchayats = (regionalAssembly) => {
-    return regionalAssembly ? LOCAL_PANCHAYATS[regionalAssembly] || [] : [];
+    try {
+      if (!regionalAssembly || !LOCAL_PANCHAYATS[regionalAssembly]) return [];
+      return Object.keys(LOCAL_PANCHAYATS[regionalAssembly]);
+    } catch (error) {
+      console.error('Error in getFilteredLocalPanchayats:', error);
+      return [];
+    }
   };
 
   const handleRegistrationInputChange = (e) => {
@@ -1104,8 +1103,8 @@ const Gallery = () => {
                     >
                       <option value="">Select Gram Panchayat</option>
                       {registrationForm.district && registrationForm.localBody && 
-                        getGramPanchayats(registrationForm.district).map(gp => (
-                          <option key={gp} value={gp}>{gp}</option>
+                        getGramPanchayats(registrationForm.district).map((gp, index) => (
+                          <option key={`${gp}-${index}`} value={gp}>{gp}</option>
                         ))
                       }
                     </select>
@@ -1131,7 +1130,7 @@ const Gallery = () => {
                       } px-3 py-2`}
                     >
                       <option value="">Select Regional Assembly</option>
-                      {Object.keys(LOCAL_PANCHAYATS).map(assembly => (
+                      {Object.keys(LOCAL_PANCHAYATS || {}).map(assembly => (
                         <option key={assembly} value={assembly}>{assembly}</option>
                       ))}
                     </select>
@@ -1152,12 +1151,17 @@ const Gallery = () => {
                       disabled={!registrationForm.regionalAssembly}
                     >
                       <option value="">Select Local Panchayat Trust</option>
-                      {getFilteredLocalPanchayats(registrationForm.regionalAssembly).map(trust => (
-                        <option key={trust} value={trust}>{trust}</option>
-                      ))}
+                      {registrationForm.regionalAssembly && 
+                        getFilteredLocalPanchayats(registrationForm.regionalAssembly).map((trust, index) => (
+                          <option key={`${trust}-${index}`} value={trust}>{trust}</option>
+                        ))
+                      }
                     </select>
                     {formErrors.localPanchayatTrust && (
                       <p className="mt-1 text-sm text-red-600">{formErrors.localPanchayatTrust}</p>
+                    )}
+                    {!registrationForm.regionalAssembly && (
+                      <p className="text-gray-500 text-xs mt-1">Please select a regional assembly first</p>
                     )}
                   </div>
 
