@@ -166,15 +166,20 @@ const getLocalBodies = (district) => {
     'Vidisha': VIDISHA_LOCAL_BODIES
   };
 
-  const localBodies = districtMap[district];
-  if (!localBodies) return [];
+  try {
+    const localBodies = districtMap[district];
+    if (!localBodies) return [];
 
-  // Safely combine NAGAR_PALIKA and JANPAD_PANCHAYAT arrays
-  const nagarPalika = Array.isArray(localBodies?.NAGAR_PALIKA) ? localBodies.NAGAR_PALIKA : [];
-  const janpadPanchayat = Array.isArray(localBodies?.JANPAD_PANCHAYAT) ? localBodies.JANPAD_PANCHAYAT : [];
   
-
-  return [...new Set([...nagarPalika, ...janpadPanchayat])];
+    const nagarPalika = Array.isArray(localBodies?.NAGAR_PALIKA) ? localBodies.NAGAR_PALIKA : [];
+    const janpadPanchayat = Array.isArray(localBodies?.JANPAD_PANCHAYAT) ? localBodies.JANPAD_PANCHAYAT : [];
+    
+    // Return unique values only
+    return [...new Set([...nagarPalika, ...janpadPanchayat])];
+  } catch (error) {
+    console.error('Error in getLocalBodies:', error);
+    return [];
+  }
 };
 
 // Helper function to get gram panchayats based on district
@@ -231,7 +236,13 @@ const getGramPanchayats = (district) => {
     'Vidisha': VIDISHA_GRAM_PANCHAYATS
   };
 
-  return districtMap[district] || [];
+  try {
+    const gramPanchayats = districtMap[district];
+    return Array.isArray(gramPanchayats) ? gramPanchayats : [];
+  } catch (error) {
+    console.error('Error in getGramPanchayats:', error);
+    return [];
+  }
 };
 
 // Import constants from Registration component
@@ -297,7 +308,13 @@ const LOCAL_PANCHAYAT_NAMES = [
 ];
 
 const getSubLocalPanchayats = (regionalAssembly, district) => {
-  return LOCAL_PANCHAYATS[regionalAssembly]?.[district] || [];
+  try {
+    const subPanchayats = LOCAL_PANCHAYATS[regionalAssembly]?.[district] || [];
+    return Array.isArray(subPanchayats) ? subPanchayats : [];
+  } catch (error) {
+    console.error('Error in getSubLocalPanchayats:', error);
+    return [];
+  }
 };
 
 const Gallery = () => {
