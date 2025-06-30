@@ -664,6 +664,8 @@ const Login = () => {
     setShowOtpInput(false);
     setFormData(prev => ({ ...prev, mpin: '', otp: '' }));
     setErrors({});
+    setAuthMode('otp');
+    setHasMpin(false);  // Reset MPIN flag to allow OTP flow
   };
 
   return (
