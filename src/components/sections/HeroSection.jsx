@@ -171,7 +171,7 @@ const HeroSection = () => {
   </Link>
 ) : (
   <div 
-    className="absolute inset-0 bg-center bg-no-repeat mt-24 lg:mt-32"
+    className="absolute inset-0 bg-center bg-no-repeat"
     style={{ 
       backgroundImage: `url("${imagePath}")`,
       backgroundSize: 'cover',
