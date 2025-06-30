@@ -47,7 +47,10 @@ export const REQUIRED_FIELDS = [
   "birthDate", 
   "gender",
   "nationality",
-  "state", 
+  "state",
+  "district",
+  "localPanchayat",
+  "subLocalPanchayat",
   "workType"
 ];
 
