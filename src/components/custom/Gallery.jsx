@@ -174,7 +174,7 @@ const getLocalBodies = (district) => {
     const nagarPalika = Array.isArray(localBodies?.NAGAR_PALIKA) ? localBodies.NAGAR_PALIKA : [];
     const janpadPanchayat = Array.isArray(localBodies?.JANPAD_PANCHAYAT) ? localBodies.JANPAD_PANCHAYAT : [];
     
-    // Return unique values only
+ 
     return [...new Set([...nagarPalika, ...janpadPanchayat])];
   } catch (error) {
     console.error('Error in getLocalBodies:', error);
@@ -809,35 +809,33 @@ const Gallery = () => {
       {/* Registration Modal */}
       {showRegistrationModal && (
         <div 
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm overflow-y-auto"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
           onClick={(e) => {
-            // Close modal when clicking the backdrop
             if (e.target === e.currentTarget) {
               setShowRegistrationModal(false);
             }
           }}
         >
-          <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full p-6 my-8 relative">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl relative">
             {/* Close button */}
             <button
               onClick={() => setShowRegistrationModal(false)}
-              className="absolute top-4 right-4 p-2 hover:bg-gray-100 rounded-full transition-colors duration-200 group"
+              className="absolute -top-3 -right-3 p-2 bg-white rounded-full shadow-lg hover:bg-gray-100 transition-colors duration-200 z-10"
               aria-label="Close modal"
             >
-              <X className="w-6 h-6 text-gray-400 group-hover:text-gray-600" />
+              <X className="w-5 h-5 text-gray-500" />
             </button>
 
-            {/* Header */}
-            <div className="border-b border-gray-200 pb-4 mb-6">
-              <h3 className="text-2xl font-bold text-gray-900">Quick Registration</h3>
-              <p className="text-gray-500 mt-1">Please fill in your details to access the gallery</p>
+            {/* Form Header */}
+            <div className="bg-red-600 text-white px-6 py-4 rounded-t-xl">
+              <h3 className="text-xl font-semibold">Quick Registration</h3>
+              <p className="text-sm text-red-100 mt-1">Please fill in your details to access the gallery</p>
             </div>
 
-            <form onSubmit={handleRegistrationSubmit} className="space-y-6">
+            <form onSubmit={handleRegistrationSubmit} className="px-6 py-4 max-h-[80vh] overflow-y-auto">
               {/* Basic Information */}
-              <div className="bg-gray-50 rounded-xl p-6 space-y-6">
-                <h4 className="text-lg font-semibold text-gray-900 mb-4">Basic Information</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
                     <input
@@ -845,13 +843,13 @@ const Gallery = () => {
                       name="name"
                       value={registrationForm.name}
                       onChange={handleRegistrationInputChange}
-                      className={`mt-1 block w-full rounded-lg shadow-sm ${
-                        formErrors.name ? 'border-red-500 ring-red-500' : 'border-gray-300 focus:ring-red-500 focus:border-red-500'
-                      } px-4 py-2`}
-                      placeholder="Enter your full name"
+                      className={`block w-full rounded-lg shadow-sm ${
+                        formErrors.name ? 'border-red-500' : 'border-gray-300'
+                      } px-3 py-2 text-sm focus:ring-red-500 focus:border-red-500`}
+                      placeholder="Enter your name"
                     />
                     {formErrors.name && (
-                      <p className="mt-1 text-sm text-red-600">{formErrors.name}</p>
+                      <p className="mt-1 text-xs text-red-600">{formErrors.name}</p>
                     )}
                   </div>
 
@@ -863,32 +861,34 @@ const Gallery = () => {
                       value={registrationForm.mobileNumber}
                       onChange={handleRegistrationInputChange}
                       maxLength={10}
-                      className={`mt-1 block w-full rounded-lg shadow-sm ${
-                        formErrors.mobileNumber ? 'border-red-500 ring-red-500' : 'border-gray-300 focus:ring-red-500 focus:border-red-500'
-                      } px-4 py-2`}
-                      placeholder="Enter 10-digit mobile number"
+                      className={`block w-full rounded-lg shadow-sm ${
+                        formErrors.mobileNumber ? 'border-red-500' : 'border-gray-300'
+                      } px-3 py-2 text-sm focus:ring-red-500 focus:border-red-500`}
+                      placeholder="10-digit number"
                     />
                     {formErrors.mobileNumber && (
-                      <p className="mt-1 text-sm text-red-600">{formErrors.mobileNumber}</p>
+                      <p className="mt-1 text-xs text-red-600">{formErrors.mobileNumber}</p>
                     )}
                   </div>
+                </div>
 
+                <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Gender *</label>
                     <select
                       name="gender"
                       value={registrationForm.gender}
                       onChange={handleRegistrationInputChange}
-                      className={`mt-1 block w-full rounded-lg shadow-sm ${
-                        formErrors.gender ? 'border-red-500 ring-red-500' : 'border-gray-300 focus:ring-red-500 focus:border-red-500'
-                      } px-4 py-2`}
+                      className={`block w-full rounded-lg shadow-sm ${
+                        formErrors.gender ? 'border-red-500' : 'border-gray-300'
+                      } px-3 py-2 text-sm focus:ring-red-500 focus:border-red-500`}
                     >
                       <option value="">Select Gender</option>
                       <option value="Male">Male</option>
                       <option value="Female">Female</option>
                     </select>
                     {formErrors.gender && (
-                      <p className="mt-1 text-sm text-red-600">{formErrors.gender}</p>
+                      <p className="mt-1 text-xs text-red-600">{formErrors.gender}</p>
                     )}
                   </div>
 
@@ -898,32 +898,29 @@ const Gallery = () => {
                       name="nationality"
                       value={registrationForm.nationality}
                       onChange={handleRegistrationInputChange}
-                      className={`mt-1 block w-full rounded-lg shadow-sm ${
-                        formErrors.nationality ? 'border-red-500 ring-red-500' : 'border-gray-300 focus:ring-red-500 focus:border-red-500'
-                      } px-4 py-2`}
+                      className={`block w-full rounded-lg shadow-sm ${
+                        formErrors.nationality ? 'border-red-500' : 'border-gray-300'
+                      } px-3 py-2 text-sm focus:ring-red-500 focus:border-red-500`}
                     >
                       <option value="">Select Nationality</option>
                       <option value="Indian">Indian</option>
                       <option value="Non-Indian">Non-Indian</option>
                     </select>
                     {formErrors.nationality && (
-                      <p className="mt-1 text-sm text-red-600">{formErrors.nationality}</p>
+                      <p className="mt-1 text-xs text-red-600">{formErrors.nationality}</p>
                     )}
                   </div>
                 </div>
-              </div>
 
-              {/* Community Information */}
-              <div className="bg-gray-50 rounded-xl p-6 space-y-6">
-                <h4 className="text-lg font-semibold text-gray-900 mb-4">Community Information</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Community Information */}
+                <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Gotra</label>
                     <select
                       name="gotra"
                       value={registrationForm.gotra}
                       onChange={handleRegistrationInputChange}
-                      className="mt-1 block w-full rounded-lg shadow-sm border-gray-300 focus:ring-red-500 focus:border-red-500 px-4 py-2"
+                      className="block w-full rounded-lg shadow-sm border-gray-300 px-3 py-2 text-sm focus:ring-red-500 focus:border-red-500"
                     >
                       <option value="">Select Gotra</option>
                       {Object.keys(gotraAaknaMap).map((gotra) => (
@@ -938,7 +935,7 @@ const Gallery = () => {
                       name="aakna"
                       value={registrationForm.aakna}
                       onChange={handleRegistrationInputChange}
-                      className="mt-1 block w-full rounded-lg shadow-sm border-gray-300 focus:ring-red-500 focus:border-red-500 px-4 py-2"
+                      className="block w-full rounded-lg shadow-sm border-gray-300 px-3 py-2 text-sm focus:ring-red-500 focus:border-red-500"
                       disabled={!registrationForm.gotra}
                     >
                       <option value="">Select Aakna</option>
@@ -946,26 +943,20 @@ const Gallery = () => {
                         <option key={aakna} value={aakna}>{aakna}</option>
                       ))}
                     </select>
-                    {!registrationForm.gotra && (
-                      <p className="text-gray-500 text-xs mt-2 ml-1 italic">Select a Gotra first to see available Aakna options</p>
-                    )}
                   </div>
                 </div>
-              </div>
 
-              {/* Location Information */}
-              <div className="bg-gray-50 rounded-xl p-6 space-y-6">
-                <h4 className="text-lg font-semibold text-gray-900 mb-4">Location Information</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Location Information */}
+                <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">State *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">State *</label>
                     <select
                       name="state"
                       value={registrationForm.state}
                       onChange={handleRegistrationInputChange}
-                      className={`mt-1 block w-full rounded-lg shadow-sm ${
-                        formErrors.state ? 'border-red-500 ring-red-500' : 'border-gray-300 focus:ring-red-500 focus:border-red-500'
-                      } px-4 py-2`}
+                      className={`block w-full rounded-lg shadow-sm ${
+                        formErrors.state ? 'border-red-500' : 'border-gray-300'
+                      } px-3 py-2 text-sm focus:ring-red-500 focus:border-red-500`}
                     >
                       <option value="">Select State</option>
                       {STATES.map(state => (
@@ -973,19 +964,19 @@ const Gallery = () => {
                       ))}
                     </select>
                     {formErrors.state && (
-                      <p className="mt-1 text-sm text-red-600">{formErrors.state}</p>
+                      <p className="mt-1 text-xs text-red-600">{formErrors.state}</p>
                     )}
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">District *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">District *</label>
                     <select
                       name="district"
                       value={registrationForm.district}
                       onChange={handleRegistrationInputChange}
-                      className={`mt-1 block w-full rounded-lg shadow-sm ${
-                        formErrors.district ? 'border-red-500 ring-red-500' : 'border-gray-300 focus:ring-red-500 focus:border-red-500'
-                      } px-4 py-2`}
+                      className={`block w-full rounded-lg shadow-sm ${
+                        formErrors.district ? 'border-red-500' : 'border-gray-300'
+                      } px-3 py-2 text-sm focus:ring-red-500 focus:border-red-500`}
                       disabled={!registrationForm.state}
                     >
                       <option value="">Select District</option>
@@ -994,19 +985,21 @@ const Gallery = () => {
                       ))}
                     </select>
                     {formErrors.district && (
-                      <p className="mt-1 text-sm text-red-600">{formErrors.district}</p>
+                      <p className="mt-1 text-xs text-red-600">{formErrors.district}</p>
                     )}
                   </div>
+                </div>
 
+                <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Local Body *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Local Body *</label>
                     <select
                       name="localBody"
                       value={registrationForm.localBody}
                       onChange={handleRegistrationInputChange}
-                      className={`mt-1 block w-full rounded-lg shadow-sm ${
-                        formErrors.localBody ? 'border-red-500 ring-red-500' : 'border-gray-300 focus:ring-red-500 focus:border-red-500'
-                      } px-4 py-2`}
+                      className={`block w-full rounded-lg shadow-sm ${
+                        formErrors.localBody ? 'border-red-500' : 'border-gray-300'
+                      } px-3 py-2 text-sm focus:ring-red-500 focus:border-red-500`}
                       disabled={!registrationForm.district}
                     >
                       <option value="">Select Local Body</option>
@@ -1015,125 +1008,124 @@ const Gallery = () => {
                       ))}
                     </select>
                     {formErrors.localBody && (
-                      <p className="mt-1 text-sm text-red-600">{formErrors.localBody}</p>
+                      <p className="mt-1 text-xs text-red-600">{formErrors.localBody}</p>
                     )}
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Gram Panchayat *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Gram Panchayat *</label>
                     <input
                       type="text"
                       name="gramPanchayat"
                       value={registrationForm.gramPanchayat}
                       onChange={handleRegistrationInputChange}
                       placeholder="Enter Gram Panchayat"
-                      className={`mt-1 block w-full rounded-lg shadow-sm ${
-                        formErrors.gramPanchayat ? 'border-red-500 ring-red-500' : 'border-gray-300 focus:ring-red-500 focus:border-red-500'
-                      } px-4 py-2`}
+                      className={`block w-full rounded-lg shadow-sm ${
+                        formErrors.gramPanchayat ? 'border-red-500' : 'border-gray-300'
+                      } px-3 py-2 text-sm focus:ring-red-500 focus:border-red-500`}
                       disabled={!registrationForm.district || !registrationForm.localBody}
                     />
                     {formErrors.gramPanchayat && (
-                      <p className="mt-1 text-sm text-red-600">{formErrors.gramPanchayat}</p>
-                    )}
-                    {!registrationForm.district && (
-                      <p className="text-gray-500 text-xs mt-1">Please select a district first</p>
-                    )}
-                    {registrationForm.district && !registrationForm.localBody && (
-                      <p className="text-gray-500 text-xs mt-1">Please select a local body first</p>
+                      <p className="mt-1 text-xs text-red-600">{formErrors.gramPanchayat}</p>
                     )}
                   </div>
+                </div>
 
+                <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Regional Assembly *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Regional Assembly *</label>
                     <input
                       type="text"
                       name="regionalAssembly"
                       value={registrationForm.regionalAssembly}
                       onChange={handleRegistrationInputChange}
                       placeholder="Enter Regional Assembly"
-                      className={`mt-1 block w-full rounded-lg shadow-sm ${
-                        formErrors.regionalAssembly ? 'border-red-500 ring-red-500' : 'border-gray-300 focus:ring-red-500 focus:border-red-500'
-                      } px-4 py-2`}
+                      className={`block w-full rounded-lg shadow-sm ${
+                        formErrors.regionalAssembly ? 'border-red-500' : 'border-gray-300'
+                      } px-3 py-2 text-sm focus:ring-red-500 focus:border-red-500`}
                     />
                     {formErrors.regionalAssembly && (
-                      <p className="mt-1 text-sm text-red-600">{formErrors.regionalAssembly}</p>
+                      <p className="mt-1 text-xs text-red-600">{formErrors.regionalAssembly}</p>
                     )}
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Local Panchayat Trust *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Local Panchayat Trust *</label>
                     <input
                       type="text"
                       name="localPanchayatTrust"
                       value={registrationForm.localPanchayatTrust}
                       onChange={handleRegistrationInputChange}
                       placeholder="Enter Local Panchayat Trust"
-                      className={`mt-1 block w-full rounded-lg shadow-sm ${
-                        formErrors.localPanchayatTrust ? 'border-red-500 ring-red-500' : 'border-gray-300 focus:ring-red-500 focus:border-red-500'
-                      } px-4 py-2`}
+                      className={`block w-full rounded-lg shadow-sm ${
+                        formErrors.localPanchayatTrust ? 'border-red-500' : 'border-gray-300'
+                      } px-3 py-2 text-sm focus:ring-red-500 focus:border-red-500`}
                     />
                     {formErrors.localPanchayatTrust && (
-                      <p className="mt-1 text-sm text-red-600">{formErrors.localPanchayatTrust}</p>
+                      <p className="mt-1 text-xs text-red-600">{formErrors.localPanchayatTrust}</p>
                     )}
                   </div>
+                </div>
 
+                <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Local Panchayat Name *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Local Panchayat Name *</label>
                     <input
                       type="text"
                       name="localPanchayatName"
                       value={registrationForm.localPanchayatName}
                       onChange={handleRegistrationInputChange}
                       placeholder="Enter Local Panchayat Name"
-                      className={`mt-1 block w-full rounded-lg shadow-sm ${
-                        formErrors.localPanchayatName ? 'border-red-500 ring-red-500' : 'border-gray-300 focus:ring-red-500 focus:border-red-500'
-                      } px-4 py-2`}
+                      className={`block w-full rounded-lg shadow-sm ${
+                        formErrors.localPanchayatName ? 'border-red-500' : 'border-gray-300'
+                      } px-3 py-2 text-sm focus:ring-red-500 focus:border-red-500`}
                     />
                     {formErrors.localPanchayatName && (
-                      <p className="mt-1 text-sm text-red-600">{formErrors.localPanchayatName}</p>
+                      <p className="mt-1 text-xs text-red-600">{formErrors.localPanchayatName}</p>
                     )}
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Sub Local Panchayat *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Sub Local Panchayat *</label>
                     <input
                       type="text"
                       name="subLocalPanchayat"
                       value={registrationForm.subLocalPanchayat}
                       onChange={handleRegistrationInputChange}
                       placeholder="Enter Sub Local Panchayat"
-                      className={`mt-1 block w-full rounded-lg shadow-sm ${
-                        formErrors.subLocalPanchayat ? 'border-red-500 ring-red-500' : 'border-gray-300 focus:ring-red-500 focus:border-red-500'
-                      } px-4 py-2`}
+                      className={`block w-full rounded-lg shadow-sm ${
+                        formErrors.subLocalPanchayat ? 'border-red-500' : 'border-gray-300'
+                      } px-3 py-2 text-sm focus:ring-red-500 focus:border-red-500`}
                     />
                     {formErrors.subLocalPanchayat && (
-                      <p className="mt-1 text-sm text-red-600">{formErrors.subLocalPanchayat}</p>
+                      <p className="mt-1 text-xs text-red-600">{formErrors.subLocalPanchayat}</p>
                     )}
                   </div>
                 </div>
               </div>
 
               {formErrors.submit && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                  <p className="text-red-600 text-sm">{formErrors.submit}</p>
+                <div className="mt-4 p-2 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-sm text-red-600">{formErrors.submit}</p>
                 </div>
               )}
 
-              <div className="flex gap-4 justify-end pt-4 border-t border-gray-200">
+              {/* Form Actions */}
+              <div className="mt-6 flex items-center justify-end gap-3 border-t pt-4">
                 <button
                   type="button"
                   onClick={() => setShowRegistrationModal(false)}
-                  className="px-6 py-2.5 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors duration-200"
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-6 py-2.5 text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors duration-200 flex items-center justify-center min-w-[100px] disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center min-w-[100px]"
                 >
                   {isSubmitting ? (
-                    <span className="inline-block w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></span>
+                    <span className="inline-block w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></span>
                   ) : (
                     'Register'
                   )}
