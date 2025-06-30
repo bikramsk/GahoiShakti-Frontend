@@ -18,8 +18,8 @@ export const FORM_STEPS = [
       "state",
       "regionalAssembly",
       "localPanchayatName",
-      "localPanchayat",
-      "subLocalPanchayat",
+      "city",
+     "gramPanchayat"
     ],
   },
   { 
