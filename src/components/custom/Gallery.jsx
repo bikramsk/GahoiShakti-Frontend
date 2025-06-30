@@ -34,12 +34,89 @@ const Gallery = () => {
     aakna: '',
     state: '',
     district: '',
-    localPanchayat: '',
-    subLocalPanchayat: '',
-    regionalAssembly: ''
+    localBody: '',
+    gramPanchayat: '',
+    regionalAssembly: '',
+    localPanchayatTrust: '',
+    localPanchayatName: '',
+    subLocalPanchayat: ''
   });
   const [formErrors, setFormErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Add gotraAaknaMap constant
+  const gotraAaknaMap = {
+    "Vasar/Vastil/Vasal": [
+      "Rusiya", "Arusiya", "Behre", "Bahre", "Pahariya", "Reja", "Mar", "Amar", "Mor", "Sethiya",
+      "Damele", "Kathal", "Kathil", "Marele", "Nahar", "Naar", "KareKhemau", "Raghare", "Bagar",
+      "Tudha", "Sah", "Saav", "Dangan ke", "Seth (Mau ke/Paliya ke/Khakshis ke/Mahuta ke/Bhaghoi ke)",
+      "Kasav", "Khaira", "Sarawgi (Mau ke)", "Sahdele", "Sadele", "Changele", "Chungele", "Mungele",
+      "Dhoosar", "Dadraya", "Patodiya", "Patodi", "Paterha", "Jhanjhar", "Kharaya", "Baraya",
+      "Kunayar", "Purpuriya", "Puranpuriya", "Kajar", "Kshankshar"
+    ],
+    "Gol": [
+      "Amroha", "Andhi", "Bamoriya", "Bardiya", "Barele/Barol", "Barha/Barehe", "Bed", "Bhagoriya",
+      "Bilaiya", "Bijpuriya", "Brijpuriya", "Chauda/Chodha/Chouda", "Chiroliya", "Dagarhiha",
+      "Dadam", "Damorha", "Devadhiya", "Digoriya", "Dingauriya", "Dohariya Devaraha", "Geda",
+      "Gugoriya/Ugoriya", "Hadyal", "Hathnoria/Hathnotiya", "Jhudele/Jurele/Jhood", "Kachhwaha",
+      "Kanjoulya", "Kharya/Khara", "Khatal", "Khatik", "Khunteta", "Kudayar", "Kudele", "Kudraya",
+      "Kunayar", "Lakhaurya", "Lakoriya", "Lohiya/Loiya", "Maheshwari", "Matele/Mahtele", "Misurha/Masaurya",
+      "Nagariya", "Naina/Nehna", "Neekhra", "Nigoti (Nigotiya)", "Pachnole/Pachraulya", "Paterha",
+      "Piparsania", "Purpuriya", "Puranpuriya", "Rawat", "Rikholya", "Sakeray/Sakahere", "Sarawgi",
+      "Seth", "Shaav/Shah", "Shikoly/Sokorya/Shipoulya", "Sirsoniya/Risoniya", "Soni", "Suhane/Sohane",
+      "Sulganiya/Sulghaniya", "Tapa", "Teetbilasi/Teetbirasi", "Tikraya/Tapakle", "Tusele", "Viswari"
+    ],
+    "Gangal / Gagil": [
+      "Amaulya/Amauriya", "Bhondiya (Bhondu)", "Chapra/Chupara", "Dhusar", "Jhudele/Jhad",
+      "Katare", "Piparsaniya", "Rawat", "Seth (Padri ke)", "Tusele"
+    ],
+    "Badal / Waghil / Bandal": [
+      "Bajrang Gadiya", "Chandaiya/Chandraseniya", "Dengre/Dagre", "Ghura", "Jhudele/Jurele/Jhood",
+      "Khard", "Khangat", "Kudraya", "Naina/Nehna", "Pachnole/Pachraulya", "Sah/Saav",
+      "Seth (Chandaiya ke)", "Suhane/Sohane", "Teetbilasi/Teetbirasi"
+    ],
+    "Kocchal / Kochil": [
+      "Neekhra", "Indurkhiya", "Kastwar", "Kurele", "Misurha/Masaurya", "Sawla/Saula/Chawla",
+      "Viswari", "Pahariya", "Piparsania", "Dadarya", "Nachhola", "Baronya", "Binaurya",
+      "Kharya/Khara", "Iksade", "Sulganiya/Sulghaniya", "Kanjoulya", "Nigoti (Nigotiya)",
+      "Rawat", "Seth", "Soni"
+    ],
+    "Jaital": [
+      "Baderia", "Kathal/Kathil", "Nagariya", "Rikholya/Lakhourya", "Seth (Bareth ke)",
+      "Shikoly/Sokorya/Shipoulya", "Lahariya", "Sirojiya"
+    ],
+    "Vachhil": [
+      "Kuchiya/Kuchha", "Tikraya/Tapakle", "Damele", "Barsainya", "Tapa", "Kanakne",
+      "Matele/Mahtele", "Hunka", "Seth (Nawgaon/Negua ke)", "Badonya", "Gandhi", "Rikholya",
+      "Dhanoriya", "Itoriya/Itodiya", "Sakeray/Sakahere", "Soni", "Khadsariya/Kharsadiya",
+      "Badhiya", "Vinaurya", "Sirsoniya/Risoniya", "Shikoly/Sokorya/Shipoulya", "Khangat",
+      "Katare", "Sarawgi (Mau ke)", "Chungele"
+    ],
+    "Kachhil": [
+      "Chapra/Chupara", "Tusele", "Piparsaniya", "Seth (Padri ke)", "Dhusar", "Bhondiya (Bhondu)",
+      "Amaulya/Amauriya", "Jhudele/Jhad", "Rawat", "Katare"
+    ],
+    "Bhaal": [
+      "Kudraya", "Khard", "Suhane/Sohane", "Dengre/Dagre", "Teetbilasi/Teetbirasi", "Ghura",
+      "Khangat", "Bajrang Gadiya", "Naina/Nehna", "Pachnole/Pachraulya", "Sah/Saav",
+      "Seth (Chandaiya ke)", "Chandaiya/Chandraseniya", "Jhudele/Jurele/Jhood"
+    ],
+    "Kohil": ["Kandele", "Lohiya/Loiya", "Shaav/Shah (Unnao ke)", "Jhuke/Jhunk"],
+    "Kasiv": [
+      "Asoo", "Asoopi", "Asooti", "Khantal", "Beder", "Badil", "Baidal", "Sudipa",
+      "Asudipa", "Deepa/Teepa"
+    ],
+    "Kasav": [
+      "Asoo", "Asoopi", "Asooti", "Khantal", "Beder", "Badil", "Baidal", "Sudipa",
+      "Asudipa", "Deepa/Teepa"
+    ],
+    "Single": []
+  };
+
+  // Add getAaknaOptions function
+  const getAaknaOptions = () => {
+    return registrationForm.gotra ? gotraAaknaMap[registrationForm.gotra] || [] : [];
+  };
 
   useEffect(() => {
     const checkAuth = () => {
@@ -276,7 +353,11 @@ const Gallery = () => {
     if (!registrationForm.nationality) errors.nationality = 'Nationality is required';
     if (!registrationForm.state) errors.state = 'State is required';
     if (!registrationForm.district) errors.district = 'District is required';
-    if (!registrationForm.localPanchayat) errors.localPanchayat = 'Local Panchayat is required';
+    if (!registrationForm.localBody) errors.localBody = 'Local Body is required';
+    if (!registrationForm.gramPanchayat) errors.gramPanchayat = 'Gram Panchayat is required';
+    if (!registrationForm.regionalAssembly) errors.regionalAssembly = 'Regional Assembly is required';
+    if (!registrationForm.localPanchayatTrust) errors.localPanchayatTrust = 'Local Panchayat Trust is required';
+    if (!registrationForm.localPanchayatName) errors.localPanchayatName = 'Local Panchayat Name is required';
     if (!registrationForm.subLocalPanchayat) errors.subLocalPanchayat = 'Sub Local Panchayat is required';
     
     setFormErrors(errors);
@@ -299,7 +380,17 @@ const Gallery = () => {
         education: '',
         currentAddress: '',
         workType: 'Other',
-        suggestions: ''
+        suggestions: '',
+        location_details: {
+          state: registrationForm.state,
+          district: registrationForm.district,
+          local_body: registrationForm.localBody,
+          gram_panchayat: registrationForm.gramPanchayat,
+          regional_assembly: registrationForm.regionalAssembly,
+          local_panchayat_trust: registrationForm.localPanchayatTrust,
+          local_panchayat_name: registrationForm.localPanchayatName,
+          sub_local_panchayat: registrationForm.subLocalPanchayat
+        }
       });
 
       // First create the registration
@@ -312,7 +403,8 @@ const Gallery = () => {
       });
 
       if (!registrationResponse.ok) {
-        throw new Error('Registration failed');
+        const errorData = await registrationResponse.json();
+        throw new Error(errorData?.error?.message || 'Registration failed');
       }
 
       // Then create MPIN (using last 4 digits of mobile as default MPIN)
@@ -355,12 +447,14 @@ const Gallery = () => {
           setSelectedImageIdx(0);
           document.body.style.overflow = 'hidden';
         }
+      } else {
+        throw new Error('Failed to verify MPIN');
       }
     } catch (error) {
       console.error('Registration error:', error);
       setFormErrors(prev => ({
         ...prev,
-        submit: 'Registration failed. Please try again.'
+        submit: error.message || 'Registration failed. Please try again.'
       }));
     } finally {
       setIsSubmitting(false);
@@ -550,105 +644,189 @@ const Gallery = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Gotra</label>
-                  <input
-                    type="text"
+                  <select
                     name="gotra"
                     value={registrationForm.gotra}
                     onChange={handleRegistrationInputChange}
                     className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-                  />
+                  >
+                    <option value="">Select Gotra</option>
+                    {Object.keys(gotraAaknaMap).map((gotra) => (
+                      <option key={gotra} value={gotra}>
+                        {gotra}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Aakna</label>
-                  <input
-                    type="text"
+                  <select
                     name="aakna"
                     value={registrationForm.aakna}
                     onChange={handleRegistrationInputChange}
                     className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
-                  />
+                    disabled={!registrationForm.gotra}
+                  >
+                    <option value="">Select Aakna</option>
+                    {getAaknaOptions().map((aakna) => (
+                      <option key={aakna} value={aakna}>
+                        {aakna}
+                      </option>
+                    ))}
+                  </select>
+                  {!registrationForm.gotra && (
+                    <p className="text-gray-500 text-xs mt-2 ml-1 italic">
+                      Select a Gotra first to see available Aakna options
+                    </p>
+                  )}
                 </div>
               </div>
 
               {/* Location Information */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">State *</label>
-                  <select
-                    name="state"
-                    value={registrationForm.state}
-                    onChange={handleRegistrationInputChange}
-                    className={`mt-1 block w-full rounded-md border ${
-                      formErrors.state ? 'border-red-500' : 'border-gray-300'
-                    } px-3 py-2`}
-                  >
-                    <option value="">Select State</option>
-                    {STATES.map(state => (
-                      <option key={state} value={state}>{state}</option>
-                    ))}
-                  </select>
-                  {formErrors.state && (
-                    <p className="mt-1 text-sm text-red-600">{formErrors.state}</p>
-                  )}
-                </div>
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">State *</label>
+                    <select
+                      name="state"
+                      value={registrationForm.state}
+                      onChange={handleRegistrationInputChange}
+                      className={`mt-1 block w-full rounded-md border ${
+                        formErrors.state ? 'border-red-500' : 'border-gray-300'
+                      } px-3 py-2`}
+                    >
+                      <option value="">Select State</option>
+                      {STATES.map(state => (
+                        <option key={state} value={state}>{state}</option>
+                      ))}
+                    </select>
+                    {formErrors.state && (
+                      <p className="mt-1 text-sm text-red-600">{formErrors.state}</p>
+                    )}
+                  </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">District *</label>
-                  <select
-                    name="district"
-                    value={registrationForm.district}
-                    onChange={handleRegistrationInputChange}
-                    className={`mt-1 block w-full rounded-md border ${
-                      formErrors.district ? 'border-red-500' : 'border-gray-300'
-                    } px-3 py-2`}
-                    disabled={!registrationForm.state}
-                  >
-                    <option value="">Select District</option>
-                    {registrationForm.state && STATE_TO_DISTRICTS[registrationForm.state]?.map(district => (
-                      <option key={district} value={district}>{district}</option>
-                    ))}
-                  </select>
-                  {formErrors.district && (
-                    <p className="mt-1 text-sm text-red-600">{formErrors.district}</p>
-                  )}
-                </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">District *</label>
+                    <select
+                      name="district"
+                      value={registrationForm.district}
+                      onChange={handleRegistrationInputChange}
+                      className={`mt-1 block w-full rounded-md border ${
+                        formErrors.district ? 'border-red-500' : 'border-gray-300'
+                      } px-3 py-2`}
+                      disabled={!registrationForm.state}
+                    >
+                      <option value="">Select District</option>
+                      {registrationForm.state && STATE_TO_DISTRICTS[registrationForm.state]?.map(district => (
+                        <option key={district} value={district}>{district}</option>
+                      ))}
+                    </select>
+                    {formErrors.district && (
+                      <p className="mt-1 text-sm text-red-600">{formErrors.district}</p>
+                    )}
+                  </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Local Panchayat *</label>
-                  <select
-                    name="localPanchayat"
-                    value={registrationForm.localPanchayat}
-                    onChange={handleRegistrationInputChange}
-                    className={`mt-1 block w-full rounded-md border ${
-                      formErrors.localPanchayat ? 'border-red-500' : 'border-gray-300'
-                    } px-3 py-2`}
-                    disabled={!registrationForm.district}
-                  >
-                    <option value="">Select Local Panchayat</option>
-                    {registrationForm.district && DISTRICT_TO_CITIES[registrationForm.district]?.map(city => (
-                      <option key={city} value={city}>{city}</option>
-                    ))}
-                  </select>
-                  {formErrors.localPanchayat && (
-                    <p className="mt-1 text-sm text-red-600">{formErrors.localPanchayat}</p>
-                  )}
-                </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Local Body *</label>
+                    <select
+                      name="localBody"
+                      value={registrationForm.localBody}
+                      onChange={handleRegistrationInputChange}
+                      className={`mt-1 block w-full rounded-md border ${
+                        formErrors.localBody ? 'border-red-500' : 'border-gray-300'
+                      } px-3 py-2`}
+                      disabled={!registrationForm.district}
+                    >
+                      <option value="">Select Local Body</option>
+                      {registrationForm.district && DISTRICT_TO_CITIES[registrationForm.district]?.map(city => (
+                        <option key={city} value={city}>{city}</option>
+                      ))}
+                    </select>
+                    {formErrors.localBody && (
+                      <p className="mt-1 text-sm text-red-600">{formErrors.localBody}</p>
+                    )}
+                  </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Sub Local Panchayat *</label>
-                  <input
-                    type="text"
-                    name="subLocalPanchayat"
-                    value={registrationForm.subLocalPanchayat}
-                    onChange={handleRegistrationInputChange}
-                    className={`mt-1 block w-full rounded-md border ${
-                      formErrors.subLocalPanchayat ? 'border-red-500' : 'border-gray-300'
-                    } px-3 py-2`}
-                  />
-                  {formErrors.subLocalPanchayat && (
-                    <p className="mt-1 text-sm text-red-600">{formErrors.subLocalPanchayat}</p>
-                  )}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Gram Panchayat *</label>
+                    <input
+                      type="text"
+                      name="gramPanchayat"
+                      value={registrationForm.gramPanchayat}
+                      onChange={handleRegistrationInputChange}
+                      className={`mt-1 block w-full rounded-md border ${
+                        formErrors.gramPanchayat ? 'border-red-500' : 'border-gray-300'
+                      } px-3 py-2`}
+                    />
+                    {formErrors.gramPanchayat && (
+                      <p className="mt-1 text-sm text-red-600">{formErrors.gramPanchayat}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Regional Assembly *</label>
+                    <input
+                      type="text"
+                      name="regionalAssembly"
+                      value={registrationForm.regionalAssembly}
+                      onChange={handleRegistrationInputChange}
+                      className={`mt-1 block w-full rounded-md border ${
+                        formErrors.regionalAssembly ? 'border-red-500' : 'border-gray-300'
+                      } px-3 py-2`}
+                    />
+                    {formErrors.regionalAssembly && (
+                      <p className="mt-1 text-sm text-red-600">{formErrors.regionalAssembly}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Local Panchayat Trust *</label>
+                    <input
+                      type="text"
+                      name="localPanchayatTrust"
+                      value={registrationForm.localPanchayatTrust}
+                      onChange={handleRegistrationInputChange}
+                      className={`mt-1 block w-full rounded-md border ${
+                        formErrors.localPanchayatTrust ? 'border-red-500' : 'border-gray-300'
+                      } px-3 py-2`}
+                    />
+                    {formErrors.localPanchayatTrust && (
+                      <p className="mt-1 text-sm text-red-600">{formErrors.localPanchayatTrust}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Local Panchayat Name *</label>
+                    <input
+                      type="text"
+                      name="localPanchayatName"
+                      value={registrationForm.localPanchayatName}
+                      onChange={handleRegistrationInputChange}
+                      className={`mt-1 block w-full rounded-md border ${
+                        formErrors.localPanchayatName ? 'border-red-500' : 'border-gray-300'
+                      } px-3 py-2`}
+                    />
+                    {formErrors.localPanchayatName && (
+                      <p className="mt-1 text-sm text-red-600">{formErrors.localPanchayatName}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Sub Local Panchayat *</label>
+                    <input
+                      type="text"
+                      name="subLocalPanchayat"
+                      value={registrationForm.subLocalPanchayat}
+                      onChange={handleRegistrationInputChange}
+                      className={`mt-1 block w-full rounded-md border ${
+                        formErrors.subLocalPanchayat ? 'border-red-500' : 'border-gray-300'
+                      } px-3 py-2`}
+                    />
+                    {formErrors.subLocalPanchayat && (
+                      <p className="mt-1 text-sm text-red-600">{formErrors.subLocalPanchayat}</p>
+                    )}
+                  </div>
                 </div>
               </div>
 

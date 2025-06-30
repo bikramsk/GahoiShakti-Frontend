@@ -1110,6 +1110,7 @@
       "previous": "पिछला",
       "next": "अगला",
       "imageOf": "तस्वीर {{current}}/{{total}}"
-    }
+    },
+    "registerToView": "देखने के लिए रजिस्टर करें"
   }
 } 
