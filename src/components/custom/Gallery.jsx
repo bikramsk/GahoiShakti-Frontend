@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { X, ChevronLeft, ChevronRight, Calendar, Image, Maximize2, Lock } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import { STATES, STATE_TO_DISTRICTS, DISTRICT_TO_CITIES } from '../../constants/locationConstants';
+import { formatFormData } from '../../utils/form/formUtils';
 
 const API_URL = import.meta.env.MODE === 'production' 
   ? 'https://admin.gahoishakti.in'
@@ -21,8 +23,24 @@ const Gallery = () => {
   const [mpinError, setMpinError] = useState('');
   const [verifyingMpin, setVerifyingMpin] = useState(false);
   const [userMobile, setUserMobile] = useState('');
+  const [showRegistrationModal, setShowRegistrationModal] = useState(false);
+  const [registrationForm, setRegistrationForm] = useState({
+    name: '',
+    mobileNumber: '',
+    gender: '',
+    nationality: '',
+    isGahoi: 'Yes',
+    gotra: '',
+    aakna: '',
+    state: '',
+    district: '',
+    localPanchayat: '',
+    subLocalPanchayat: '',
+    regionalAssembly: ''
+  });
+  const [formErrors, setFormErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
- 
   useEffect(() => {
     const checkAuth = () => {
       const token = localStorage.getItem('token');
@@ -232,6 +250,123 @@ const Gallery = () => {
     });
   };
 
+  const handleRegistrationInputChange = (e) => {
+    const { name, value } = e.target;
+    setRegistrationForm(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    // Clear error when user types
+    if (formErrors[name]) {
+      setFormErrors(prev => ({
+        ...prev,
+        [name]: ''
+      }));
+    }
+  };
+
+  const validateForm = () => {
+    const errors = {};
+    if (!registrationForm.name) errors.name = 'Name is required';
+    if (!registrationForm.mobileNumber) errors.mobileNumber = 'Mobile number is required';
+    if (registrationForm.mobileNumber && !/^\d{10}$/.test(registrationForm.mobileNumber)) {
+      errors.mobileNumber = 'Invalid mobile number';
+    }
+    if (!registrationForm.gender) errors.gender = 'Gender is required';
+    if (!registrationForm.nationality) errors.nationality = 'Nationality is required';
+    if (!registrationForm.state) errors.state = 'State is required';
+    if (!registrationForm.district) errors.district = 'District is required';
+    if (!registrationForm.localPanchayat) errors.localPanchayat = 'Local Panchayat is required';
+    if (!registrationForm.subLocalPanchayat) errors.subLocalPanchayat = 'Sub Local Panchayat is required';
+    
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleRegistrationSubmit = async (e) => {
+    e.preventDefault();
+    if (!validateForm()) return;
+
+    setIsSubmitting(true);
+    try {
+      // Format the form data according to the backend structure
+      const formattedData = formatFormData({
+        ...registrationForm,
+        display_picture: null,
+        email: '',
+        birthDate: '',
+        marriageDate: '',
+        education: '',
+        currentAddress: '',
+        workType: 'Other',
+        suggestions: ''
+      });
+
+      // First create the registration
+      const registrationResponse = await fetch(`${API_URL}/api/registration-pages`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ data: formattedData })
+      });
+
+      if (!registrationResponse.ok) {
+        throw new Error('Registration failed');
+      }
+
+      // Then create MPIN (using last 4 digits of mobile as default MPIN)
+      const defaultMpin = registrationForm.mobileNumber.slice(-4);
+      const mpinResponse = await fetch(`${API_URL}/api/create-mpin`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          mobileNumber: registrationForm.mobileNumber,
+          mpin: defaultMpin
+        })
+      });
+
+      if (!mpinResponse.ok) {
+        throw new Error('MPIN creation failed');
+      }
+
+      // Finally, verify MPIN to get JWT token
+      const verifyResponse = await fetch(`${API_URL}/api/verify-mpin`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          mobileNumber: registrationForm.mobileNumber,
+          mpin: defaultMpin
+        })
+      });
+
+      const verifyData = await verifyResponse.json();
+      if (verifyResponse.ok && verifyData.jwt) {
+        localStorage.setItem('token', verifyData.jwt);
+        localStorage.setItem('verifiedMobile', registrationForm.mobileNumber);
+        setIsAuthenticated(true);
+        setShowRegistrationModal(false);
+        // If there was a selected event, show it
+        if (selectedEvent) {
+          setSelectedImageIdx(0);
+          document.body.style.overflow = 'hidden';
+        }
+      }
+    } catch (error) {
+      console.error('Registration error:', error);
+      setFormErrors(prev => ({
+        ...prev,
+        submit: 'Registration failed. Please try again.'
+      }));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-red-50 to-rose-100">
       {/* Hero Section - Always visible */}
@@ -322,6 +457,230 @@ const Gallery = () => {
         </div>
       )}
 
+      {/* Registration Modal */}
+      {showRegistrationModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm overflow-y-auto">
+          <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full p-6 my-8">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-2xl font-bold text-gray-900">Quick Registration</h3>
+              <button
+                onClick={() => setShowRegistrationModal(false)}
+                className="p-2 hover:bg-gray-100 rounded-full"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <form onSubmit={handleRegistrationSubmit} className="space-y-6">
+              {/* Basic Information */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Name *</label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={registrationForm.name}
+                    onChange={handleRegistrationInputChange}
+                    className={`mt-1 block w-full rounded-md border ${
+                      formErrors.name ? 'border-red-500' : 'border-gray-300'
+                    } px-3 py-2`}
+                  />
+                  {formErrors.name && (
+                    <p className="mt-1 text-sm text-red-600">{formErrors.name}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Mobile Number *</label>
+                  <input
+                    type="tel"
+                    name="mobileNumber"
+                    value={registrationForm.mobileNumber}
+                    onChange={handleRegistrationInputChange}
+                    maxLength={10}
+                    className={`mt-1 block w-full rounded-md border ${
+                      formErrors.mobileNumber ? 'border-red-500' : 'border-gray-300'
+                    } px-3 py-2`}
+                  />
+                  {formErrors.mobileNumber && (
+                    <p className="mt-1 text-sm text-red-600">{formErrors.mobileNumber}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Gender *</label>
+                  <select
+                    name="gender"
+                    value={registrationForm.gender}
+                    onChange={handleRegistrationInputChange}
+                    className={`mt-1 block w-full rounded-md border ${
+                      formErrors.gender ? 'border-red-500' : 'border-gray-300'
+                    } px-3 py-2`}
+                  >
+                    <option value="">Select Gender</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                  </select>
+                  {formErrors.gender && (
+                    <p className="mt-1 text-sm text-red-600">{formErrors.gender}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Nationality *</label>
+                  <select
+                    name="nationality"
+                    value={registrationForm.nationality}
+                    onChange={handleRegistrationInputChange}
+                    className={`mt-1 block w-full rounded-md border ${
+                      formErrors.nationality ? 'border-red-500' : 'border-gray-300'
+                    } px-3 py-2`}
+                  >
+                    <option value="">Select Nationality</option>
+                    <option value="Indian">Indian</option>
+                    <option value="Non-Indian">Non-Indian</option>
+                  </select>
+                  {formErrors.nationality && (
+                    <p className="mt-1 text-sm text-red-600">{formErrors.nationality}</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Community Information */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Gotra</label>
+                  <input
+                    type="text"
+                    name="gotra"
+                    value={registrationForm.gotra}
+                    onChange={handleRegistrationInputChange}
+                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Aakna</label>
+                  <input
+                    type="text"
+                    name="aakna"
+                    value={registrationForm.aakna}
+                    onChange={handleRegistrationInputChange}
+                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2"
+                  />
+                </div>
+              </div>
+
+              {/* Location Information */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">State *</label>
+                  <select
+                    name="state"
+                    value={registrationForm.state}
+                    onChange={handleRegistrationInputChange}
+                    className={`mt-1 block w-full rounded-md border ${
+                      formErrors.state ? 'border-red-500' : 'border-gray-300'
+                    } px-3 py-2`}
+                  >
+                    <option value="">Select State</option>
+                    {STATES.map(state => (
+                      <option key={state} value={state}>{state}</option>
+                    ))}
+                  </select>
+                  {formErrors.state && (
+                    <p className="mt-1 text-sm text-red-600">{formErrors.state}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">District *</label>
+                  <select
+                    name="district"
+                    value={registrationForm.district}
+                    onChange={handleRegistrationInputChange}
+                    className={`mt-1 block w-full rounded-md border ${
+                      formErrors.district ? 'border-red-500' : 'border-gray-300'
+                    } px-3 py-2`}
+                    disabled={!registrationForm.state}
+                  >
+                    <option value="">Select District</option>
+                    {registrationForm.state && STATE_TO_DISTRICTS[registrationForm.state]?.map(district => (
+                      <option key={district} value={district}>{district}</option>
+                    ))}
+                  </select>
+                  {formErrors.district && (
+                    <p className="mt-1 text-sm text-red-600">{formErrors.district}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Local Panchayat *</label>
+                  <select
+                    name="localPanchayat"
+                    value={registrationForm.localPanchayat}
+                    onChange={handleRegistrationInputChange}
+                    className={`mt-1 block w-full rounded-md border ${
+                      formErrors.localPanchayat ? 'border-red-500' : 'border-gray-300'
+                    } px-3 py-2`}
+                    disabled={!registrationForm.district}
+                  >
+                    <option value="">Select Local Panchayat</option>
+                    {registrationForm.district && DISTRICT_TO_CITIES[registrationForm.district]?.map(city => (
+                      <option key={city} value={city}>{city}</option>
+                    ))}
+                  </select>
+                  {formErrors.localPanchayat && (
+                    <p className="mt-1 text-sm text-red-600">{formErrors.localPanchayat}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Sub Local Panchayat *</label>
+                  <input
+                    type="text"
+                    name="subLocalPanchayat"
+                    value={registrationForm.subLocalPanchayat}
+                    onChange={handleRegistrationInputChange}
+                    className={`mt-1 block w-full rounded-md border ${
+                      formErrors.subLocalPanchayat ? 'border-red-500' : 'border-gray-300'
+                    } px-3 py-2`}
+                  />
+                  {formErrors.subLocalPanchayat && (
+                    <p className="mt-1 text-sm text-red-600">{formErrors.subLocalPanchayat}</p>
+                  )}
+                </div>
+              </div>
+
+              {formErrors.submit && (
+                <p className="text-red-600 text-sm">{formErrors.submit}</p>
+              )}
+
+              <div className="flex gap-4 justify-end">
+                <button
+                  type="button"
+                  onClick={() => setShowRegistrationModal(false)}
+                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="px-4 py-2 text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center min-w-[100px]"
+                >
+                  {isSubmitting ? (
+                    <span className="inline-block w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></span>
+                  ) : (
+                    'Register'
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Events Grid Section - Shows loading/error states */}
       <div className="max-w-7xl mx-auto px-4 py-8">
         {loading ? (
@@ -357,15 +716,10 @@ const Gallery = () => {
                         {t('gallery.loginRequired') || 'Please login to view gallery images'}
                       </p>
                       <button
-                        onClick={() => navigate('/login', { 
-                          state: { 
-                            from: '/gallery',
-                            message: t('gallery.pleaseLogin') || 'Please login to view gallery images.'
-                          } 
-                        })}
+                        onClick={() => setShowRegistrationModal(true)}
                         className="bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white py-3 px-6 rounded-full font-semibold transition-colors duration-200"
                       >
-                        {t('gallery.loginToView') || 'Login to View'}
+                        {t('gallery.registerToView') || 'Register to View'}
                       </button>
                     </div>
                   )}
