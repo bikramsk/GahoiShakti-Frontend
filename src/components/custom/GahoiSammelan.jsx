@@ -92,7 +92,7 @@ const GahoiSammelanPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-red-50 via-orange-50 to-red-50">
       {/* Hero Section */}
-      <div className="relative bg-gradient-to-r from-red-900 to-red-800 text-white py-24 mt-20">
+      <div className="relative bg-gradient-to-r from-red-900 to-red-800 text-white py-24">
         <div className="absolute inset-0 bg-black opacity-40"></div>
         <div className="max-w-6xl mx-auto px-6 relative z-10">
           <div className="text-center space-y-6">
