@@ -498,7 +498,7 @@ const GahoiSammelanPage = () => {
                         name="height"
                         value={formData.height}
                         onChange={handleInputChange}
-                        placeholder={t('gahoiSammelan.form.personalInfo.heightPlaceholder')}
+                        // placeholder={t('gahoiSammelan.form.personalInfo.heightPlaceholder')}
                         className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all shadow-sm hover:border-red-300"
                       />
                     </div>
@@ -529,7 +529,7 @@ const GahoiSammelanPage = () => {
                         name="nationality"
                         value={formData.nationality}
                         onChange={handleInputChange}
-                        placeholder={t('gahoiSammelan.form.personalInfo.nationalityPlaceholder')}
+                        // placeholder={t('gahoiSammelan.form.personalInfo.nationalityPlaceholder')}
                         className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all shadow-sm hover:border-red-300"
                       />
                     </div>
@@ -617,7 +617,7 @@ const GahoiSammelanPage = () => {
                       name="annualIncome"
                       value={formData.annualIncome}
                       onChange={handleInputChange}
-                      placeholder={t('gahoiSammelan.form.professionalInfo.incomePlaceholder')}
+                      // placeholder={t('gahoiSammelan.form.professionalInfo.incomePlaceholder')}
                       className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all shadow-sm hover:border-red-300"
                     />
                   </div>
@@ -803,7 +803,7 @@ const GahoiSammelanPage = () => {
                       value={formData.siblings}
                       onChange={handleInputChange}
                       rows="2"
-                      placeholder={t('gahoiSammelan.form.familyInfo.siblingsPlaceholder')}
+                      // placeholder={t('gahoiSammelan.form.familyInfo.siblingsPlaceholder')}
                       className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all shadow-sm hover:border-red-300 resize-none"
                     />
                   </div>
