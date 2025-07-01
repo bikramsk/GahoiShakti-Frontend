@@ -68,7 +68,7 @@ const UserProfile = () => {
           // Attempt 1: Try with mobile number filter
           async () => {
             if (mobileNumber) {
-              console.log('Attempting to fetch by mobile number:', mobileNumber);
+              // console.log('Attempting to fetch by mobile number:', mobileNumber);
               const response = await fetch(
                 `${API_BASE}/api/registration-pages?filters[personal_information][mobile_number][$eq]=${mobileNumber}&populate=*`,
                 {
@@ -81,7 +81,7 @@ const UserProfile = () => {
               );
               if (response.ok) {
                 const data = await response.json();
-                console.log('Mobile number fetch response:', data);
+                // console.log('Mobile number fetch response:', data);
                 return data.data?.[0];
               }
               lastError = `Mobile number fetch failed with status: ${response.status}`;
@@ -92,7 +92,7 @@ const UserProfile = () => {
           // Attempt 2: Try with document ID if available
           async () => {
             if (documentId) {
-              console.log('Attempting to fetch by document ID:', documentId);
+              // console.log('Attempting to fetch by document ID:', documentId);
               const response = await fetch(
                 `${API_BASE}/api/registration-pages/${documentId}?populate=*`,
                 {
@@ -105,7 +105,7 @@ const UserProfile = () => {
               );
               if (response.ok) {
                 const data = await response.json();
-                console.log('Document ID fetch response:', data);
+                // console.log('Document ID fetch response:', data);
                 return data.data;
               }
               lastError = `Document ID fetch failed with status: ${response.status}`;
@@ -115,7 +115,7 @@ const UserProfile = () => {
 
           // Attempt 3: Get all registration pages and filter client-side
           async () => {
-            console.log('Attempting to fetch all registration pages');
+            // console.log('Attempting to fetch all registration pages');
             const response = await fetch(
               `${API_BASE}/api/registration-pages?populate=*`,
               {
@@ -128,7 +128,7 @@ const UserProfile = () => {
             );
             if (response.ok) {
               const data = await response.json();
-              console.log('All registration pages response:', data);
+              // console.log('All registration pages response:', data);
               return data.data?.find(entry => 
                 entry.attributes?.personal_information?.mobile_number === mobileNumber
               );
@@ -274,170 +274,172 @@ const UserProfile = () => {
   const renderSectionContent = () => {
     switch (activeSection) {
       case 'personal':
-  return (
-                  <section>
-                    <div className="flex justify-between items-center mb-6">
-                      <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Personal Information</h2>
+        return (
+          <section>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Personal Information</h2>
+            </div>
+            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+              <dl className="divide-y divide-gray-200">
+                {Object.entries(displayData.personal_information || {})
+                  .filter(([key]) => key !== 'id' && key !== 'display_picture')
+                  .map(([key, value]) => (
+                    <div key={key} className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
+                      <dt className="text-sm font-medium text-gray-500 mb-1 sm:mb-0">
+                        {key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                      </dt>
+                      <dd className="text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                        {value?.toString() || 'N/A'}
+                      </dd>
                     </div>
-                    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                      <dl className="divide-y divide-gray-200">
-                        {Object.entries(displayData.personal_information || {}).map(([key, value]) => (
-                          key !== 'display_picture' && (
-                            <div key={key} className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
-                              <dt className="text-sm font-medium text-gray-500 mb-1 sm:mb-0">
-                                {key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
-                              </dt>
-                              <dd className="text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                                {value?.toString() || 'N/A'}
-                              </dd>
-                            </div>
-                          )
-                        ))}
-                      </dl>
-                    </div>
-                  </section>
+                  ))}
+              </dl>
+            </div>
+          </section>
         );
       case 'family':
         return (
-                  <section>
-                    <div className="flex justify-between items-center mb-6">
-                      <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Family Details</h2>
-                    </div>
-                    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                      <dl className="divide-y divide-gray-200">
-                        {Object.entries(displayData.family_details || {}).length > 0 ? (
-                          Object.entries(displayData.family_details || {}).map(([key, value]) => (
-                            <div key={key} className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
-                              <dt className="text-sm font-medium text-gray-500 mb-1 sm:mb-0">
-                                {key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
-                              </dt>
-                              <dd className="text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                                {value?.toString() || 'N/A'}
-                              </dd>
-                            </div>
-                          ))
-                        ) : (
-                          <div className="px-4 py-6 text-center text-gray-500">
-                            No family details available
-                          </div>
-                        )}
-                      </dl>
-                    </div>
-                  </section>
+          <section>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Family Details</h2>
+            </div>
+            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+              <dl className="divide-y divide-gray-200">
+                {Object.entries(displayData.family_details || {}).length > 0 ? (
+                  Object.entries(displayData.family_details || {})
+                    .filter(([key]) => key !== 'id')
+                    .map(([key, value]) => (
+                      <div key={key} className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
+                        <dt className="text-sm font-medium text-gray-500 mb-1 sm:mb-0">
+                          {key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                        </dt>
+                        <dd className="text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                          {value?.toString() || 'N/A'}
+                        </dd>
+                      </div>
+                    ))
+                ) : (
+                  <div className="px-4 py-6 text-center text-gray-500">
+                    No family details available
+                  </div>
+                )}
+              </dl>
+            </div>
+          </section>
         );
       case 'biographical':
         return (
-                  <section>
-                    <div className="flex justify-between items-center mb-6">
-                      <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Biographical Details</h2>
+          <section>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Biographical Details</h2>
+            </div>
+            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+              <dl className="divide-y divide-gray-200">
+                {Object.entries(displayData.biographical_details || {})
+                  .filter(([key]) => key !== 'id')
+                  .map(([key, value]) => (
+                    <div key={key} className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
+                      <dt className="text-sm font-medium text-gray-500 mb-1 sm:mb-0">
+                        {key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                      </dt>
+                      <dd className="text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                        {value?.toString() || 'N/A'}
+                      </dd>
                     </div>
-                    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                      <dl className="divide-y divide-gray-200">
-                        {Object.entries(displayData.biographical_details || {}).length > 0 ? (
-                          Object.entries(displayData.biographical_details || {}).map(([key, value]) => (
-                            <div key={key} className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
-                              <dt className="text-sm font-medium text-gray-500 mb-1 sm:mb-0">
-                                {key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
-                              </dt>
-                              <dd className="text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                                {value?.toString() || 'N/A'}
-                              </dd>
-                            </div>
-                          ))
-                        ) : (
-                          <div className="px-4 py-6 text-center text-gray-500">
-                            No biographical details available
-                          </div>
-                        )}
-                      </dl>
-                    </div>
-                  </section>
+                  ))}
+              </dl>
+            </div>
+          </section>
         );
       case 'work':
         return (
-                  <section>
-                    <div className="flex justify-between items-center mb-6">
-                      <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Work Information</h2>
-                    </div>
-                    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                      <dl className="divide-y divide-gray-200">
-                        {Object.entries(displayData.work_information || {}).length > 0 ? (
-                          Object.entries(displayData.work_information || {}).map(([key, value]) => (
-                            <div key={key} className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
-                              <dt className="text-sm font-medium text-gray-500 mb-1 sm:mb-0">
-                                {key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
-                              </dt>
-                              <dd className="text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                                {value?.toString() || 'N/A'}
-                              </dd>
-                            </div>
-                          ))
-                        ) : (
-                          <div className="px-4 py-6 text-center text-gray-500">
-                            No work information available
-                          </div>
-                        )}
-                      </dl>
-                    </div>
-                  </section>
+          <section>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Work Information</h2>
+            </div>
+            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+              <dl className="divide-y divide-gray-200">
+                {Object.entries(displayData.work_information || {}).length > 0 ? (
+                  Object.entries(displayData.work_information || {})
+                    .filter(([key]) => key !== 'id')
+                    .map(([key, value]) => (
+                      <div key={key} className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
+                        <dt className="text-sm font-medium text-gray-500 mb-1 sm:mb-0">
+                          {key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                        </dt>
+                        <dd className="text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                          {value?.toString() || 'N/A'}
+                        </dd>
+                      </div>
+                    ))
+                ) : (
+                  <div className="px-4 py-6 text-center text-gray-500">
+                    No work information available
+                  </div>
+                )}
+              </dl>
+            </div>
+          </section>
         );
       case 'additional':
         return (
-                  <section>
-                    <div className="flex justify-between items-center mb-6">
-                      <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Additional Details</h2>
-                    </div>
-                    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                      <dl className="divide-y divide-gray-200">
-                        {Object.entries(displayData.additional_details || {}).filter(([key]) => key !== 'regional_information').length > 0 ? (
-                          Object.entries(displayData.additional_details || {}).map(([key, value]) => (
-                            key !== 'regional_information' && (
-                              <div key={key} className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
-                                <dt className="text-sm font-medium text-gray-500 mb-1 sm:mb-0">
-                                  {key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
-                                </dt>
-                                <dd className="text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                                  {value?.toString() || 'N/A'}
-                                </dd>
-                              </div>
-                            )
-                          ))
-                        ) : (
-                          <div className="px-4 py-6 text-center text-gray-500">
-                            No additional details available
-                          </div>
-                        )}
-                      </dl>
-                    </div>
-                  </section>
+          <section>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Additional Details</h2>
+            </div>
+            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+              <dl className="divide-y divide-gray-200">
+                {Object.entries(displayData.additional_details || {}).filter(([key]) => key !== 'regional_information' && key !== 'id').length > 0 ? (
+                  Object.entries(displayData.additional_details || {})
+                    .filter(([key]) => key !== 'regional_information' && key !== 'id')
+                    .map(([key, value]) => (
+                      <div key={key} className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
+                        <dt className="text-sm font-medium text-gray-500 mb-1 sm:mb-0">
+                          {key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                        </dt>
+                        <dd className="text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                          {value?.toString() || 'N/A'}
+                        </dd>
+                      </div>
+                    ))
+                ) : (
+                  <div className="px-4 py-6 text-center text-gray-500">
+                    No additional details available
+                  </div>
+                )}
+              </dl>
+            </div>
+          </section>
         );
       case 'regional':
         return (
-                  <section>
-                    <div className="flex justify-between items-center mb-6">
-                      <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Regional Information</h2>
-                    </div>
-                    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                      <dl className="divide-y divide-gray-200">
-                        {Object.entries(displayData.additional_details?.regional_information || {}).length > 0 ? (
-                          Object.entries(displayData.additional_details?.regional_information || {}).map(([key, value]) => (
-                            <div key={key} className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
-                              <dt className="text-sm font-medium text-gray-500 mb-1 sm:mb-0">
-                                {key.split(/(?=[A-Z])/).join(' ')}
-                              </dt>
-                              <dd className="text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                                {value?.toString() || 'N/A'}
-                              </dd>
-                            </div>
-                          ))
-                        ) : (
-                          <div className="px-4 py-6 text-center text-gray-500">
-                            No regional information available
-                          </div>
-                        )}
-                      </dl>
-                    </div>
-                  </section>
+          <section>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Regional Information</h2>
+            </div>
+            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+              <dl className="divide-y divide-gray-200">
+                {Object.entries(displayData.additional_details?.regional_information || {}).length > 0 ? (
+                  Object.entries(displayData.additional_details?.regional_information || {})
+                    .filter(([key]) => key !== 'id')
+                    .map(([key, value]) => (
+                      <div key={key} className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
+                        <dt className="text-sm font-medium text-gray-500 mb-1 sm:mb-0">
+                          {key.split(/(?=[A-Z])/).join(' ')}
+                        </dt>
+                        <dd className="text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                          {value?.toString() || 'N/A'}
+                        </dd>
+                      </div>
+                    ))
+                ) : (
+                  <div className="px-4 py-6 text-center text-gray-500">
+                    No regional information available
+                  </div>
+                )}
+              </dl>
+            </div>
+          </section>
         );
       default:
         return null;
