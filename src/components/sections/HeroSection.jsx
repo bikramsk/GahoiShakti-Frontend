@@ -153,7 +153,7 @@ const HeroSection = () => {
   const imagePath = isMobile ? currentBanner.mobile : currentBanner.desktop;
 
   return (
-    <section className="relative h-[40vh] sm:h-[50vh] md:h-[80vh] lg:h-[80vh] w-full overflow-hidden">
+    <section className="relative h-[40vh] sm:h-[50vh] md:h-[60vh] lg:h-[70vh] w-full overflow-hidden">
       {/* Background Image */}
 
       {currentImageIndex === 0 ? (
