@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 
 const API_BASE = import.meta.env.MODE === 'production' 
   ? 'https://admin.gahoishakti.in'
-  : 'http://localhost:1337';
+  : 'http://localhost:1340';
 
 const SECTIONS = [
   { id: 'personal', title: 'Personal Information', icon: 'user' },
@@ -21,7 +21,7 @@ const UserProfile = () => {
   const [error, setError] = useState(null);
   const [activeSection, setActiveSection] = useState('personal');
 
-  // Global error boundary
+
   useEffect(() => {
     const handleError = (error) => {
       console.error('Error in UserProfile:', error);
@@ -43,66 +43,122 @@ const UserProfile = () => {
       try {
         const mobileNumber = localStorage.getItem('verifiedMobile');
         const token = localStorage.getItem('token');
+        const documentId = localStorage.getItem('documentId');
 
-        console.log('Auth check:', { hasMobile: !!mobileNumber, hasToken: !!token });
+        console.log('Auth check:', { 
+          hasMobile: !!mobileNumber, 
+          hasToken: !!token,
+          hasDocumentId: !!documentId,
+          apiBase: API_BASE 
+        });
 
-        if (!mobileNumber || !token) {
-          console.log('Missing auth data');
+        if (!token) {
+          console.log('Missing auth token');
           setError('Please login again to continue');
-          localStorage.removeItem('token');
-          localStorage.removeItem('verifiedMobile');
+          localStorage.clear();
           setTimeout(() => navigate('/login', { replace: true }), 2000);
           return;
         }
 
-        // Get registration data with mobile number filter
-        const apiUrl = `${API_BASE}/api/registration-pages?filters[personal_information][mobile_number][$eq]=${mobileNumber}&populate=*`;
-        console.log('Making API request:', apiUrl);
+        let profileData = null;
+        let lastError = null;
 
-        const profileResponse = await fetch(apiUrl, {
-          method: 'GET',
-          headers: {
-            'Authorization': token,
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
+        // Try different approaches 
+        const attempts = [
+          // Attempt 1: Try with mobile number filter
+          async () => {
+            if (mobileNumber) {
+              console.log('Attempting to fetch by mobile number:', mobileNumber);
+              const response = await fetch(
+                `${API_BASE}/api/registration-pages?filters[personal_information][mobile_number][$eq]=${mobileNumber}&populate=*`,
+                {
+                  headers: { 
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                  }
+                }
+              );
+              if (response.ok) {
+                const data = await response.json();
+                console.log('Mobile number fetch response:', data);
+                return data.data?.[0];
+              }
+              lastError = `Mobile number fetch failed with status: ${response.status}`;
+            }
+            return null;
           },
-          credentials: 'include'
-        });
 
-        if (!profileResponse.ok) {
-          const errorText = await profileResponse.text();
-          console.log('API error:', {
-            status: profileResponse.status,
-            response: errorText
-          });
+          // Attempt 2: Try with document ID if available
+          async () => {
+            if (documentId) {
+              console.log('Attempting to fetch by document ID:', documentId);
+              const response = await fetch(
+                `${API_BASE}/api/registration-pages/${documentId}?populate=*`,
+                {
+                  headers: { 
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                  }
+                }
+              );
+              if (response.ok) {
+                const data = await response.json();
+                console.log('Document ID fetch response:', data);
+                return data.data;
+              }
+              lastError = `Document ID fetch failed with status: ${response.status}`;
+            }
+            return null;
+          },
 
-          if (profileResponse.status === 401 || profileResponse.status === 403) {
-            console.log('Auth error - clearing token and redirecting');
-            localStorage.removeItem('token');
-            localStorage.removeItem('verifiedMobile');
-            setError('Session expired. Please login again.');
-            setTimeout(() => navigate('/login', { replace: true }), 2000);
-            return;
+          // Attempt 3: Get all registration pages and filter client-side
+          async () => {
+            console.log('Attempting to fetch all registration pages');
+            const response = await fetch(
+              `${API_BASE}/api/registration-pages?populate=*`,
+              {
+                headers: { 
+                  'Authorization': `Bearer ${token}`,
+                  'Accept': 'application/json',
+                  'Content-Type': 'application/json'
+                }
+              }
+            );
+            if (response.ok) {
+              const data = await response.json();
+              console.log('All registration pages response:', data);
+              return data.data?.find(entry => 
+                entry.attributes?.personal_information?.mobile_number === mobileNumber
+              );
+            }
+            lastError = `All pages fetch failed with status: ${response.status}`;
+            return null;
           }
-          throw new Error(`Failed to fetch profile data: ${profileResponse.status}`);
+        ];
+
+        // Try each method 
+        for (const attempt of attempts) {
+          try {
+            const result = await attempt();
+            if (result) {
+              profileData = result;
+              break;
+            }
+          } catch (error) {
+            console.warn('Attempt failed:', error);
+            lastError = error.message;
+            continue;
+          }
         }
 
-        const profileData = await profileResponse.json();
-        console.log('Got registration data:', profileData);
-
-        // Find the entry matching the mobile number
-        const userProfile = profileData.data?.find(entry => 
-          entry.attributes?.personal_information?.mobile_number === mobileNumber
-        );
-
-        if (!userProfile) {
-          console.log('No profile data found');
-          setError('No profile data found.');
-          setLoading(false);
-          return;
+        if (!profileData) {
+          throw new Error(`Could not fetch user data. Last error: ${lastError}`);
         }
 
-        const attrs = userProfile.attributes;
+       
+        const attrs = profileData.attributes || profileData;
         setUserData({
           personal_information: attrs.personal_information || {},
           family_details: attrs.family_details || {},
@@ -112,13 +168,20 @@ const UserProfile = () => {
           child_name: attrs.child_name || [],
           your_suggestions: attrs.your_suggestions || {},
           gahoi_code: attrs.gahoi_code || '',
-          documentId: userProfile.id,
+          documentId: profileData.id,
           createdAt: attrs.createdAt,
           updatedAt: attrs.updatedAt,
           publishedAt: attrs.publishedAt
         });
+        
+        
+        if (profileData.id && !localStorage.getItem('documentId')) {
+          localStorage.setItem('documentId', profileData.id);
+        }
+
         setLoading(false);
         setError(null);
+
       } catch (error) {
         console.error('Error fetching profile data:', error);
         setError('Failed to load profile. Please try again.');
@@ -128,12 +191,6 @@ const UserProfile = () => {
 
     fetchUserData();
   }, [navigate]);
-
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('verifiedMobile');
-    navigate('/login');
-  };
 
   const renderIcon = (iconName) => {
     switch (iconName) {
@@ -190,28 +247,7 @@ const UserProfile = () => {
   if (error) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 p-4">
-        <div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full">
-          <div className="text-center">
-            <svg className="mx-auto h-12 w-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-            <h3 className="mt-4 text-lg font-medium text-gray-900">{error}</h3>
-            <div className="mt-6 flex justify-center gap-3">
-              <button
-                onClick={() => window.location.reload()}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-              >
-                Try Again
-              </button>
-              <button
-                onClick={handleLogout}
-                className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-              >
-                Logout
-              </button>
-            </div>
-          </div>
-        </div>
+        <span>Failed to load profile</span>
       </div>
     );
   }
@@ -238,170 +274,170 @@ const UserProfile = () => {
   const renderSectionContent = () => {
     switch (activeSection) {
       case 'personal':
-        return (
-          <section>
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Personal Information</h2>
-            </div>
-            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-              <dl className="divide-y divide-gray-200">
-                {Object.entries(displayData.personal_information || {}).map(([key, value]) => (
-                  key !== 'display_picture' && (
-                    <div key={key} className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
-                      <dt className="text-sm font-medium text-gray-500 mb-1 sm:mb-0">
-                        {key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
-                      </dt>
-                      <dd className="text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                        {value?.toString() || 'N/A'}
-                      </dd>
+  return (
+                  <section>
+                    <div className="flex justify-between items-center mb-6">
+                      <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Personal Information</h2>
                     </div>
-                  )
-                ))}
-              </dl>
-            </div>
-          </section>
+                    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                      <dl className="divide-y divide-gray-200">
+                        {Object.entries(displayData.personal_information || {}).map(([key, value]) => (
+                          key !== 'display_picture' && (
+                            <div key={key} className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
+                              <dt className="text-sm font-medium text-gray-500 mb-1 sm:mb-0">
+                                {key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                              </dt>
+                              <dd className="text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                                {value?.toString() || 'N/A'}
+                              </dd>
+                            </div>
+                          )
+                        ))}
+                      </dl>
+                    </div>
+                  </section>
         );
       case 'family':
         return (
-          <section>
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Family Details</h2>
-            </div>
-            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-              <dl className="divide-y divide-gray-200">
-                {Object.entries(displayData.family_details || {}).length > 0 ? (
-                  Object.entries(displayData.family_details || {}).map(([key, value]) => (
-                    <div key={key} className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
-                      <dt className="text-sm font-medium text-gray-500 mb-1 sm:mb-0">
-                        {key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
-                      </dt>
-                      <dd className="text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                        {value?.toString() || 'N/A'}
-                      </dd>
+                  <section>
+                    <div className="flex justify-between items-center mb-6">
+                      <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Family Details</h2>
                     </div>
-                  ))
-                ) : (
-                  <div className="px-4 py-6 text-center text-gray-500">
-                    No family details available
-                  </div>
-                )}
-              </dl>
-            </div>
-          </section>
+                    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                      <dl className="divide-y divide-gray-200">
+                        {Object.entries(displayData.family_details || {}).length > 0 ? (
+                          Object.entries(displayData.family_details || {}).map(([key, value]) => (
+                            <div key={key} className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
+                              <dt className="text-sm font-medium text-gray-500 mb-1 sm:mb-0">
+                                {key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                              </dt>
+                              <dd className="text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                                {value?.toString() || 'N/A'}
+                              </dd>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="px-4 py-6 text-center text-gray-500">
+                            No family details available
+                          </div>
+                        )}
+                      </dl>
+                    </div>
+                  </section>
         );
       case 'biographical':
         return (
-          <section>
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Biographical Details</h2>
-            </div>
-            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-              <dl className="divide-y divide-gray-200">
-                {Object.entries(displayData.biographical_details || {}).length > 0 ? (
-                  Object.entries(displayData.biographical_details || {}).map(([key, value]) => (
-                    <div key={key} className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
-                      <dt className="text-sm font-medium text-gray-500 mb-1 sm:mb-0">
-                        {key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
-                      </dt>
-                      <dd className="text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                        {value?.toString() || 'N/A'}
-                      </dd>
+                  <section>
+                    <div className="flex justify-between items-center mb-6">
+                      <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Biographical Details</h2>
                     </div>
-                  ))
-                ) : (
-                  <div className="px-4 py-6 text-center text-gray-500">
-                    No biographical details available
-                  </div>
-                )}
-              </dl>
-            </div>
-          </section>
+                    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                      <dl className="divide-y divide-gray-200">
+                        {Object.entries(displayData.biographical_details || {}).length > 0 ? (
+                          Object.entries(displayData.biographical_details || {}).map(([key, value]) => (
+                            <div key={key} className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
+                              <dt className="text-sm font-medium text-gray-500 mb-1 sm:mb-0">
+                                {key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                              </dt>
+                              <dd className="text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                                {value?.toString() || 'N/A'}
+                              </dd>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="px-4 py-6 text-center text-gray-500">
+                            No biographical details available
+                          </div>
+                        )}
+                      </dl>
+                    </div>
+                  </section>
         );
       case 'work':
         return (
-          <section>
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Work Information</h2>
-            </div>
-            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-              <dl className="divide-y divide-gray-200">
-                {Object.entries(displayData.work_information || {}).length > 0 ? (
-                  Object.entries(displayData.work_information || {}).map(([key, value]) => (
-                    <div key={key} className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
-                      <dt className="text-sm font-medium text-gray-500 mb-1 sm:mb-0">
-                        {key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
-                      </dt>
-                      <dd className="text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                        {value?.toString() || 'N/A'}
-                      </dd>
+                  <section>
+                    <div className="flex justify-between items-center mb-6">
+                      <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Work Information</h2>
                     </div>
-                  ))
-                ) : (
-                  <div className="px-4 py-6 text-center text-gray-500">
-                    No work information available
-                  </div>
-                )}
-              </dl>
-            </div>
-          </section>
+                    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                      <dl className="divide-y divide-gray-200">
+                        {Object.entries(displayData.work_information || {}).length > 0 ? (
+                          Object.entries(displayData.work_information || {}).map(([key, value]) => (
+                            <div key={key} className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
+                              <dt className="text-sm font-medium text-gray-500 mb-1 sm:mb-0">
+                                {key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                              </dt>
+                              <dd className="text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                                {value?.toString() || 'N/A'}
+                              </dd>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="px-4 py-6 text-center text-gray-500">
+                            No work information available
+                          </div>
+                        )}
+                      </dl>
+                    </div>
+                  </section>
         );
       case 'additional':
         return (
-          <section>
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Additional Details</h2>
-            </div>
-            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-              <dl className="divide-y divide-gray-200">
-                {Object.entries(displayData.additional_details || {}).filter(([key]) => key !== 'regional_information').length > 0 ? (
-                  Object.entries(displayData.additional_details || {}).map(([key, value]) => (
-                    key !== 'regional_information' && (
-                      <div key={key} className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
-                        <dt className="text-sm font-medium text-gray-500 mb-1 sm:mb-0">
-                          {key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
-                        </dt>
-                        <dd className="text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                          {value?.toString() || 'N/A'}
-                        </dd>
-                      </div>
-                    )
-                  ))
-                ) : (
-                  <div className="px-4 py-6 text-center text-gray-500">
-                    No additional details available
-                  </div>
-                )}
-              </dl>
-            </div>
-          </section>
+                  <section>
+                    <div className="flex justify-between items-center mb-6">
+                      <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Additional Details</h2>
+                    </div>
+                    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                      <dl className="divide-y divide-gray-200">
+                        {Object.entries(displayData.additional_details || {}).filter(([key]) => key !== 'regional_information').length > 0 ? (
+                          Object.entries(displayData.additional_details || {}).map(([key, value]) => (
+                            key !== 'regional_information' && (
+                              <div key={key} className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
+                                <dt className="text-sm font-medium text-gray-500 mb-1 sm:mb-0">
+                                  {key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                                </dt>
+                                <dd className="text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                                  {value?.toString() || 'N/A'}
+                                </dd>
+                              </div>
+                            )
+                          ))
+                        ) : (
+                          <div className="px-4 py-6 text-center text-gray-500">
+                            No additional details available
+                          </div>
+                        )}
+                      </dl>
+                    </div>
+                  </section>
         );
       case 'regional':
         return (
-          <section>
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Regional Information</h2>
-            </div>
-            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-              <dl className="divide-y divide-gray-200">
-                {Object.entries(displayData.additional_details?.regional_information || {}).length > 0 ? (
-                  Object.entries(displayData.additional_details?.regional_information || {}).map(([key, value]) => (
-                    <div key={key} className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
-                      <dt className="text-sm font-medium text-gray-500 mb-1 sm:mb-0">
-                        {key.split(/(?=[A-Z])/).join(' ')}
-                      </dt>
-                      <dd className="text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                        {value?.toString() || 'N/A'}
-                      </dd>
+                  <section>
+                    <div className="flex justify-between items-center mb-6">
+                      <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Regional Information</h2>
                     </div>
-                  ))
-                ) : (
-                  <div className="px-4 py-6 text-center text-gray-500">
-                    No regional information available
-                  </div>
-                )}
-              </dl>
-            </div>
-          </section>
+                    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                      <dl className="divide-y divide-gray-200">
+                        {Object.entries(displayData.additional_details?.regional_information || {}).length > 0 ? (
+                          Object.entries(displayData.additional_details?.regional_information || {}).map(([key, value]) => (
+                            <div key={key} className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
+                              <dt className="text-sm font-medium text-gray-500 mb-1 sm:mb-0">
+                                {key.split(/(?=[A-Z])/).join(' ')}
+                              </dt>
+                              <dd className="text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                                {value?.toString() || 'N/A'}
+                              </dd>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="px-4 py-6 text-center text-gray-500">
+                            No regional information available
+                          </div>
+                        )}
+                      </dl>
+                    </div>
+                  </section>
         );
       default:
         return null;
@@ -431,7 +467,7 @@ const UserProfile = () => {
                   </button>
                 ))}
               </nav>
-            </div>
+              </div>
 
             {/* Content */}
             <div className="flex-1 p-4 lg:p-6">

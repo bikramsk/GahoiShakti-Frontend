@@ -5,12 +5,11 @@ import LanguageSwitcher from '../custom/LanguageSwitcher';
 
 const API_BASE = import.meta.env.MODE === 'production' 
   ? 'https://admin.gahoishakti.in'
-  : 'http://localhost:1337';
+  : 'http://localhost:1340';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [userData, setUserData] = useState(null);
   const dropdownRef = useRef(null);
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
@@ -25,17 +24,7 @@ const Header = () => {
       const verifiedMobile = localStorage.getItem('verifiedMobile');
       if (token && verifiedMobile) {
         setIsAuthenticated(true);
-        // Fetch user data
-        fetch(`${API_BASE}/api/users/${verifiedMobile}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        })
-        .then(res => res.json())
-        .then(data => {
-          setUserData(data);
-        })
-        .catch(console.error);
+       
       }
     };
     checkAuth();
@@ -45,7 +34,6 @@ const Header = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('verifiedMobile');
     setIsAuthenticated(false);
-    setUserData(null);
     navigate('/');
   };
 
