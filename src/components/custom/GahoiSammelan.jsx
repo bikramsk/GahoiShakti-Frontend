@@ -2,6 +2,10 @@ import React, { useState } from 'react';
 import { Calendar, MapPin, Phone, Heart, Users, Star, FileText, Camera, Upload, Check } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
+const API_BASE = import.meta.env.MODE === 'production' 
+  ? 'https://admin.gahoishakti.in'
+  : 'http://localhost:1340';
+
 const GahoiSammelanPage = () => {
   const { t } = useTranslation();
 
@@ -18,23 +22,13 @@ const GahoiSammelanPage = () => {
     color: '',
     mama: '',
     nationality: '',
-    permanentAddress: '',
     education: '',
     mobile: '',
     occupation: '',
     position: '',
     company: '',
-    companyAddress: '',
     annualIncome: '',
     currentAddress: '',
-    contact1Name: '',
-    contact1Address: '',
-    contact1Relation: '',
-    contact1Mobile: '',
-    contact2Name: '',
-    contact2Address: '',
-    contact2Relation: '',
-    contact2Mobile: '',
     currentStatus: '',
     previousSpouseName: '',
     marriageDate: '',
@@ -42,43 +36,239 @@ const GahoiSammelanPage = () => {
     endReason: '',
     childrenCount: '',
     childrenDetails: '',
-    childrenCurrentlyLiving: '',
-    childrenAfterMarriage: '',
-    kundliAvailable: '',
-    kundliMatching: '',
+    kundliAvailable: false,
+    kundliMatching: false,
     agePreference: '',
     educationPreference: '',
     partnerType: '',
-    acceptChildrenPartner: '',
+    acceptChildrenPartner: false,
     cityPreference: '',
     motherName: '',
-    motherWork: '',
-    motherAddress: '',
-    motherMobile: '',
-    motherSocial: '',
     fatherName: '',
-    grandparentsPaternal: '',
-    grandparentsMaternal: '',
-    siblings: '',
-    auntsUncles: '',
-    maternalRelatives: ''
+    siblings: ''
   });
 
   const [activeSection, setActiveSection] = useState('event');
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [selectedFiles, setSelectedFiles] = useState({
+    fullSizePhoto: null,
+    aadharCard: null,
+    divorceDeath: null,
+    kundaliFile: null
+  });
+  const [selectedDocTypes, setSelectedDocTypes] = useState({
+    fullSizePhoto: false,
+    aadharCard: false,
+    divorceDeath: false,
+    kundaliFile: false
+  });
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type } = e.target;
+    
+    let finalValue = value;
+    if (type === 'radio') {
+      if (name === 'gender') {
+        finalValue = value; 
+      } else {
+        finalValue = value === 'true'; 
+      }
+    } else if (type === 'date') {
+      // Format date as yyyy-MM-dd without time component
+      const date = new Date(value);
+      if (!isNaN(date.getTime())) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        finalValue = `${year}-${month}-${day}`;
+      }
+    } else if (type === 'number') {
+      finalValue = value === '' ? '' : parseInt(value, 10);
+    }
+
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: finalValue
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleFileChange = (event) => {
+    const files = event.target.files;
+    const updatedFiles = { ...selectedFiles };
+    
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      if (file.size > 10 * 1024 * 1024) {
+        setError(`File ${file.name} is too large. Maximum size is 10MB.`);
+        continue;
+      }
+      
+      Object.keys(selectedDocTypes).forEach(docType => {
+        if (selectedDocTypes[docType] && !updatedFiles[docType]) {
+          updatedFiles[docType] = file;
+        }
+      });
+    }
+    
+    setSelectedFiles(updatedFiles);
+  };
+
+  const handleRemoveFile = (docType) => {
+    setSelectedFiles(prev => ({
+      ...prev,
+      [docType]: null
+    }));
+  };
+
+  const handleDocTypeChange = (docType) => {
+    setSelectedDocTypes(prev => ({
+      ...prev,
+      [docType]: !prev[docType]
+    }));
+  };
+
+  const uploadFile = async (file) => {
+    const formData = new FormData();
+    formData.append('files', file);
+
+    const response = await fetch(`${API_BASE}/api/upload`, {
+      method: 'POST',
+      body: formData
+    });
+
+    if (!response.ok) {
+      throw new Error('File upload failed');
+    }
+
+    const data = await response.json();
+    return data[0].id; // Return the file ID
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsSubmitted(true);
-    setTimeout(() => setIsSubmitted(false), 3000);
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const fileIds = {};
+      for (const [docType, file] of Object.entries(selectedFiles)) {
+        if (file) {
+          fileIds[docType] = await uploadFile(file);
+        }
+      }
+
+      // Format all date fields to ensure yyyy-MM-dd format
+      const formatDate = (dateStr) => {
+        if (!dateStr) return null;
+        const date = new Date(dateStr);
+        if (isNaN(date.getTime())) return null;
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      };
+
+      const formattedData = {
+        ...formData,
+        birthDate: formatDate(formData.birthDate),
+        marriageDate: formatDate(formData.marriageDate),
+        marriageEndDate: formatDate(formData.marriageEndDate),
+        birthTime: formData.birthTime ? `${formData.birthTime}:00.000` : null
+      };
+
+      // Remove any undefined or null values
+      Object.keys(formattedData).forEach(key => {
+        if (formattedData[key] === undefined || formattedData[key] === null) {
+          delete formattedData[key];
+        }
+      });
+
+      const submitData = {
+        ...formattedData,
+        selectedDocuments: selectedDocTypes,
+        fullSizePhoto: fileIds.fullSizePhoto,
+        aadharCard: fileIds.aadharCard,
+        divorceDeath: fileIds.divorceDeath,
+        kundaliFile: fileIds.kundaliFile
+      };
+
+      console.log('Submitting data:', submitData); // Debug log
+
+      const response = await fetch(`${API_BASE}/api/gahoi-sammelans`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ data: submitData })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error?.message || 'Failed to submit form');
+      }
+
+      setIsSubmitted(true);
+      // Reset form and files
+      setFormData({
+        name: '',
+        gender: '',
+        gotra: '',
+        aankna: '',
+        gan: '',
+        birthDate: '',
+        birthPlace: '',
+        birthTime: '',
+        height: '',
+        color: '',
+        mama: '',
+        nationality: '',
+        education: '',
+        mobile: '',
+        occupation: '',
+        position: '',
+        company: '',
+        annualIncome: '',
+        currentAddress: '',
+        currentStatus: '',
+        previousSpouseName: '',
+        marriageDate: '',
+        marriageEndDate: '',
+        endReason: '',
+        childrenCount: '',
+        childrenDetails: '',
+        kundliAvailable: false,
+        kundliMatching: false,
+        agePreference: '',
+        educationPreference: '',
+        partnerType: '',
+        acceptChildrenPartner: false,
+        cityPreference: '',
+        motherName: '',
+        fatherName: '',
+        siblings: ''
+      });
+      setSelectedFiles({
+        fullSizePhoto: null,
+        aadharCard: null,
+        divorceDeath: null,
+        kundaliFile: null
+      });
+      setSelectedDocTypes({
+        fullSizePhoto: false,
+        aadharCard: false,
+        divorceDeath: false,
+        kundaliFile: false
+      });
+      
+      setTimeout(() => setIsSubmitted(false), 3000);
+    } catch (err) {
+      console.error('Form submission error:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const contacts = [
@@ -101,15 +291,15 @@ const GahoiSammelanPage = () => {
           <div className="max-w-7xl mx-auto text-center">
             <div className="inline-flex items-center justify-center w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full mb-6 shadow-xl">
               <Heart className="w-8 h-8 text-white" />
-            </div>
+              </div>
             <h1 className="text-4xl md:text-6xl font-bold text-white mb-4 tracking-tight">
               {t('gahoiSammelan.title')}
             </h1>
             <p className="text-lg md:text-xl text-white/90 max-w-4xl mx-auto leading-relaxed">
               {t('gahoiSammelan.subtitle')}
             </p>
-          </div>
-        </div>
+              </div>
+            </div>
       </div>
 
       {/* Navigation Section */}
@@ -362,6 +552,12 @@ const GahoiSammelanPage = () => {
                 </div>
               )}
 
+              {error && (
+                <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-center space-x-3">
+                  <div className="text-red-700">{error}</div>
+                </div>
+              )}
+
               <form onSubmit={handleSubmit} className="space-y-8">
                 {/* Personal Information */}
                 <div className="space-y-6">
@@ -454,15 +650,20 @@ const GahoiSammelanPage = () => {
 
                   <div className="grid md:grid-cols-3 gap-8">
                     <div className="space-y-2">
-                      <label className="block text-sm font-medium text-gray-700">{t('gahoiSammelan.form.personalInfo.birthDate')} *</label>
-                      <input
-                        type="date"
-                        name="birthDate"
-                        value={formData.birthDate}
-                        onChange={handleInputChange}
-                        className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all shadow-sm hover:border-red-300"
-                        required
-                      />
+                      <label className="block text-sm font-medium text-gray-700">
+                        {t('gahoiSammelan.form.personalInfo.birthDate')} *
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="date"
+                          name="birthDate"
+                          value={formData.birthDate}
+                          onChange={handleInputChange}
+                          className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all shadow-sm hover:border-red-300 cursor-pointer"
+                          required
+                          onClick={(e) => e.target.showPicker()}
+                        />
+                      </div>
                     </div>
                     <div className="space-y-2">
                       <label className="block text-sm font-medium text-gray-700">{t('gahoiSammelan.form.personalInfo.birthPlace')}</label>
@@ -556,10 +757,74 @@ const GahoiSammelanPage = () => {
                       <option value="postGraduate">{t('gahoiSammelan.form.personalInfo.educationOptions.postGraduate')}</option>
                       <option value="graduate">{t('gahoiSammelan.form.personalInfo.educationOptions.graduate')}</option>
                       <option value="diploma">{t('gahoiSammelan.form.personalInfo.educationOptions.diploma')}</option>
-                      <option value="12th">{t('gahoiSammelan.form.personalInfo.educationOptions.12th')}</option>
-                      <option value="10th">{t('gahoiSammelan.form.personalInfo.educationOptions.10th')}</option>
+                      <option value="class12">{t('gahoiSammelan.form.personalInfo.educationOptions.12th')}</option>
+                      <option value="class10">{t('gahoiSammelan.form.personalInfo.educationOptions.10th')}</option>
                       <option value="other">{t('gahoiSammelan.form.personalInfo.educationOptions.other')}</option>
                     </select>
+                  </div>
+
+                  <div className="space-y-6">
+                    {/* Kundli Available */}
+                    <div className="space-y-2">
+                      <label className="block text-sm font-medium text-gray-700">
+                        {t('gahoiSammelan.form.personalInfo.kundliAvailable')}
+                      </label>
+                      <div className="flex space-x-6">
+                        <label className="flex items-center space-x-2">
+                          <input
+                            type="radio"
+                            name="kundliAvailable"
+                            value="true"
+                            checked={formData.kundliAvailable === true}
+                            onChange={handleInputChange}
+                            className="form-radio text-red-600 focus:ring-red-500"
+                          />
+                          <span>{t('common.yes')}</span>
+                        </label>
+                        <label className="flex items-center space-x-2">
+                          <input
+                            type="radio"
+                            name="kundliAvailable"
+                            value="false"
+                            checked={formData.kundliAvailable === false}
+                            onChange={handleInputChange}
+                            className="form-radio text-red-600 focus:ring-red-500"
+                          />
+                          <span>{t('common.no')}</span>
+                        </label>
+                      </div>
+                    </div>
+
+                    {/* Kundli Matching */}
+                    <div className="space-y-2">
+                      <label className="block text-sm font-medium text-gray-700">
+                        {t('gahoiSammelan.form.personalInfo.kundliMatching')}
+                      </label>
+                      <div className="flex space-x-6">
+                        <label className="flex items-center space-x-2">
+                          <input
+                            type="radio"
+                            name="kundliMatching"
+                            value="true"
+                            checked={formData.kundliMatching === true}
+                            onChange={handleInputChange}
+                            className="form-radio text-red-600 focus:ring-red-500"
+                          />
+                          <span>{t('common.yes')}</span>
+                        </label>
+                        <label className="flex items-center space-x-2">
+                          <input
+                            type="radio"
+                            name="kundliMatching"
+                            value="false"
+                            checked={formData.kundliMatching === false}
+                            onChange={handleInputChange}
+                            className="form-radio text-red-600 focus:ring-red-500"
+                          />
+                          <span>{t('common.no')}</span>
+                        </label>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -656,13 +921,16 @@ const GahoiSammelanPage = () => {
                     <label className="block text-sm font-medium text-gray-700">
                       {t('gahoiSammelan.form.previousMarriage.marriageDate')}
                     </label>
+                    <div className="relative">
                       <input
                         type="date"
                         name="marriageDate"
                         value={formData.marriageDate}
                         onChange={handleInputChange}
-                      className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all shadow-sm hover:border-red-300"
+                        className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all shadow-sm hover:border-red-300 cursor-pointer"
+                        onClick={(e) => e.target.showPicker()}
                       />
+                    </div>
                   </div>
 
                   <div className="space-y-2">
@@ -758,6 +1026,37 @@ const GahoiSammelanPage = () => {
                       className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all shadow-sm hover:border-red-300"
                       />
                   </div>
+
+                  {/* Accept Children Partner */}
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      {t('gahoiSammelan.form.partnerPreferences.acceptChildren')}
+                    </label>
+                    <div className="flex space-x-6">
+                      <label className="flex items-center space-x-2">
+                        <input
+                          type="radio"
+                          name="acceptChildrenPartner"
+                          value="true"
+                          checked={formData.acceptChildrenPartner === true}
+                          onChange={handleInputChange}
+                          className="form-radio text-red-600 focus:ring-red-500"
+                        />
+                        <span>{t('common.yes')}</span>
+                      </label>
+                      <label className="flex items-center space-x-2">
+                        <input
+                          type="radio"
+                          name="acceptChildrenPartner"
+                          value="false"
+                          checked={formData.acceptChildrenPartner === false}
+                          onChange={handleInputChange}
+                          className="form-radio text-red-600 focus:ring-red-500"
+                        />
+                        <span>{t('common.no')}</span>
+                      </label>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Family Information */}
@@ -817,34 +1116,75 @@ const GahoiSammelanPage = () => {
                   <div className="bg-gray-50 rounded-2xl p-8 border-2 border-dashed border-gray-200">
                     <div className="grid md:grid-cols-2 gap-6 mb-8">
                       {[
-                        { icon: Camera, label: t('gahoiSammelan.form.documents.fullSizePhoto') },
-                        { icon: FileText, label: t('gahoiSammelan.form.documents.aadharCard') },
-                        { icon: FileText, label: t('gahoiSammelan.form.documents.divorceOrDeath') },
-                        { icon: Star, label: t('gahoiSammelan.form.documents.kundali') }
-                      ].map((doc, index) => (
-                        <div key={index} className="flex items-center space-x-4 p-4 bg-white rounded-xl border border-gray-100 shadow-sm hover:border-red-200 transition-colors">
+                        { type: 'fullSizePhoto', icon: Camera, label: t('gahoiSammelan.form.documents.fullSizePhoto') },
+                        { type: 'aadharCard', icon: FileText, label: t('gahoiSammelan.form.documents.aadharCard') },
+                        { type: 'divorceDeath', icon: FileText, label: t('gahoiSammelan.form.documents.divorceOrDeath') },
+                        { type: 'kundaliFile', icon: Star, label: t('gahoiSammelan.form.documents.kundali') }
+                      ].map((doc) => (
+                        <div key={doc.type} className="flex items-center space-x-4 p-4 bg-white rounded-xl border border-gray-100 shadow-sm hover:border-red-200 transition-colors">
                           <input
                             type="checkbox"
+                            checked={selectedDocTypes[doc.type]}
+                            onChange={() => handleDocTypeChange(doc.type)}
                             className="form-checkbox h-5 w-5 text-red-600 rounded border-gray-300 focus:ring-red-500"
                           />
-                          <div className="flex items-center space-x-3">
-                            <doc.icon className="w-5 h-5 text-gray-400" />
-                            <span className="text-gray-700">{doc.label}</span>
-                      </div>
-                      </div>
+                          <div className="flex-1 flex items-center justify-between">
+                            <div className="flex items-center space-x-3">
+                              <doc.icon className="w-5 h-5 text-gray-400" />
+                              <span className="text-gray-700">{doc.label}</span>
+                            </div>
+                            {selectedFiles[doc.type] && (
+                              <div className="flex items-center space-x-2">
+                                <span className="text-sm text-green-600">
+                                  {selectedFiles[doc.type].name}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveFile(doc.type)}
+                                  className="p-1 hover:bg-red-50 rounded-full text-red-500 transition-colors"
+                                >
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                                  </svg>
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
                       ))}
-                      </div>
+                    </div>
                     
                     <div className="relative group cursor-pointer">
                       <input
                         type="file"
                         multiple
+                        onChange={handleFileChange}
                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        accept=".jpg,.jpeg,.png,.pdf,.doc,.docx"
+                        disabled={!Object.values(selectedDocTypes).some(type => type)}
                       />
-                      <div className="text-center p-8 border-2 border-dashed border-gray-200 rounded-xl group-hover:border-red-300 transition-colors">
-                        <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4 group-hover:text-red-500 transition-colors" />
-                        <p className="text-gray-600 group-hover:text-red-600 transition-colors">{t('gahoiSammelan.form.documents.dragDrop')}</p>
-                        <p className="text-sm text-gray-500 mt-2">{t('gahoiSammelan.form.documents.maxSize')}</p>
+                      <div className={`text-center p-8 border-2 border-dashed rounded-xl transition-colors ${
+                        Object.values(selectedDocTypes).some(type => type)
+                          ? 'border-gray-200 group-hover:border-red-300'
+                          : 'border-gray-100 bg-gray-50 cursor-not-allowed'
+                      }`}>
+                        <Upload className={`w-12 h-12 mx-auto mb-4 transition-colors ${
+                          Object.values(selectedDocTypes).some(type => type)
+                            ? 'text-gray-400 group-hover:text-red-500'
+                            : 'text-gray-300'
+                        }`} />
+                        <p className={`transition-colors ${
+                          Object.values(selectedDocTypes).some(type => type)
+                            ? 'text-gray-600 group-hover:text-red-600'
+                            : 'text-gray-400'
+                        }`}>
+                          {Object.values(selectedDocTypes).some(type => type)
+                            ? t('gahoiSammelan.form.documents.dragDrop')
+                            : t('gahoiSammelan.form.documents.selectDocFirst')}
+                        </p>
+                        <p className="text-sm text-gray-500 mt-2">
+                          {t('gahoiSammelan.form.documents.maxSize')}
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -883,9 +1223,12 @@ const GahoiSammelanPage = () => {
                 <div className="flex flex-col items-center space-y-4">
                   <button
                     type="submit"
-                    className="px-8 py-4 bg-gradient-to-r from-red-600 to-red-500 text-white text-lg font-semibold rounded-xl hover:from-red-700 hover:to-red-600 transition-all shadow-lg hover:shadow-xl"
+                    disabled={loading}
+                    className={`px-8 py-4 bg-gradient-to-r from-red-600 to-red-500 text-white text-lg font-semibold rounded-xl transition-all shadow-lg hover:shadow-xl ${
+                      loading ? 'opacity-50 cursor-not-allowed' : 'hover:from-red-700 hover:to-red-600'
+                    }`}
                   >
-                    {t('gahoiSammelan.form.submit')}
+                    {loading ? t('common.submitting') : t('gahoiSammelan.form.submit')}
                   </button>
                   <p className="text-gray-500 text-sm text-center">
                     {t('gahoiSammelan.footer.note')}

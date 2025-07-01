@@ -13,7 +13,10 @@
     "tagline": "Empowering our community through unity, tradition, and mutual support.",
     "select": "Select",
     "required": "Required",
-    "optional": "Optional"
+    "optional": "Optional",
+    "submitting": "Submitting...",
+    "yes": "Yes",
+    "no": "No"
   },
   "navigation": {
     "home": "Home",
@@ -136,7 +139,10 @@
     "setMpin": "Set MPIN",
     "setting": "Setting MPIN...",
     "fullName": "Full Name",
-    "namePlaceholder": "Enter your full name"
+    "namePlaceholder": "Enter your full name",
+    "personalInfo": {
+      "mama": "Mama"
+    }
   },
   "latestNews": {
     "meta": {
@@ -1043,7 +1049,10 @@
           "12th": "12th",
           "10th": "10th",
           "other": "Other"
-        }
+        },
+        "kundliAvailable": "Is Kundli Available?",
+        "kundliMatching": "Is Kundli Matching Required?",
+        "mama": "Mama"
       },
       "professionalInfo": {
         "title": "Professional Information",
@@ -1071,7 +1080,8 @@
         "service": "Service",
         "housewife": "Housewife",
         "any": "Any",
-        "location": "Preferred Location"
+        "location": "Preferred Location",
+        "acceptChildren": "Would you accept a partner with children?"
       },
       "familyInfo": {
         "title": "Family Information",
@@ -1087,7 +1097,8 @@
         "divorceOrDeath": "Divorce Decree / Death Certificate",
         "kundali": "Kundali",
         "dragDrop": "Drag files here or click to select",
-        "maxSize": "Maximum file size: 10MB"
+        "maxSize": "Maximum file size: 10MB",
+        "selectDocFirst": "Please select document type first"
       },
       "consent": {
         "title": "Consent Form",
@@ -1096,7 +1107,6 @@
       },
       "submit": "Submit Application"
     },
-   
     "footer": {
       "title": "Join Us in This Noble Initiative",
       "tagline": "Building Bridges, Connecting Hearts",
