@@ -92,27 +92,23 @@ const GahoiSammelanPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-red-50 via-orange-50 to-red-50">
       {/* Hero Section */}
-      <div className="relative bg-gradient-to-r from-red-900 to-red-800 text-white py-24">
-        <div className="absolute inset-0 bg-black opacity-40"></div>
-        <div className="max-w-6xl mx-auto px-6 relative z-10">
-          <div className="text-center space-y-6">
-            {/* Main Organization Title with Decorative Elements */}
-            <div className="relative inline-block">
-              <div className="absolute -left-8 -right-8 top-1/2 transform -translate-y-1/2 h-px bg-red-200/30"></div>
-              <h1 className="text-5xl md:text-7xl font-bold leading-tight relative inline-block px-6 bg-gradient-to-r from-red-900 to-red-800">
-                {t('gahoiSammelan.title')}
-              </h1>
-              </div>
-            {/* Subtitle with Elegant Styling */}
-            <div className="relative">
-              <p className="text-xl md:text-2xl text-red-200 font-light italic">
-                {t('gahoiSammelan.subtitle')}
-              </p>
-              <div className="absolute left-1/2 transform -translate-x-1/2 -bottom-4 w-24 h-1 bg-red-500/30 rounded-full"></div>
-              </div>
-            
-           
+      <div className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-red-900 via-red-800 to-orange-800"></div>
+        <div className="absolute inset-0 bg-[url('/sammelan-bg.webp')] bg-cover bg-center opacity-20"></div>
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/20 to-black/40"></div>
+        
+        <div className="relative pt-16 pb-12 px-4">
+          <div className="max-w-7xl mx-auto text-center">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full mb-6 shadow-xl">
+              <Heart className="w-8 h-8 text-white" />
             </div>
+            <h1 className="text-4xl md:text-6xl font-bold text-white mb-4 tracking-tight">
+              {t('gahoiSammelan.title')}
+            </h1>
+            <p className="text-lg md:text-xl text-white/90 max-w-4xl mx-auto leading-relaxed">
+              {t('gahoiSammelan.subtitle')}
+            </p>
+          </div>
         </div>
       </div>
 
