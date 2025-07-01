@@ -76,13 +76,13 @@ const Header = () => {
 
   return (
     <>
-      {/* Top Profile Bar - Not Fixed */}
+      {/* Top Bar  */}
       {isAuthenticated && (
         <div className="bg-red-900 text-white w-full">
           <div className="container mx-auto px-4">
             <div className="flex justify-end items-center py-1">
               <Link
-                to="/"
+                to="/my-account"
                 className="text-sm text-white hover:text-yellow-200 px-4 py-1 border-r border-red-800"
               >
                 {t('navigation.myProfile')}
