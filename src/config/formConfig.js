@@ -50,6 +50,7 @@ export const REQUIRED_FIELDS = [
   "state",
   "district",
   "local_body",
+  "city",
   "gramPanchayat",
   "localPanchayat",
   "subLocalPanchayat",

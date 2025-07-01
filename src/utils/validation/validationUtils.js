@@ -10,6 +10,8 @@ export const validateField = (name, value) => {
         return 'Local Body is required';
       case 'gramPanchayat':
         return 'Gram Panchayat is required';
+      case 'city':
+        return 'Local Body is required';
       default:
         displayName = name
           .replace(/([A-Z])/g, ' $1') // Add space before capital letters
