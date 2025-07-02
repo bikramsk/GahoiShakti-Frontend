@@ -527,7 +527,7 @@ const GahoiSammelanPage = () => {
               </div>
               <div className="mt-8 text-center">
                 <p className="text-gray-600 mb-4">{t('gahoiSammelan.contact.phonepeTitle')}</p>
-                <p className="text-2xl font-bold text-green-600">7049004444</p>
+                <p className="text-2xl font-bold text-green-600">8251980900</p>
                 <p className="text-sm text-gray-500 mt-2">{t('gahoiSammelan.contact.paymentNote')}</p>
               </div>
             </div>
