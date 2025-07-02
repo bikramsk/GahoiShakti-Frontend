@@ -239,6 +239,7 @@ const Login = () => {
     mpin: '',
     confirmMpin: ''
   });
+  const [isCheckingUser, setIsCheckingUser] = useState(false);
 
   React.useEffect(() => {
     const loadPageData = async () => {
@@ -269,6 +270,7 @@ const Login = () => {
   useEffect(() => {
     const checkUser = async () => {
       if (formData.mobileNumber.length === 10) {
+        setIsCheckingUser(true);
         try {
           const API_TOKEN = localStorage.getItem('token');
           const response = await fetch(`${API_BASE}/api/check-user-mpin/${formData.mobileNumber}`, {
@@ -302,6 +304,8 @@ const Login = () => {
             ...prev,
             mobileNumber: 'Failed to check user status. Please try again.'
           }));
+        } finally {
+          setIsCheckingUser(false);
         }
       }
     };
@@ -852,7 +856,7 @@ const Login = () => {
                 </div>
 
                 {/* Name Input - Only show after mobile verification for new users */}
-                {!userExists && formData.mobileNumber.length === 10 && !showOtpInput && (
+                {!isCheckingUser && !userExists && formData.mobileNumber.length === 10 && !showOtpInput && (
                   <div className="space-y-1 sm:space-y-2">
                     <label className="text-xs sm:text-sm font-medium text-gray-700 flex items-center">
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-1.5 text-red-700" viewBox="0 0 20 20" fill="currentColor">
