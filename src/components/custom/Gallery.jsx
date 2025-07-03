@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 
 const API_URL = import.meta.env.MODE === 'production' 
   ? 'https://admin.gahoishakti.in'
-  : 'http://localhost:1340';
+  : 'http://localhost:1337';
 
 const Gallery = () => {
   const { t } = useTranslation();
@@ -234,24 +234,24 @@ const Gallery = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-red-50 to-rose-100">
-       {/* Hero Section - Always visible */}
-     <div className="relative overflow-hidden">
-         <div className="absolute inset-0 bg-gradient-to-r from-red-900 via-red-800 to-orange-800"></div>
+      {/* Hero Section - Always visible */}
+      <div className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-red-900 via-red-800 to-orange-800"></div>
         <div className="absolute inset-0 bg-[url('/gallery-bg.webp')] bg-cover bg-center opacity-20"></div>
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/20 to-black/40"></div>
         
-        <div className="relative pt-16 pb-12 px-4">
-           <div className="max-w-7xl mx-auto text-center">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full mb-6 shadow-xl">
-              <Image className="w-8 h-8 text-white" />
+        <div className="relative pt-32 pb-24 px-4">
+          <div className="max-w-7xl mx-auto text-center">
+            <div className="inline-flex items-center justify-center w-24 h-24 bg-white/20 backdrop-blur-sm rounded-full mb-8 shadow-xl">
+              <Image className="w-12 h-12 text-white" />
             </div>
-             <h1 className="text-4xl md:text-6xl font-bold text-white mb-4 tracking-tight">
-               {t('gallery.title')}
+            <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 tracking-tight">
+              {t('gallery.title')}
             </h1>
-             <p className="text-lg md:text-xl text-white/90 max-w-4xl mx-auto leading-relaxed">
-               {t('gallery.subtitle')}
+            <p className="text-xl md:text-2xl text-white/90 max-w-4xl mx-auto leading-relaxed">
+              {t('gallery.subtitle')}
             </p>
-           </div>
+          </div>
         </div>
       </div>
 

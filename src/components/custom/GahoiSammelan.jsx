@@ -209,7 +209,7 @@ const GahoiSammelanPage = () => {
         throw new Error(errorData.error?.message || 'Failed to submit form');
       }
 
-      setIsSubmitted(true);
+    setIsSubmitted(true);
       // Reset form and files
       setFormData({
         name: '',
@@ -262,7 +262,7 @@ const GahoiSammelanPage = () => {
         kundaliFile: false
       });
       
-      setTimeout(() => setIsSubmitted(false), 3000);
+    setTimeout(() => setIsSubmitted(false), 3000);
     } catch (err) {
       console.error('Form submission error:', err);
       setError(err.message);
@@ -654,16 +654,16 @@ const GahoiSammelanPage = () => {
                         {t('gahoiSammelan.form.personalInfo.birthDate')} *
                       </label>
                       <div className="relative">
-                        <input
-                          type="date"
-                          name="birthDate"
-                          value={formData.birthDate}
-                          onChange={handleInputChange}
+                      <input
+                        type="date"
+                        name="birthDate"
+                        value={formData.birthDate}
+                        onChange={handleInputChange}
                           className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all shadow-sm hover:border-red-300 cursor-pointer"
-                          required
+                        required
                           onClick={(e) => e.target.showPicker()}
-                        />
-                      </div>
+                      />
+                    </div>
                     </div>
                     <div className="space-y-2">
                       <label className="block text-sm font-medium text-gray-700">{t('gahoiSammelan.form.personalInfo.birthPlace')}</label>
@@ -1034,25 +1034,25 @@ const GahoiSammelanPage = () => {
                     </label>
                     <div className="flex space-x-6">
                       <label className="flex items-center space-x-2">
-                        <input
-                          type="radio"
-                          name="acceptChildrenPartner"
+                            <input
+                              type="radio"
+                              name="acceptChildrenPartner"
                           value="true"
                           checked={formData.acceptChildrenPartner === true}
-                          onChange={handleInputChange}
+                              onChange={handleInputChange}
                           className="form-radio text-red-600 focus:ring-red-500"
-                        />
+                            />
                         <span>{t('common.yes')}</span>
-                      </label>
+                          </label>
                       <label className="flex items-center space-x-2">
-                        <input
+                      <input
                           type="radio"
                           name="acceptChildrenPartner"
                           value="false"
                           checked={formData.acceptChildrenPartner === false}
-                          onChange={handleInputChange}
+                        onChange={handleInputChange}
                           className="form-radio text-red-600 focus:ring-red-500"
-                        />
+                      />
                         <span>{t('common.no')}</span>
                       </label>
                     </div>
@@ -1132,9 +1132,9 @@ const GahoiSammelanPage = () => {
                             <div className="flex items-center space-x-3">
                               <doc.icon className="w-5 h-5 text-gray-400" />
                               <span className="text-gray-700">{doc.label}</span>
-                            </div>
+                      </div>
                             {selectedFiles[doc.type] && (
-                              <div className="flex items-center space-x-2">
+                      <div className="flex items-center space-x-2">
                                 <span className="text-sm text-green-600">
                                   {selectedFiles[doc.type].name}
                                 </span>
@@ -1147,10 +1147,10 @@ const GahoiSammelanPage = () => {
                                     <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
                                   </svg>
                                 </button>
-                              </div>
+                      </div>
                             )}
-                          </div>
-                        </div>
+                      </div>
+                      </div>
                       ))}
                     </div>
                     
