@@ -153,7 +153,7 @@ const GahoiSammelanPage = () => {
               ))}
             </div>
 
-            {/* Second Register Now Button with simplified style */}
+            {/* Second Register Now Button */}
             <div className="mt-12 text-center">
               <a 
                 href="/login"
