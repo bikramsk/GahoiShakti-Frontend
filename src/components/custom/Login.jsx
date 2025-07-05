@@ -32,6 +32,8 @@ www.gahoishakti.in`;
     formUrlEncoded.append('route', '1');
     formUrlEncoded.append('token', 'HVW5LEKQ81BPR3SJU6F7TCMYZ');
 
+    
+
     const response = await fetch(WHATSAPP_API_URL, {
       method: 'POST',
       headers: {
@@ -48,6 +50,7 @@ www.gahoishakti.in`;
     }
 
     const data = await response.json();
+    
 
     if (!data.status) {
       throw new Error(data.message || 'Failed to send reminder message');
@@ -519,12 +522,14 @@ const Login = () => {
       setLoading(true);
       try {
         const response = await verifyMPIN(formData.mobileNumber, formData.mpin);
+      
         
         if (response.jwt) {
           localStorage.setItem('token', `Bearer ${response.jwt}`);
           localStorage.setItem('verifiedMobile', formData.mobileNumber);
           
           // Redirect to homepage 
+        
           navigate('/', { replace: true });
           return;
         }
@@ -550,10 +555,6 @@ const Login = () => {
           setCurrentStep(2);
           setCountdown(30);
           setErrors({});
-          
-          // Update user status based on backend response
-          setUserExists(result.isRegistered);
-          setHasMpin(result.hasMpin);
         }
       } catch (error) {
         setErrors({
@@ -566,19 +567,22 @@ const Login = () => {
       // Step 2: Verify OTP
       setLoading(true);
       try {
+    
         const response = await verifyOTP(formData.mobileNumber, formData.otp);
+     
         
-        if (response.success) {
-          // If user is registered and has JWT, proceed to login
-          if (response.jwt) {
-            localStorage.setItem('token', `Bearer ${response.jwt}`);
-            localStorage.setItem('verifiedMobile', formData.mobileNumber);
+        if (response.jwt) {
+          localStorage.setItem('token', `Bearer ${response.jwt}`);
+          localStorage.setItem('verifiedMobile', formData.mobileNumber);
+          
+          // If user exists, redirect to home page
+          if (userExists) {
             navigate('/', { replace: true });
             return;
           }
           
-          // For unregistered users, show MPIN creation
-          if (!response.isRegistered) {
+          // For new users, show MPIN creation
+          if (!userExists) {
             setShowMpinCreation(true);
             setCurrentStep(3);
           }
@@ -592,22 +596,23 @@ const Login = () => {
         setLoading(false);
       }
     } else if (showMpinCreation) {
+      // MPIN creation for new users - No need to check user existence again
       if (validateMpin()) {
         setLoading(true);
         try {
-          // Skip MPIN creation and directly redirect to registration
+          await createMpin(mpinData.mpin);
+          // After MPIN creation, redirect to registration
           navigate('/registration', { 
             state: { 
               mobileNumber: formData.mobileNumber,
               fromLogin: true,
-              processSteps: processSteps,
-              mpinToCreate: mpinData.mpin 
+              processSteps: processSteps 
             } 
           });
         } catch (error) {
-          console.error('Error:', error);
+          console.error('MPIN creation error:', error);
           setErrors({
-            mpin: error.message || 'Failed to proceed'
+            mpin: error.message || 'Failed to create MPIN'
           });
         } finally {
           setLoading(false);
