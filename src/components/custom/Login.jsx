@@ -596,23 +596,22 @@ const Login = () => {
         setLoading(false);
       }
     } else if (showMpinCreation) {
-      // MPIN creation for new users - No need to check user existence again
       if (validateMpin()) {
         setLoading(true);
         try {
-          await createMpin(mpinData.mpin);
-          // After MPIN creation, redirect to registration
+          // Skip MPIN creation and directly redirect to registration
           navigate('/registration', { 
             state: { 
               mobileNumber: formData.mobileNumber,
               fromLogin: true,
-              processSteps: processSteps 
+              processSteps: processSteps,
+              mpinToCreate: mpinData.mpin 
             } 
           });
         } catch (error) {
-          console.error('MPIN creation error:', error);
+          console.error('Error:', error);
           setErrors({
-            mpin: error.message || 'Failed to create MPIN'
+            mpin: error.message || 'Failed to proceed'
           });
         } finally {
           setLoading(false);
