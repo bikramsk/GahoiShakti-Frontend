@@ -32,8 +32,6 @@ www.gahoishakti.in`;
     formUrlEncoded.append('route', '1');
     formUrlEncoded.append('token', 'HVW5LEKQ81BPR3SJU6F7TCMYZ');
 
-    
-
     const response = await fetch(WHATSAPP_API_URL, {
       method: 'POST',
       headers: {
@@ -50,7 +48,6 @@ www.gahoishakti.in`;
     }
 
     const data = await response.json();
-    
 
     if (!data.status) {
       throw new Error(data.message || 'Failed to send reminder message');
@@ -522,14 +519,12 @@ const Login = () => {
       setLoading(true);
       try {
         const response = await verifyMPIN(formData.mobileNumber, formData.mpin);
-      
         
         if (response.jwt) {
           localStorage.setItem('token', `Bearer ${response.jwt}`);
           localStorage.setItem('verifiedMobile', formData.mobileNumber);
           
           // Redirect to homepage 
-        
           navigate('/', { replace: true });
           return;
         }
@@ -555,6 +550,10 @@ const Login = () => {
           setCurrentStep(2);
           setCountdown(30);
           setErrors({});
+          
+          // Update user status based on backend response
+          setUserExists(result.isRegistered);
+          setHasMpin(result.hasMpin);
         }
       } catch (error) {
         setErrors({
@@ -567,22 +566,19 @@ const Login = () => {
       // Step 2: Verify OTP
       setLoading(true);
       try {
-    
         const response = await verifyOTP(formData.mobileNumber, formData.otp);
-     
         
-        if (response.jwt) {
-          localStorage.setItem('token', `Bearer ${response.jwt}`);
-          localStorage.setItem('verifiedMobile', formData.mobileNumber);
-          
-          // If user exists, redirect to home page
-          if (userExists) {
+        if (response.success) {
+          // If user is registered and has JWT, proceed to login
+          if (response.jwt) {
+            localStorage.setItem('token', `Bearer ${response.jwt}`);
+            localStorage.setItem('verifiedMobile', formData.mobileNumber);
             navigate('/', { replace: true });
             return;
           }
           
-          // For new users, show MPIN creation
-          if (!userExists) {
+          // For unregistered users, show MPIN creation
+          if (!response.isRegistered) {
             setShowMpinCreation(true);
             setCurrentStep(3);
           }
