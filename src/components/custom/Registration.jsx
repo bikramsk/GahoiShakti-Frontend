@@ -2412,7 +2412,7 @@ useEffect(() => {
                    >
                      <path
                        fillRule="evenodd"
-                       d="M10 2a1 1 0 011 1v1.323l3.954 1.582 1.599-.8a1 1 0 01.894 1.79l-1.233.616 1.738 5.42a1 1 0 01-.285 1.05A3.989 3.989 0 0115 15a3.989 3.989 0 01-2.667-1.019 1 1 0 01-.285-1.05l1.715-5.349L11 6.477V16h2a1 1 0 110 2H7a1 1 0 110-2h2V6.477L6.237 7.582l1.715 5.349a1 1 0 01-.285 1.05A3.989 3.989 0 015 15a3.989 3.989 0 01-2.667-1.019 1 1 0 01-.285-1.05l1.738-5.42-1.233-.617a1 1 0 01.894-1.788l1.599.799L9 4.323V3a1 1 0 011-1z"
+                       d="M10 2a1 1 0 011 1v1.323l3.954 1.582l1.599-.8a1 1 0 01.894 1.79l-1.233.616l1.738 5.42a1 1 0 01-.285 1.05A3.989 3.989 0 0115 15a3.989 3.989 0 01-2.667-1.019 1 1 0 01-.285-1.05l1.715-5.349L11 6.477V16h2a1 1 0 110 2H7a1 1 0 110-2h2V6.477L6.237 7.582l1.715 5.349a1 1 0 01-.285 1.05A3.989 3.989 0 015 15a3.989 3.989 0 01-2.667-1.019 1 1 0 01-.285-1.05l1.738-5.42-1.233-.617a1 1 0 01.894-1.788l1.599.799L9 4.323V3a1 1 0 011-1z"
                        clipRule="evenodd"
                      />
                    </svg>
@@ -3445,7 +3445,12 @@ useEffect(() => {
                        <option value="">{t('registration.workInfo.selectBusinessSize')}</option>
                        {BUSINESS_SIZES.map((size) => (
                          <option key={size} value={size}>
-                           {t(`registration.workInfo.businessSizeOptions.${size}`)}
+                           {t(`registration.workInfo.businessSizeOptions.${size === "Micro Enterprise" ? "micro" :
+                             size === "Small Enterprise" ? "small" :
+                             size === "Medium Enterprise" ? "medium" :
+                             size === "Large Enterprise" ? "large" :
+                             size === "Self Employed/Freelancer" ? "selfEmployed" :
+                             "notApplicable"}`)}
                          </option>
                        ))}
                      </select>
@@ -3538,7 +3543,9 @@ useEffect(() => {
                          className="h-4 w-4 text-red-700 focus:ring-red-500"
                        />
                        <span className="ml-2 text-sm text-gray-700">
-                         {t(`registration.workInfo.employmentTypesOptions.${type}`)}
+                         {t(`registration.workInfo.employmentTypesOptions.${type === "Central Government Employee" ? "centralGovt" : 
+                           type === "State Government Employee" ? "stateGovt" : 
+                           "privateSector"}`)}
                        </span>
                      </label>
                    ))}
@@ -3575,7 +3582,6 @@ useEffect(() => {
              </div>
            </div>
          );
- 
  
        case 4:
          return (
