@@ -322,36 +322,59 @@ const UserProfile = () => {
     }
   };
 
-  const handleSaveProfile = async () => {
+const handleSaveProfile = async () => {
+  try {
     const token = localStorage.getItem("token");
-    const documentId = formData?.documentId;
+    const documentId = localStorage.getItem("documentId");
 
-    try {
-      const response = await fetch(
-        `${API_BASE}/api/registration-pages/${documentId}`,
-        {
-          method: "PUT",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ data: formData }),
+    // Clean up nested IDs recursively
+    const removeNestedIds = (obj) => {
+      if (Array.isArray(obj)) {
+        return obj.map(removeNestedIds);
+      } else if (typeof obj === "object" && obj !== null) {
+        const newObj = {};
+        for (const key in obj) {
+          if (key !== "id") {
+            newObj[key] = removeNestedIds(obj[key]);
+          }
         }
-      );
-
-      if (response.ok) {
-        const updated = await response.json();
-        setUserData(updated.data);
-        setEditMode(false);
-        alert("Profile updated successfully!");
-      } else {
-        throw new Error("Update failed");
+        return newObj;
       }
-    } catch (err) {
-      console.error(err);
-      alert("Failed to save profile. Try again.");
+      return obj;
+    };
+
+    // Clone formData and remove `documentId` from root level
+    const cleanedFormData = removeNestedIds({ ...formData });
+    delete cleanedFormData.documentId;
+
+    const response = await fetch(
+      `https://admin.gahoishakti.in/api/registration-pages/${documentId}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ data: cleanedFormData }),
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      console.error("Error saving profile:", result);
+      alert("Failed to save. Check console for details.");
+    } else {
+      alert("Profile saved successfully");
+      setEditMode(false);
     }
-  };
+  } catch (err) {
+    console.error("Unexpected error:", err);
+    alert("Unexpected error occurred.");
+  }
+};
+
+
 
   if (loading) {
     return (
@@ -711,58 +734,63 @@ const UserProfile = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-white rounded-lg shadow-xl overflow-hidden">
-          <div className="flex flex-col lg:flex-row">
-            {/* Sidebar */}
-            <div className="w-full lg:w-64 bg-gray-50 border-b lg:border-b-0 lg:border-r border-gray-200">
-              <nav className="flex lg:flex-col overflow-x-auto lg:overflow-x-visible py-2 lg:py-4">
-                {SECTIONS.map((section) => (
-                  <button
-                    key={section.id}
-                    onClick={() => setActiveSection(section.id)}
-                    className={`flex-shrink-0 flex items-center px-4 py-3 text-sm font-medium transition-colors
-                      ${
-                        activeSection === section.id
-                          ? "bg-red-50 text-red-700 border-b-4 lg:border-b-0 lg:border-l-4 border-red-700"
-                          : "text-gray-600 hover:bg-gray-100"
-                      } w-auto lg:w-full whitespace-nowrap`}
-                  >
-                    {renderIcon(section.icon)}
-                    <span className="ml-3">{section.title}</span>
-                  </button>
-                ))}
-              </nav>
-            </div>
-
-            {/* Edit button */}
-            <div className="flex justify-end p-4">
+<div className="min-h-screen bg-gray-100">
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="bg-white rounded-lg shadow-xl overflow-hidden">
+      <div className="flex flex-col lg:flex-row">
+        {/* Sidebar */}
+        <div className="w-full lg:w-64 bg-gray-50 border-b lg:border-b-0 lg:border-r border-gray-200">
+          <nav className="flex lg:flex-col overflow-x-auto lg:overflow-x-visible py-2 lg:py-4">
+            {SECTIONS.map((section) => (
               <button
-                onClick={() => setEditMode(!editMode)}
-                className="text-sm bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded"
+                key={section.id}
+                onClick={() => setActiveSection(section.id)}
+                className={`flex-shrink-0 flex items-center px-4 py-3 text-sm font-medium transition-colors
+                  ${
+                    activeSection === section.id
+                      ? "bg-red-50 text-red-700 border-b-4 lg:border-b-0 lg:border-l-4 border-red-700"
+                      : "text-gray-600 hover:bg-gray-100"
+                  } w-auto lg:w-full whitespace-nowrap`}
               >
-                {editMode ? "Cancel Editing" : "Edit Profile"}
+                {renderIcon(section.icon)}
+                <span className="ml-3">{section.title}</span>
+              </button>
+            ))}
+          </nav>
+        </div>
+
+        {/* Main content area (includes Edit/Save and Section content) */}
+        <div className="flex-1 p-4 lg:p-6">
+          {/* Edit Button */}
+          <div className="flex justify-end mb-4">
+            <button
+              onClick={() => setEditMode(!editMode)}
+              className="text-sm bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded"
+            >
+              {editMode ? "Cancel Editing" : "Edit Profile"}
+            </button>
+          </div>
+
+          {/* Section Content */}
+          {renderSectionContent()}
+
+          {/* Save Button */}
+          {editMode && (
+            <div className="text-right mt-4">
+              <button
+                onClick={handleSaveProfile}
+                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
+              >
+                Save Changes
               </button>
             </div>
-
-            {/* Content */}
-            <div className="flex-1 p-4 lg:p-6">{renderSectionContent()}</div>
-            {/* Save Button */}
-            {editMode && (
-              <div className="text-right mt-4">
-                <button
-                  onClick={handleSaveProfile}
-                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
-                >
-                  Save Changes
-                </button>
-              </div>
-            )}
-          </div>
+          )}
         </div>
       </div>
     </div>
+  </div>
+</div>
+
   );
 };
 
