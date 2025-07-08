@@ -3541,6 +3541,7 @@ useEffect(() => {
    {t(`registration.workInfo.employmentTypesOptions.${type}`)}
  </span>
                      </label>
+                     ))}
                    </div>
                    {hasError("employmentType") && (
                        <p className="text-red-500 text-xs">
