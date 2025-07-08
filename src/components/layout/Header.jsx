@@ -10,6 +10,7 @@ const API_BASE = import.meta.env.MODE === 'production'
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const dropdownRef = useRef(null);
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
@@ -24,10 +25,18 @@ const Header = () => {
       const verifiedMobile = localStorage.getItem('verifiedMobile');
       if (token && verifiedMobile) {
         setIsAuthenticated(true);
-       
       }
     };
     checkAuth();
+  }, []);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const isScrolled = window.scrollY > 10;
+      setScrolled(isScrolled);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   const handleLogout = () => {
@@ -38,24 +47,18 @@ const Header = () => {
   };
 
   useEffect(() => {
-    if (isMenuOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
-    }
+    document.body.style.overflow = isMenuOpen ? 'hidden' : 'unset';
     return () => {
       document.body.style.overflow = 'unset';
     };
   }, [isMenuOpen]);
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setIsMenuOpen(false);
       }
     };
-
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
@@ -64,149 +67,189 @@ const Header = () => {
 
   const menuItems = [
     { to: '/', label: t('navigation.home') },
-    ...(isAuthenticated ? [] : [{ to: '/login', label: t('navigation.login') }]),
+    // ...(isAuthenticated ? [] : [{ to: '/login', label: t('navigation.login') }]),
     { to: '/about-us', label: t('navigation.about') },
     { to: '/our-team', label: t('navigation.team', 'Our Team') },
     { to: '/contact-us', label: t('navigation.contact') },
     { to: '/gau-seva', label: t('navigation.gauseva') },
     { to: '/gotra-aankna', label: t('navigation.gotraankna') },
-    // { to: '/all-assembly', label: t('navigation.allassembly') },
-    // { to: '/community-funds', label: t('navigation.funds') },
   ];
 
   return (
-    <>
-      {/* Top Bar  */}
-      {isAuthenticated && (
-        <div className="bg-red-900 text-white w-full">
-          <div className="container mx-auto px-4">
-            <div className="flex justify-end items-center py-1">
+    <header className={`w-full top-0 z-50 transition-all duration-300 ${
+      scrolled 
+        ? 'bg-[#800000] shadow-xl border-b border-gray-200/20' 
+        : 'bg-[#800000] shadow-lg'
+    }`}>
+      <nav className="container mx-auto px-4 py-1">
+        <div className="flex justify-between items-center">
+          {/* Logo */}
+          <Link to="/" className="flex items-center">
+            <img 
+              src="/logo.png" 
+              alt="Gahoi Logo" 
+              className="h-20 md:h-24 lg:h-28 w-auto object-contain"
+            />
+          </Link>
+
+          {/* MyAccount login and logout*/}
+          <div className="hidden md:flex items-center space-x-4 absolute top-2 right-16">
+            {isAuthenticated ? (
+              <div className="flex items-center space-x-3 text-sm">
+                <Link
+                  to="/my-account"
+                  className="text-white hover:text-yellow-300 transition-colors duration-300 flex items-center space-x-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                  <span>{t('navigation.myProfile')}</span>
+                </Link>
+                <div className="h-4 w-px bg-white/40"></div>
+                <button
+                  onClick={handleLogout}
+                  className="text-white hover:text-yellow-300 transition-colors duration-300 flex items-center space-x-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
+                  <span>{t('navigation.logout')}</span>
+                </button>
+              </div>
+            ) : (
               <Link
-                to="/my-account"
-                className="text-sm text-white hover:text-yellow-200 px-4 py-1 border-r border-red-800"
+                to="/login"
+                className="text-white hover:text-yellow-300 transition-colors duration-300 flex items-center space-x-2 text-sm"
               >
-                {t('navigation.myProfile')}
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                </svg>
+                <span>{t('navigation.login')}</span>
               </Link>
-              <button
-                onClick={handleLogout}
-                className="text-sm text-white hover:text-yellow-200 px-4 py-1"
-              >
-                {t('navigation.logout')}
-              </button>
+            )}
+          </div>
+
+          {/* Desktop */}
+          <div className="hidden md:flex items-center space-x-10">
+            <div className="flex items-center space-x-8">
+              {menuItems.map((item) => (
+                <Link
+                  key={item.to}
+                  to={item.to}
+                  className={`${hindiTextClass} text-white hover:text-yellow-300 transition-colors duration-300 font-medium relative group px-1`}
+                >
+                  {item.label}
+                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-yellow-300 transition-all duration-300 group-hover:w-full"></span>
+                </Link>
+              ))}
+            </div>
+            
+            {/* Language  */}
+            <div className="flex items-center">
+              <LanguageSwitcher />
             </div>
           </div>
-        </div>
-      )}
 
-      {/* Main Header */}
-      <header className="bg-[#800000]">
-        <nav className="container mx-auto px-4 py-2">
-          <div className="flex justify-between items-center">
-            <Link to="/" className="flex items-center space-x-3 z-50">
-              <img 
-                src="/logo.png" 
-                alt="Gahoi Logo" 
-                className="h-20 sm:h-14 md:h-16 lg:h-28 w-auto object-contain"
-              />
-            </Link>
+          {/* Mobile Menu */}
+          <button
+            onClick={() => setIsMenuOpen(true)}
+            className="md:hidden text-white p-2 hover:bg-white/10 rounded-lg transition-all duration-300"
+            aria-label="Open menu"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
 
-            <div className="flex items-center space-x-3">
-              {/* Hamburger icon */}
-              {!isMenuOpen && (
-                <button 
-                  onClick={() => setIsMenuOpen(true)}
-                  className="md:hidden text-white p-2 hover:bg-white/10 rounded-lg transition-colors z-50"
-                  aria-label="Open menu"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                  </svg>
-                </button>
-              )}
-            </div>
-
-            {/* Desktop Menu */}
-            <div className="hidden md:flex items-center space-x-4">
-              <div className="flex space-x-2 lg:space-x-4 items-center">
-                {menuItems.map((item) => (
-                  <div 
-                    key={item.to}
-                    className="relative"
-                  >
-                    <Link
-                      to={item.to}
-                      className={`${hindiTextClass} text-white hover:text-yellow-200 transition-colors drop-shadow-lg px-1 lg:px-2 whitespace-nowrap`}
-                    >
-                      {item.label}
-                    </Link>
-                  </div>
-                ))}
-              </div>
-              <div className="ml-4">
-                <LanguageSwitcher />
-              </div>
-            </div>
-
-            {/* Mobile Menu */}
-            {isMenuOpen && (
+          
+          {isMenuOpen && (
+            <>
+              <div className="fixed inset-0 bg-black/50 z-40" onClick={() => setIsMenuOpen(false)}></div>
               <div 
                 ref={dropdownRef}
-                className="md:hidden fixed inset-0 top-[88px] bg-red-800/95 backdrop-blur-sm z-40"
+                className="fixed inset-y-0 right-0 w-80 bg-[#800000] z-50 shadow-2xl"
               >
-                {/* Close button */}
-                <button
-                  onClick={() => setIsMenuOpen(false)}
-                  className="absolute top-4 right-4 text-white p-2 hover:bg-white/10 rounded-lg transition-colors z-50"
-                  aria-label="Close menu"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-                <div className="container mx-auto px-4 py-4">
-                  <div className="flex flex-col space-y-4">
+                <div className="p-6">
+                  {/* Mobile Menu Header */}
+                  <div className="flex items-center justify-between mb-8">
+                    <img 
+                      src="/logo.png" 
+                      alt="Gahoi Logo" 
+                      className="h-12 w-auto object-contain"
+                    />
+                    <button
+                      onClick={() => setIsMenuOpen(false)}
+                      className="text-white hover:text-yellow-300 p-2 hover:bg-white/10 rounded-lg transition-all duration-300"
+                    >
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+
+                  {/* Mobile Items */}
+                  <div className="space-y-3">
                     {menuItems.map((item) => (
                       <Link
                         key={item.to}
                         to={item.to}
-                        className={`${hindiTextClass} block text-white hover:text-yellow-200 py-2 text-lg font-medium`}
                         onClick={() => setIsMenuOpen(false)}
+                        className={`${hindiTextClass} text-white hover:text-yellow-300 block px-4 py-3 rounded-lg transition-all duration-300 hover:bg-white/10`}
                       >
                         {item.label}
                       </Link>
                     ))}
-                    {isAuthenticated && (
-                      <div className="border-t border-red-700 pt-4">
-                        <Link
-                          to="/my-account"
-                          className="block text-white hover:text-yellow-200 py-2 text-lg font-medium"
+                    
+                    {isAuthenticated ? (
+                      <div className="mt-6 pt-6 border-t border-white/20 space-y-3">
+                        <Link 
+                          to="/my-account" 
                           onClick={() => setIsMenuOpen(false)}
+                          className="flex items-center text-white hover:text-yellow-300 px-4 py-3 rounded-lg transition-all duration-300 hover:bg-white/10"
                         >
+                          <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                          </svg>
                           {t('navigation.myProfile')}
                         </Link>
-                        <button
-                          onClick={() => {
-                            handleLogout();
-                            setIsMenuOpen(false);
-                          }}
-                          className="block text-white hover:text-yellow-200 py-2 text-lg font-medium text-left w-full"
+                        <button 
+                          onClick={() => { setIsMenuOpen(false); handleLogout(); }}
+                          className="flex items-center text-white hover:text-yellow-300 px-4 py-3 rounded-lg transition-all duration-300 hover:bg-white/10 w-full text-left"
                         >
+                          <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                          </svg>
                           {t('navigation.logout')}
                         </button>
                       </div>
+                    ) : (
+                      <div className="mt-6 pt-6 border-t border-white/20">
+                        <Link
+                          to="/login"
+                          onClick={() => setIsMenuOpen(false)}
+                          className="flex items-center text-white hover:text-yellow-300 px-4 py-3 rounded-lg transition-all duration-300 hover:bg-white/10"
+                        >
+                          <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                          </svg>
+                          {t('navigation.login')}
+                        </Link>
+                      </div>
                     )}
-                    <div className="mt-4 border-t border-red-700 pt-4">
+                    
+                    <div className="mt-6 pt-6 border-t border-white/20">
                       <LanguageSwitcher />
                     </div>
                   </div>
                 </div>
               </div>
-            )}
-          </div>
-        </nav>
-      </header>
-    </>
+            </>
+          )}
+        </div>
+      </nav>
+    </header>
   );
 };
 
-export default Header; 
+export default Header;
+
