@@ -363,7 +363,7 @@ const handleSaveProfile = async () => {
 
     if (!response.ok) {
       console.error("Error saving profile:", result);
-      alert("Failed to save. Check console for details.");
+      // alert("Failed to save. Check console for details.");
     } else {
       alert("Profile saved successfully");
       setEditMode(false);
