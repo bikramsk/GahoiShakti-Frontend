@@ -331,7 +331,6 @@ const RegistrationForm = () => {
 const [finalSubmitted, setFinalSubmitted] = useState(false);
 
 
-
 const clearProgress = () => {
   sessionStorage.removeItem("registrationProgress");
   setFormData(INITIAL_FORM_DATA);
