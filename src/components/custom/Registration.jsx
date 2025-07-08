@@ -3518,37 +3518,37 @@ useEffect(() => {
                {/* Show these fields only if Professional/Employee is selected */}
                {formData.workCategory === "professional" && (
                  <div className="md:col-span-2 space-y-3">
-                     <label className="block text-sm font-medium text-gray-700">
-                     {t('registration.workInfo.employmentType')}
-                     </label>
-                   <div className="flex flex-col space-y-2">
+                 <label className="block text-sm font-medium text-gray-700">
+                   {t('registration.workInfo.employmentType')}
+                 </label>
+                 <div className="flex flex-col space-y-2">
                    {EMPLOYMENT_TYPES.map((type) => (
-                       <label key={type} className="inline-flex items-center">
-                     <input
-                           type="radio"
-                           name="employmentType"
-                           value={type}
-                           checked={formData.employmentType === type}
-                           onChange={(e) =>
-                             setFormData({
-                               ...formData,
-                               employmentType: e.target.checked ? e.target.value : ""
-                             })
-                           }
-                           className="h-4 w-4 text-red-700 focus:ring-red-500"
-                         />
-                        <span className="ml-2 text-sm text-gray-700">
-   {t(`registration.workInfo.employmentTypesOptions.${type}`)}
- </span>
+                     <label key={type} className="inline-flex items-center">
+                       <input
+                         type="radio"
+                         name="employmentType"
+                         value={type}
+                         checked={formData.employmentType === type}
+                         onChange={(e) =>
+                           setFormData({
+                             ...formData,
+                             employmentType: e.target.checked ? e.target.value : ""
+                           })
+                         }
+                         className="h-4 w-4 text-red-700 focus:ring-red-500"
+                       />
+                       <span className="ml-2 text-sm text-gray-700">
+                         {t(`registration.workInfo.employmentTypesOptions.${type}`)}
+                       </span>
                      </label>
-                     ))}
-                   </div>
-                   {hasError("employmentType") && (
-                       <p className="text-red-500 text-xs">
-                       {t('registration.workInfo.pleaseSelectEmploymentType')}
-                       </p>
-                     )}
-                   </div>
+                   ))}
+                 </div>
+                 {hasError("employmentType") && (
+                   <p className="text-red-500 text-xs">
+                     {t('registration.workInfo.pleaseSelectEmploymentType')}
+                   </p>
+                 )}
+               </div>
                )}
  
               
@@ -3575,6 +3575,7 @@ useEffect(() => {
              </div>
            </div>
          );
+ 
  
        case 4:
          return (
