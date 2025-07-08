@@ -133,7 +133,7 @@ import PreviousMarriageSection from "./PreviousMarriageSection";
 
 const API_BASE =
   import.meta.env.MODE === "production"
-    ? "https://api.gahoishakti.in"
+    ? "https://admin.gahoishakti.in"
     : "http://localhost:1340";
 
 const API_TOKEN = import.meta.env.VITE_API_TOKEN || "";
@@ -1512,7 +1512,7 @@ useEffect(() => {
       );
 
       const res = await fetch(
-        "https://api.gahoishakti.i/api/whatsapp/send",
+        "https://admin.gahoishakti.in/api/whatsapp/send",
         {
           method: "POST",
           headers: {
@@ -1933,7 +1933,7 @@ useEffect(() => {
           : `91${mobileNumber}`;
 
         const response = await fetch(
-          "https://api.gahoishakti.i/api/send-sms",
+          "https://admin.gahoishakti.in/api/send-sms",
           {
             method: "POST",
             headers: {
@@ -2130,22 +2130,6 @@ useEffect(() => {
                        className="form-radio text-red-500 focus:ring-red-500"
                      />
                      <span className="ml-2 text-sm text-gray-700">{t('registration.personalInfo.female')}</span>
-                   </label>
-                   <label className="inline-flex items-center">
-                     <input
-                       type="radio"
-                       name="gender"
-                       value="Other"
-                       checked={formData.gender === "Other"}
-                       onChange={(e) =>
-                         setFormData({
-                           ...formData,
-                           gender: e.target.value,
-                         })
-                       }
-                       className="form-radio text-red-500 focus:ring-red-500"
-                     />
-                     <span className="ml-2 text-sm text-gray-700">{t('registration.personalInfo.other')}</span>
                    </label>
                  </div>
  
@@ -3557,7 +3541,6 @@ useEffect(() => {
    {t(`registration.workInfo.employmentTypesOptions.${type}`)}
  </span>
                      </label>
-                     ))}
                    </div>
                    {hasError("employmentType") && (
                        <p className="text-red-500 text-xs">
