@@ -688,7 +688,7 @@ export const formatFormData = (data, displayPictureId = null) => {
       mobile_number: data.mobileNumber ?? "",
       email_address: data.email || null,
       display_picture: displayPictureId,
-      Gender: data.gender ?? "",
+      Gender: data.Gender ?? "",
       nationality: data.nationality ?? "",
       is_gahoi: data.isGahoi ?? "Yes",
     },
