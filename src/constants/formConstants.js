@@ -40,13 +40,21 @@ export const INDUSTRY_SECTORS = [
   "Other Services"
 ];
 
+// export const BUSINESS_SIZES = [
+//   "Micro Enterprise",
+//   "Small Enterprise",
+//   "Medium Enterprise",
+//   "Large Enterprise",
+//   "Self Employed/Freelancer",
+//   "Not Applicable"
+// ];
 export const BUSINESS_SIZES = [
-  "Micro Enterprise",
-  "Small Enterprise",
-  "Medium Enterprise",
-  "Large Enterprise",
-  "Self Employed/Freelancer",
-  "Not Applicable"
+"micro",
+"small",
+"medium",
+"large",
+"selfEmployed",
+"notApplicable"
 ];
 
 export const WORK_TYPES = [
@@ -71,9 +79,9 @@ export const WORK_TYPES = [
 // Other
 
 export const EMPLOYMENT_TYPES = [
-  "Central Government Employee",
-  "State Government Employee",
-  "Private Sector Employee"
+  "centralGovt",
+  "stateGovt",
+  "privateSector"
 ];
 
 
@@ -106,11 +114,11 @@ export const SIBLING_RELATION_OPTIONS = [
 
 export const FORM_STEPS = [
   {
-    name: "Personal Information",
+    name: "registration.steps.personalInfo",
     fields: ["name", "mobileNumber", "village", "id", "email", "gender", "isGahoi"],
   },
   {
-    name: "Additional Details",
+    name: "registration.steps.additionalDetails",
     fields: [
       "bloodGroup",
       "birthDate",
@@ -126,9 +134,9 @@ export const FORM_STEPS = [
       "subLocalPanchayat",
     ],
   },
-  { name: "Family Information", fields: ["familyDetails"] },
+  { name: "registration.steps.familyInfo", fields: ["familyDetails"] },
   {
-    name: "Work Information",
+    name:  "registration.steps.workInfo",
     fields: [
       "occupation",
       "companyName",
@@ -142,7 +150,7 @@ export const FORM_STEPS = [
     ],
   },
   {
-    name: "Final Submission",
+    name:  "registration.steps.finalSubmission",
     fields: ["suggestions", "date", "referenceBy", "confirmAccuracy"],
   },
 ];

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { FIXED_CODES } from '../../utils/form/formUtils';
 
 const API_BASE = import.meta.env.MODE === 'production' 
@@ -288,6 +289,8 @@ const gotraAaknaMap = {
 };
 
 const PreviousMarriageSection = ({ formData, setFormData, errors, setErrors }) => {
+  const { t } = useTranslation();
+
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
       ...prev,
@@ -298,7 +301,6 @@ const PreviousMarriageSection = ({ formData, setFormData, errors, setErrors }) =
       }
     }));
 
-    // Clear the specific error when user starts typing/selecting
     if (errors?.[`previous_marriage.${field}`]) {
       setErrors(prev => ({ 
         ...prev, 
@@ -320,10 +322,10 @@ const PreviousMarriageSection = ({ formData, setFormData, errors, setErrors }) =
       if (data && data[0] && data[0].id) {
         handleInputChange(field, data[0].id);
       } else {
-        alert('File upload failed!');
+        alert(t('errors.somethingWentWrong'));
       }
     } catch (error) {
-      alert('File upload failed!');
+      alert(t('errors.somethingWentWrong'));
       console.error(error);
     }
   };
@@ -338,61 +340,21 @@ const PreviousMarriageSection = ({ formData, setFormData, errors, setErrors }) =
     };
     handleInputChange('children', updated);
   };
+
   const addChild = () => {
     handleInputChange('children', [...children, { child_name: '', age: '', gender: '' }]);
   };
+
   const removeChild = (index) => {
     const updated = children.filter((_, i) => i !== index);
     handleInputChange('children', updated);
   };
 
-  // Sort gotra options alphabetically
   const sortedGotraOptions = GAHOI_GOTRAS.sort((a, b) => a.localeCompare(b));
-
-  // aakna options based on selected gotra
   const getAaknaOptions = () => {
     const selectedGotra = formData.previousMarriage?.spouse_gotra;
     if (!selectedGotra) return [];
     return gotraAaknaMap[selectedGotra] || [];
-  };
-
-  // Validate all required fields
-  const validateFields = () => {
-    const newErrors = {};
-    const fields = [
-      { key: 'spouse_name', label: 'Name of Previous Spouse' },
-      { key: 'spouse_gotra', label: 'Spouse Gotra' },
-      { key: 'spouse_akna', label: 'Spouse Aakna' },
-      { key: 'spouse_dob', label: 'Spouse Date of Birth' },
-      { key: 'children_living_with', label: 'Will children live with you' },
-      { key: 'want_kundli_match', label: 'Do you want to match Kundli' },
-      { key: 'accept_partner_with_children', label: 'Willing to accept partner with children' }
-    ];
-
-    fields.forEach(({ key, label }) => {
-      if (!formData.previousMarriage?.[key]) {
-        newErrors[`previous_marriage.${key}`] = `${label} is required`;
-      }
-    });
-
-    // Validate children information if children_living_with is 'yes'
-    if (formData.previousMarriage?.children_living_with === 'yes') {
-      const children = formData.previousMarriage?.children || [];
-      children.forEach((child, index) => {
-        if (!child.child_name) {
-          newErrors[`previous_marriage.children.${index}.name`] = 'Child name is required';
-        }
-        if (!child.gender) {
-          newErrors[`previous_marriage.children.${index}.gender`] = 'Child gender is required';
-        }
-        if (!child.age) {
-          newErrors[`previous_marriage.children.${index}.age`] = 'Child age is required';
-        }
-      });
-    }
-
-    setErrors(prev => ({ ...prev, ...newErrors }));
-    return Object.keys(newErrors).length === 0;
   };
 
   return (
@@ -402,14 +364,16 @@ const PreviousMarriageSection = ({ formData, setFormData, errors, setErrors }) =
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-amber-600" viewBox="0 0 20 20" fill="currentColor">
             <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
           </svg>
-          Previous Marriage Information
+          {t('previousMarriage.title')}
         </h3>
       </div>
       <div className="p-6 space-y-6">
         {/* Basic Information */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Name of Previous Spouse</label>
+            <label className="block text-sm font-medium text-gray-700">
+              {t('previousMarriage.spouse.name')}
+            </label>
             <input
               type="text"
               value={formData.previousMarriage?.spouse_name || ''}
@@ -417,14 +381,16 @@ const PreviousMarriageSection = ({ formData, setFormData, errors, setErrors }) =
               className={`mt-1 block w-full px-4 py-2.5 text-gray-700 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 ${
                 errors?.['previous_marriage.spouse_name'] ? 'border-red-500 bg-red-50' : 'border-gray-300'
               }`}
-              placeholder="Enter previous spouse's name"
+              placeholder={t('previousMarriage.spouse.name_placeholder')}
             />
             {errors?.['previous_marriage.spouse_name'] && (
-              <p className="text-red-500 text-xs mt-1">{errors['previous_marriage.spouse_name']}</p>
+              <p className="text-red-500 text-xs mt-1">{t('previousMarriage.validation.required')}</p>
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Spouse Gotra</label>
+            <label className="block text-sm font-medium text-gray-700">
+              {t('previousMarriage.spouse.gotra')}
+            </label>
             <select
               value={formData.previousMarriage?.spouse_gotra || ''}
               onChange={(e) => handleInputChange('spouse_gotra', e.target.value)}
@@ -432,17 +398,19 @@ const PreviousMarriageSection = ({ formData, setFormData, errors, setErrors }) =
                 errors?.['previous_marriage.spouse_gotra'] ? 'border-red-500 bg-red-50' : 'border-gray-300'
               }`}
             >
-              <option value="">Select Gotra</option>
+              <option value="">{t('previousMarriage.spouse.gotra_placeholder')}</option>
               {sortedGotraOptions.map(gotra => (
                 <option key={gotra} value={gotra}>{gotra}</option>
               ))}
             </select>
             {errors?.['previous_marriage.spouse_gotra'] && (
-              <p className="text-red-500 text-xs mt-1">{errors['previous_marriage.spouse_gotra']}</p>
+              <p className="text-red-500 text-xs mt-1">{t('previousMarriage.validation.required')}</p>
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Spouse Aakna</label>
+            <label className="block text-sm font-medium text-gray-700">
+              {t('previousMarriage.spouse.akna')}
+            </label>
             <select
               value={formData.previousMarriage?.spouse_akna || ''}
               onChange={(e) => handleInputChange('spouse_akna', e.target.value)}
@@ -451,22 +419,24 @@ const PreviousMarriageSection = ({ formData, setFormData, errors, setErrors }) =
               }`}
               disabled={!formData.previousMarriage?.spouse_gotra}
             >
-              <option value="">Select Aakna</option>
+              <option value="">{t('previousMarriage.spouse.akna_placeholder')}</option>
               {getAaknaOptions().map(akna => (
                 <option key={akna} value={akna}>{akna}</option>
               ))}
             </select>
             {errors?.['previous_marriage.spouse_akna'] && (
-              <p className="text-red-500 text-xs mt-1">{errors['previous_marriage.spouse_akna']}</p>
+              <p className="text-red-500 text-xs mt-1">{t('previousMarriage.validation.required')}</p>
             )}
             {!formData.previousMarriage?.spouse_gotra && (
               <p className="text-gray-500 text-xs mt-2 ml-1 italic">
-                Select a Gotra first to see available Aakna options
+                {t('previousMarriage.spouse.akna_help')}
               </p>
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Spouse Date of Birth</label>
+            <label className="block text-sm font-medium text-gray-700">
+              {t('previousMarriage.spouse.dob')}
+            </label>
             <input
               type="date"
               value={formData.previousMarriage?.spouse_dob || ''}
@@ -474,9 +444,10 @@ const PreviousMarriageSection = ({ formData, setFormData, errors, setErrors }) =
               className={`mt-1 block w-full px-4 py-2.5 text-gray-700 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 ${
                 errors?.['previous_marriage.spouse_dob'] ? 'border-red-500 bg-red-50' : 'border-gray-300'
               }`}
+              placeholder={t('previousMarriage.spouse.dob_placeholder')}
             />
             {errors?.['previous_marriage.spouse_dob'] && (
-              <p className="text-red-500 text-xs mt-1">{errors['previous_marriage.spouse_dob']}</p>
+              <p className="text-red-500 text-xs mt-1">{t('previousMarriage.validation.required')}</p>
             )}
           </div>
         </div>
@@ -484,7 +455,9 @@ const PreviousMarriageSection = ({ formData, setFormData, errors, setErrors }) =
         {/* Children Information */}
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Will children live with you/your partner after marriage?</label>
+            <label className="block text-sm font-medium text-gray-700">
+              {t('previousMarriage.children.living_with')}
+            </label>
             <div className="mt-2 space-x-4">
               <label className="inline-flex items-center">
                 <input
@@ -497,7 +470,7 @@ const PreviousMarriageSection = ({ formData, setFormData, errors, setErrors }) =
                     errors?.['previous_marriage.children_living_with'] ? 'border-red-500' : ''
                   }`}
                 />
-                <span className="ml-2 text-sm text-gray-700">Yes</span>
+                <span className="ml-2 text-sm text-gray-700">{t('common.yes')}</span>
               </label>
               <label className="inline-flex items-center">
                 <input
@@ -510,17 +483,19 @@ const PreviousMarriageSection = ({ formData, setFormData, errors, setErrors }) =
                     errors?.['previous_marriage.children_living_with'] ? 'border-red-500' : ''
                   }`}
                 />
-                <span className="ml-2 text-sm text-gray-700">No</span>
+                <span className="ml-2 text-sm text-gray-700">{t('common.no')}</span>
               </label>
             </div>
             {errors?.['previous_marriage.children_living_with'] && (
-              <p className="text-red-500 text-xs mt-1">{errors['previous_marriage.children_living_with']}</p>
+              <p className="text-red-500 text-xs mt-1">{t('previousMarriage.validation.required')}</p>
             )}
           </div>
 
           {formData.previousMarriage?.children_living_with === 'yes' && (
             <div className="mt-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Children's Information</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                {t('previousMarriage.children.info_title')}
+              </label>
               {children.map((child, idx) => (
                 <div key={idx} className="flex items-center gap-2 mb-2">
                   <div className="flex-1">
@@ -531,10 +506,10 @@ const PreviousMarriageSection = ({ formData, setFormData, errors, setErrors }) =
                       className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 w-full ${
                         errors?.[`previous_marriage.children.${idx}.name`] ? 'border-red-500 bg-red-50' : ''
                       }`}
-                      placeholder={`Child ${idx + 1} Name`}
+                      placeholder={t('previousMarriage.children.child_name_placeholder', { number: idx + 1 })}
                     />
                     {errors?.[`previous_marriage.children.${idx}.name`] && (
-                      <p className="text-red-500 text-xs mt-1">{errors[`previous_marriage.children.${idx}.name`]}</p>
+                      <p className="text-red-500 text-xs mt-1">{t('previousMarriage.validation.required')}</p>
                     )}
                   </div>
                   <div className="flex-1">
@@ -545,12 +520,12 @@ const PreviousMarriageSection = ({ formData, setFormData, errors, setErrors }) =
                         errors?.[`previous_marriage.children.${idx}.gender`] ? 'border-red-500 bg-red-50' : ''
                       }`}
                     >
-                      <option value="">Select Gender</option>
-                      <option value="Male">Male</option>
-                      <option value="Female">Female</option>
+                      <option value="">{t('previousMarriage.children.gender')}</option>
+                      <option value="Male">{t('previousMarriage.children.gender_options.male')}</option>
+                      <option value="Female">{t('previousMarriage.children.gender_options.female')}</option>
                     </select>
                     {errors?.[`previous_marriage.children.${idx}.gender`] && (
-                      <p className="text-red-500 text-xs mt-1">{errors[`previous_marriage.children.${idx}.gender`]}</p>
+                      <p className="text-red-500 text-xs mt-1">{t('previousMarriage.validation.required')}</p>
                     )}
                   </div>
                   <div className="w-24">
@@ -561,17 +536,30 @@ const PreviousMarriageSection = ({ formData, setFormData, errors, setErrors }) =
                       className={`px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 w-full ${
                         errors?.[`previous_marriage.children.${idx}.age`] ? 'border-red-500 bg-red-50' : ''
                       }`}
-                      placeholder="Age"
+                      placeholder={t('previousMarriage.children.age_placeholder')}
                       min="0"
                     />
                     {errors?.[`previous_marriage.children.${idx}.age`] && (
-                      <p className="text-red-500 text-xs mt-1">{errors[`previous_marriage.children.${idx}.age`]}</p>
+                      <p className="text-red-500 text-xs mt-1">{t('previousMarriage.validation.required')}</p>
                     )}
                   </div>
-                  <button type="button" onClick={() => removeChild(idx)} className="text-red-600 hover:text-red-800 px-2">×</button>
+                  <button 
+                    type="button" 
+                    onClick={() => removeChild(idx)} 
+                    className="text-red-600 hover:text-red-800 px-2"
+                    title={t('previousMarriage.children.remove_child')}
+                  >
+                    ×
+                  </button>
                 </div>
               ))}
-              <button type="button" onClick={addChild} className="mt-2 px-3 py-1 bg-amber-100 text-amber-700 rounded hover:bg-amber-200 text-sm">+ Add Child</button>
+              <button 
+                type="button" 
+                onClick={addChild} 
+                className="mt-2 px-3 py-1 bg-amber-100 text-amber-700 rounded hover:bg-amber-200 text-sm"
+              >
+                {t('previousMarriage.children.add_child')}
+              </button>
             </div>
           )}
         </div>
@@ -579,7 +567,9 @@ const PreviousMarriageSection = ({ formData, setFormData, errors, setErrors }) =
         {/* Partner Preferences */}
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Do you want to match Kundli?</label>
+            <label className="block text-sm font-medium text-gray-700">
+              {t('previousMarriage.preferences.kundli_match')}
+            </label>
             <div className="mt-1 flex space-x-6">
               <label className="inline-flex items-center">
                 <input
@@ -592,7 +582,7 @@ const PreviousMarriageSection = ({ formData, setFormData, errors, setErrors }) =
                     errors?.['previous_marriage.want_kundli_match'] ? 'border-red-500' : ''
                   }`}
                 />
-                <span className="ml-2 text-sm text-gray-700">Yes</span>
+                <span className="ml-2 text-sm text-gray-700">{t('common.yes')}</span>
               </label>
               <label className="inline-flex items-center">
                 <input
@@ -605,16 +595,18 @@ const PreviousMarriageSection = ({ formData, setFormData, errors, setErrors }) =
                     errors?.['previous_marriage.want_kundli_match'] ? 'border-red-500' : ''
                   }`}
                 />
-                <span className="ml-2 text-sm text-gray-700">No</span>
+                <span className="ml-2 text-sm text-gray-700">{t('common.no')}</span>
               </label>
             </div>
             {errors?.['previous_marriage.want_kundli_match'] && (
-              <p className="text-red-500 text-xs mt-1">{errors['previous_marriage.want_kundli_match']}</p>
+              <p className="text-red-500 text-xs mt-1">{t('previousMarriage.validation.required')}</p>
             )}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Willing to accept a partner with children?</label>
+            <label className="block text-sm font-medium text-gray-700">
+              {t('previousMarriage.preferences.accept_children')}
+            </label>
             <div className="mt-1 flex space-x-6">
               <label className="inline-flex items-center">
                 <input
@@ -627,7 +619,7 @@ const PreviousMarriageSection = ({ formData, setFormData, errors, setErrors }) =
                     errors?.['previous_marriage.accept_partner_with_children'] ? 'border-red-500' : ''
                   }`}
                 />
-                <span className="ml-2 text-sm text-gray-700">Yes</span>
+                <span className="ml-2 text-sm text-gray-700">{t('common.yes')}</span>
               </label>
               <label className="inline-flex items-center">
                 <input
@@ -640,21 +632,23 @@ const PreviousMarriageSection = ({ formData, setFormData, errors, setErrors }) =
                     errors?.['previous_marriage.accept_partner_with_children'] ? 'border-red-500' : ''
                   }`}
                 />
-                <span className="ml-2 text-sm text-gray-700">No</span>
+                <span className="ml-2 text-sm text-gray-700">{t('common.no')}</span>
               </label>
             </div>
             {errors?.['previous_marriage.accept_partner_with_children'] && (
-              <p className="text-red-500 text-xs mt-1">{errors['previous_marriage.accept_partner_with_children']}</p>
+              <p className="text-red-500 text-xs mt-1">{t('previousMarriage.validation.required')}</p>
             )}
           </div>
         </div>
 
         {/* Document Uploads */}
         <div className="space-y-4">
-          <h4 className="font-medium text-gray-700">Required Documents</h4>
+          <h4 className="font-medium text-gray-700">{t('previousMarriage.documents.title')}</h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700">Proof of Payment</label>
+              <label className="block text-sm font-medium text-gray-700">
+                {t('previousMarriage.documents.payment_proof')}
+              </label>
               <input
                 type="file"
                 onChange={(e) => handleFileChange('payment_proof', e.target.files[0])}
@@ -663,12 +657,22 @@ const PreviousMarriageSection = ({ formData, setFormData, errors, setErrors }) =
               />
               {formData.previousMarriage?.payment_proof && (
                 <div className="flex items-center mt-1">
-                  <span className="text-xs text-gray-500 mr-2">{typeof formData.previousMarriage.payment_proof === 'string' ? 'Uploaded' : formData.previousMarriage.payment_proof.name}</span>
-                  <button type="button" onClick={() => handleInputChange('payment_proof', null)} className="text-red-500 text-xs ml-2">Remove</button>
+                  <span className="text-xs text-gray-500 mr-2">
+                    {typeof formData.previousMarriage.payment_proof === 'string' 
+                      ? t('previousMarriage.documents.uploaded')
+                      : formData.previousMarriage.payment_proof.name}
+                  </span>
+                  <button 
+                    type="button" 
+                    onClick={() => handleInputChange('payment_proof', null)} 
+                    className="text-red-500 text-xs ml-2"
+                  >
+                    {t('previousMarriage.documents.remove')}
+                  </button>
                 </div>
               )}
               {errors && errors['previous_marriage.payment_proof'] && (
-                <span className="text-red-500 text-xs">{errors['previous_marriage.payment_proof']}</span>
+                <span className="text-red-500 text-xs">{t('previousMarriage.validation.fileRequired')}</span>
               )}
             </div>
           </div>
