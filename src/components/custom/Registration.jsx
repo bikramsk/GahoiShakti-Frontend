@@ -398,7 +398,7 @@ const saveDraftToServer = async (data, step) => {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('❌ Failed to save draft to server:', errorText);
+      console.error('Failed to save draft to server:', errorText);
       return false;
     }
 
@@ -406,7 +406,7 @@ const saveDraftToServer = async (data, step) => {
     console.log('Draft saved successfully:', savedData);
     return true;
   } catch (error) {
-    console.error('❗ Error saving draft to server:', error);
+    console.error('Error saving draft to server:', error);
     return false;
   }
 };
@@ -1834,7 +1834,14 @@ useEffect(() => {
       displayPictureId
     );
 
-    console.log("Payload to Strapi:", strapiData);
+   console.log("Form Data before formatting:", {
+      gender: formData.gender,
+      employmentType: formData.employmentType
+    });
+    console.log("Strapi Data after formatting:", {
+      gender: strapiData.personal_information.Gender,
+      employmentType: strapiData.work_information.employmentType
+    });
 
     const response = await fetch(`${API_BASE}/api/registration-pages`, {
       method: "POST",
