@@ -1,6 +1,8 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";import { useLocation } from "react-router-dom";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import PhotoUpload from "./PhotoUpload";
+import ResumeDialog from "./ResumeDialog";
 import {
   STATE_TO_ASSEMBLIES,
   INDUSTRY_SECTORS,
@@ -9,12 +11,9 @@ import {
   EMPLOYMENT_TYPES,
   HANDICAP_OPTIONS,
   BLOOD_GROUPS,
-  INITIAL_FAMILY_MEMBERS,
   MAX_CHILDREN,
   MAX_SIBLINGS,
   MARITAL_STATUS_OPTIONS,
-  EDUCATION_OPTIONS,
-  OCCUPATION_OPTIONS,
   SIBLING_RELATION_OPTIONS,
   FORM_STEPS,
   PROCESS_STEPS,
@@ -129,13 +128,14 @@ import {
   VIDISHA_GRAM_PANCHAYATS,
 } from "../../constants/locationData";
 import ReactDOM from "react-dom";
-import PreviousMarriageSection from './PreviousMarriageSection';
+import PreviousMarriageSection from "./PreviousMarriageSection";
 
-const API_BASE = import.meta.env.MODE === 'production' 
-  ? 'https://admin.gahoishakti.in'
-  : 'http://localhost:1340';
+const API_BASE =
+  import.meta.env.MODE === "production"
+    ? "https://admin.gahoishakti.in"
+    : "http://localhost:1340";
 
-const API_TOKEN = import.meta.env.VITE_API_TOKEN || '';
+const API_TOKEN = import.meta.env.VITE_API_TOKEN || "";
 
 export const CHAURASI_PANCHAYAT_NAMES = [
   "Gahoi Vaishya Panchayat",
@@ -145,12 +145,33 @@ export const CHAURASI_PANCHAYAT_NAMES = [
 
 const LOCAL_PANCHAYATS = {
   "Chambal Regional Assembly": ["Morena", "Bhind", "Gwalior"],
-  "Central Malwa Regional Assembly": ["Indore", "Dewas", "Ujjain", "Bhopal", "Vidisha", "Raisen"],
+  "Central Malwa Regional Assembly": [
+    "Indore",
+    "Dewas",
+    "Ujjain",
+    "Bhopal",
+    "Vidisha",
+    "Raisen",
+  ],
   "Mahakaushal Regional Assembly": ["Jabalpur", "Katni", "Rewa", ""],
-  "Vindhya Regional Assembly": ["Satna", "Shahdol", "Sidhi", "Chhatarpur", "Panna", "Rewa"],
+  "Vindhya Regional Assembly": [
+    "Satna",
+    "Shahdol",
+    "Sidhi",
+    "Chhatarpur",
+    "Panna",
+    "Rewa",
+  ],
   "Bundelkhand Regional Assembly": ["Sagar", "Damoh", "Chhatarpur"],
   "Chaurasi Regional Assembly": ["Bhopal", "Vidisha", "Raisen"],
-  "Southern Regional Assembly": ["Pune", "Mumbai", "Nagpur", "Amravati", "Chalisgaon", "Dhuliya"]
+  "Southern Regional Assembly": [
+    "Pune",
+    "Mumbai",
+    "Nagpur",
+    "Amravati",
+    "Chalisgaon",
+    "Dhuliya",
+  ],
 };
 
 const SUB_LOCAL_PANCHAYATS = {
@@ -161,22 +182,38 @@ const SUB_LOCAL_PANCHAYATS = {
   Chalisgaon: ["Chalisgaon"],
   Dhuliya: ["Dhuliya"],
   Morena: ["Morena", "Ambah", "Porsa"],
-  Bhind: ["Bhind", "Ater", "Lahar", "Daboh", "Tharet", "Mihona", "Aswar", "Lahar", "Gohad", "Machhand", "Raun"],
-  Gwalior: ["Gwalior", "Dabra","Madhavganj",
-        "Khasgi Bazaar",
-        "Daulatganj",
-        "Kampoo",
-        "Lohia Bazaar",
-        "Phalka Bazaar",
-        "Lohamandi",
-        "Bahodapur",
-        "Naka Chandravadni",
-        "Harishankarpuram",
-        "Thatipur",
-        "Morar",
-        "Dabra",
-        "Pichhore Dabra",
-        "Behat"],
+  Bhind: [
+    "Bhind",
+    "Ater",
+    "Lahar",
+    "Daboh",
+    "Tharet",
+    "Mihona",
+    "Aswar",
+    "Lahar",
+    "Gohad",
+    "Machhand",
+    "Raun",
+  ],
+  Gwalior: [
+    "Gwalior",
+    "Dabra",
+    "Madhavganj",
+    "Khasgi Bazaar",
+    "Daulatganj",
+    "Kampoo",
+    "Lohia Bazaar",
+    "Phalka Bazaar",
+    "Lohamandi",
+    "Bahodapur",
+    "Naka Chandravadni",
+    "Harishankarpuram",
+    "Thatipur",
+    "Morar",
+    "Dabra",
+    "Pichhore Dabra",
+    "Behat",
+  ],
   Patna: ["Patna"],
   Durg: ["Durg"],
   Rajnandgaon: ["Rajnandgaon"],
@@ -186,17 +223,48 @@ const SUB_LOCAL_PANCHAYATS = {
   Bastar: ["Bastar"],
   Koriya: ["Koriya"],
   Jhansi: [
-    "Garautha", "Barua Sagar", "Simriddha", "Tahrauli", "Gursarai", "Bamor",
-    "Poonchh", "Erich", "Bhel Simrawali", "Babina Cantt", "Bangra Uldan Ranipur",
-    "Mauranipur", "Baragaon", "Ranipur", "Jhansi", "Samthar", "Archara", "Moth"
+    "Garautha",
+    "Barua Sagar",
+    "Simriddha",
+    "Tahrauli",
+    "Gursarai",
+    "Bamor",
+    "Poonchh",
+    "Erich",
+    "Bhel Simrawali",
+    "Babina Cantt",
+    "Bangra Uldan Ranipur",
+    "Mauranipur",
+    "Baragaon",
+    "Ranipur",
+    "Jhansi",
+    "Samthar",
+    "Archara",
+    "Moth",
   ],
   Tikamgarh: [
-    "Tikamgarh", "Baldeogarh", "Jatara", "Palera", "Niwari", "Prithvipur",
-    "Orchha", "Badagaon", "Mohangarh", "Digoda", "Lidhora", "Khargapur"
+    "Tikamgarh",
+    "Baldeogarh",
+    "Jatara",
+    "Palera",
+    "Niwari",
+    "Prithvipur",
+    "Orchha",
+    "Badagaon",
+    "Mohangarh",
+    "Digoda",
+    "Lidhora",
+    "Khargapur",
   ],
   Datia: [
-    "Sewdha", "Chhoti Badoni", "Datia", "Indergarh", "Badhara Sopan",
-    "Unnao Balaji", "Bhander", "Salon B"
+    "Sewdha",
+    "Chhoti Badoni",
+    "Datia",
+    "Indergarh",
+    "Badhara Sopan",
+    "Unnao Balaji",
+    "Bhander",
+    "Salon B",
   ],
   Jaipur: ["Jaipur"],
   Indore: ["Indore"],
@@ -238,52 +306,334 @@ const CHAURASI_SUB_LOCAL_PANCHAYAT_MAPPING = {
 };
 
 const GUJARAT_CHAURASI_MAPPING = {
-  "Gandhinagar": {
+  Gandhinagar: {
     assembly: "Chaurasi Regional Assembly",
     localPanchayatName: "Gahoi Vaishya Panchayat",
     localPanchayat: "Ahmedabad",
-    subLocalPanchayat: "Gandhi Nagar"
-  }
+    subLocalPanchayat: "Gandhi Nagar",
+  },
 };
 
 const RegistrationForm = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(0);
-  // Initialize form data with mobile number from location state
-  const [formData, setFormData] = useState(() => {
-    const initialData = {
-      ...INITIAL_FORM_DATA,
-      workCategory: "professional",
-      workType: "Professional",
-       employmentType: ""
-    };
-    
-    // Only set mobile number if it exists in location state
-    if (location.state?.mobileNumber) {
-      initialData.mobile_number = location.state.mobileNumber;
-      console.log("Initial mobile number set:", location.state.mobileNumber);
-    }
-    
-    return initialData;
-  });
-  
+  const [showResumeDialog, setShowResumeDialog] = useState(false);
   const [processSteps, setProcessSteps] = useState(PROCESS_STEPS);
   const [progress, setProgress] = useState(50);
   const [errors, setErrors] = useState({});
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const { t } = useTranslation();
+  const [hasDraft, setHasDraft] = useState(false);
+  const [isLoadingDraft, setIsLoadingDraft] = useState(true);
+  const [resumeConfirmed, setResumeConfirmed] = useState(false);
+const [finalSubmitted, setFinalSubmitted] = useState(false);
 
-  // Handle location state only once 
+
+
+const clearProgress = () => {
+  sessionStorage.removeItem("registrationProgress");
+  setFormData(INITIAL_FORM_DATA);
+  setCurrentStep(0);
+};
+
+
+  const handleBackToHome = async () => {
+    try {
+      if (Object.keys(formData).length > 0 && !submitted && formData.mobile_number) {
+        const progressData = {
+          formData,
+          currentStep,
+          lastSaved: new Date().toISOString()
+        };
+        
+        sessionStorage.setItem("registrationProgress", JSON.stringify(progressData));
+         await saveDraftToServer(formData, currentStep);
+      }
+    
+      navigate('/');
+    } catch (error) {
+      console.error('Error saving progress before navigation:', error);
+      navigate('/');
+    }
+  };
+
+  // Initialize form data with mobile number from location state
+  const [formData, setFormData] = useState(() => {
+    const initialData = {
+      ...INITIAL_FORM_DATA,
+      workCategory: "professional",
+      workType: "Professional",
+      employmentType: "",
+    };
+
+    if (location.state?.mobileNumber) {
+      initialData.mobile_number = location.state.mobileNumber;
+    }
+
+    return initialData;
+  });
+
+
+ // Function to save draft to backend
+const saveDraftToServer = async (data, step) => {
+  try {
+    if (!data.mobile_number) return;
+
+    console.log('Saving draft to server:', { formData: data, currentStep: step });
+
+    const response = await fetch(
+      `${import.meta.env.VITE_PUBLIC_STRAPI_API_URL}/api/draft-registrations/mobile/${data.mobile_number}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          formData: data,
+          currentStep: step
+        })
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('❌ Failed to save draft to server:', errorText);
+      return false;
+    }
+
+    const savedData = await response.json();
+    console.log('Draft saved successfully:', savedData);
+    return true;
+  } catch (error) {
+    console.error('❗ Error saving draft to server:', error);
+    return false;
+  }
+};
+
+
+// Function to load draft from backend
+const loadDraftFromServer = async (mobileNumber) => {
+  try {
+    const response = await fetch(
+      `${import.meta.env.VITE_PUBLIC_STRAPI_API_URL}/api/draft-registrations/mobile/${mobileNumber}`
+    );
+
+    if (!response.ok) {
+      console.warn("Server response not OK:", response.status);
+      return null;
+    }
+
+    const draft = await response.json();
+    console.log("Loaded draft from server:", draft);
+
+    if (!draft || typeof draft !== "object") {
+      console.warn("Invalid draft format");
+      return null;
+    }
+
+    // Parse formData safely (in case it's a JSON string)
+    const formData = typeof draft.formData === "string"
+      ? JSON.parse(draft.formData)
+      : draft.formData;
+
+    const currentStep = parseInt(draft.currentStep, 10) || 0;
+
+    console.log("Parsed draft:", { formData, currentStep });
+
+    return {
+      formData,
+      currentStep,
+      lastSaved: draft.lastSaved,
+    };
+  } catch (error) {
+    console.error("Error loading draft from server:", error);
+    return null;
+  }
+};
+
+
+  // Function to delete draft from backend
+  const deleteDraftFromServer = async (mobileNumber) => {
+    try {
+      await fetch(
+        `${import.meta.env.VITE_PUBLIC_STRAPI_API_URL}/api/draft-registrations/mobile/${mobileNumber}`,
+        {
+          method: 'DELETE'
+        }
+      );
+    } catch (error) {
+      console.error('Error deleting draft from server:', error);
+    }
+  };
+
+  // Check for existing drafts on component mount and when mobile number changes
+  useEffect(() => {
+    const checkForDrafts = async () => {
+      setIsLoadingDraft(true);
+      let foundDraft = false;
+
+      // Get mobile number from either location state or form data
+      const mobileNumber = location.state?.mobileNumber || formData.mobile_number;
+      console.log('Checking drafts for mobile:', mobileNumber);
+
+      if (mobileNumber) {
+        // Check server first
+        const serverDraft = await loadDraftFromServer(mobileNumber);
+        console.log('Server draft:', serverDraft);
+        
+        if (serverDraft?.formData) {
+          foundDraft = true;
+          // Save server draft to session storage
+          const progressData = {
+            formData: serverDraft.formData,
+            currentStep: serverDraft.currentStep,
+            lastSaved: serverDraft.lastSaved
+          };
+          sessionStorage.setItem("registrationProgress", JSON.stringify(progressData));
+          console.log('Saved server draft to session:', progressData);
+        }
+
+        // If no server draft, check session storage
+        if (!foundDraft) {
+          const saved = sessionStorage.getItem("registrationProgress");
+          if (saved) {
+            const { lastSaved } = JSON.parse(saved);
+            const twentyFourHours = 24 * 60 * 60 * 1000;
+            if (new Date() - new Date(lastSaved) < twentyFourHours) {
+              foundDraft = true;
+              console.log('Found draft in session storage');
+            } else {
+              sessionStorage.removeItem("registrationProgress");
+            }
+          }
+        }
+
+        setHasDraft(foundDraft);
+        setShowResumeDialog(foundDraft);
+      }
+      
+      setIsLoadingDraft(false);
+    };
+
+    checkForDrafts();
+  }, [location.state?.mobileNumber, formData.mobile_number]);
+
+  // Save progress to both session storage and server
+useEffect(() => {
+  if (
+    resumeConfirmed && //Only start saving after resume/start new
+    Object.keys(formData).length > 0 &&
+    !submitted &&
+    formData.mobile_number
+  ) {
+    const saveProgress = async () => {
+      const progressData = {
+        formData,
+        currentStep,
+        lastSaved: new Date().toISOString()
+      };
+
+      try {
+        // Save to local sessionStorage
+        sessionStorage.setItem(
+          "registrationProgress",
+          JSON.stringify(progressData)
+        );
+
+        // Save to backend draft collection
+        await saveDraftToServer(formData, currentStep);
+      } catch (error) {
+        console.error("Error saving progress:", error);
+      }
+    };
+
+    saveProgress();
+  }
+}, [formData, currentStep, submitted, resumeConfirmed]);
+
+const handleResume = async () => {
+  try {
+    const mobileNumber = location.state?.mobileNumber || formData.mobile_number;
+
+    if (mobileNumber) {
+      // Load from backend
+      const serverDraft = await loadDraftFromServer(mobileNumber);
+      console.log('Loaded draft from server in handleResume:', serverDraft);
+
+      if (serverDraft?.formData && typeof serverDraft.currentStep === 'number') {
+        setFormData(serverDraft.formData);
+        setCurrentStep(serverDraft.currentStep);
+
+        // Mark that resume was confirmed
+        setResumeConfirmed(true);
+
+        // Sync server draft to sessionStorage
+        sessionStorage.setItem("registrationProgress", JSON.stringify({
+          formData: serverDraft.formData,
+          currentStep: serverDraft.currentStep,
+          lastSaved: serverDraft.lastSaved,
+        }));
+
+        console.log("Resumed from SERVER draft");
+        setShowResumeDialog(false);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+    }
+
+    // Fallback to sessionStorage
+    const saved = sessionStorage.getItem("registrationProgress");
+    if (saved) {
+      const { formData: savedFormData, currentStep: savedStep } = JSON.parse(saved);
+      if (savedFormData && typeof savedStep === 'number') {
+        setFormData(savedFormData);
+        setCurrentStep(savedStep);
+
+        // Mark resume as confirmed here too
+        setResumeConfirmed(true);
+
+        console.log("Resumed from SESSION storage");
+      }
+    } else {
+      console.warn("No valid draft found in session or server");
+    }
+
+    setShowResumeDialog(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  } catch (error) {
+    console.error("Error resuming:", error);
+    sessionStorage.removeItem("registrationProgress");
+    setShowResumeDialog(false);
+  }
+};
+
+const handleStartNew = async () => {
+  // Clear both session storage and server draft
+  sessionStorage.removeItem("registrationProgress");
+
+  if (formData.mobile_number) {
+    await deleteDraftFromServer(formData.mobile_number);
+  }
+  setResumeConfirmed(true);
+  setShowResumeDialog(false);
+};
+
+  // Handle location state only once
   useEffect(() => {
     if (location.state?.mobileNumber) {
-      console.log("Initializing form with mobile number:", location.state.mobileNumber);
-      setFormData(prevData => ({
+      console.log(
+        "Initializing form with mobile number:",
+        location.state.mobileNumber
+      );
+      setFormData((prevData) => ({
         ...prevData,
-        mobile_number: location.state.mobileNumber
+        mobile_number: location.state.mobileNumber,
       }));
     }
-  }, []); 
+  }, []);
 
   const indianCities = [
     "Ahmedabad",
@@ -354,7 +704,6 @@ const RegistrationForm = () => {
     }));
   };
 
-
   useEffect(() => {
     const header = document.querySelector("header");
     const footer = document.querySelector("footer");
@@ -377,21 +726,20 @@ const RegistrationForm = () => {
   // Optimize form steps by using constants
   const formSteps = useMemo(() => FORM_STEPS, []);
 
-  useEffect(() => {
-    if (location.state?.fromLogin) {
-      if (location.state?.processSteps) {
-        setProcessSteps(location.state.processSteps);
-      }
+useEffect(() => {
+  if (!finalSubmitted&& location.state?.fromLogin) {
+    const mobileNumber = location.state.mobileNumber;
 
-      // If mobile number is verified, we can start from the form
-      if (location.state?.mobileNumber) {
-        setFormData((prev) => ({
-          ...prev,
-          mobileNumber: location.state.mobileNumber,
-        }));
-      }
+    if (location.state.resume) {
+      setShowResumeDialog(true);
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        mobile_number: mobileNumber,
+      }));
     }
-  }, [location.state]);
+  }
+}, [finalSubmitted, location.state]);
 
   
   useEffect(() => {
@@ -400,11 +748,9 @@ const RegistrationForm = () => {
     setProgress(Math.round((completedSteps / totalSteps) * 100));
   }, [processSteps]);
 
-
   useEffect(() => {
     const registrationProgress = currentStep / (formSteps.length - 1);
 
-   
     const updatedSteps = [...processSteps];
     updatedSteps[2].completed = registrationProgress > 0;
     setProcessSteps(updatedSteps);
@@ -1156,57 +1502,60 @@ const RegistrationForm = () => {
     [errors]
   );
 
-
-
   const sendWhatsAppInvite = useCallback(async (mobileNumber) => {
     try {
       const formData = new URLSearchParams();
-      formData.append('number', mobileNumber);
-      formData.append('message', `Hi! You're invited to join us at Gahoishakti. Click here to log in and get started: https://www.gahoishakti.in/login`);
-  
-       const res = await fetch('https://admin.gahoishakti.in/api/whatsapp/send', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: formData.toString(),
-      });
-  
+      formData.append("number", mobileNumber);
+      formData.append(
+        "message",
+        `Hi! You're invited to join us at Gahoishakti. Click here to log in and get started: https://www.gahoishakti.in/login`
+      );
+
+      const res = await fetch(
+        "https://admin.gahoishakti.in/api/whatsapp/send",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body: formData.toString(),
+        }
+      );
+
       const contentType = res.headers.get("content-type");
-  
+
       if (!contentType || !contentType.includes("application/json")) {
         const raw = await res.text();
-        console.error('Unexpected response:', raw);
+        console.error("Unexpected response:", raw);
         return;
       }
-  
+
       const data = await res.json();
-  
+
       if (!data.status) {
-        console.error('Failed to send:', data.message || 'Unknown error');
+        console.error("Failed to send:", data.message || "Unknown error");
       } else {
-        console.log('WhatsApp invite sent successfully');
+        console.log("WhatsApp invite sent successfully");
       }
     } catch (err) {
-      console.error('Error sending WhatsApp message:', err);
+      console.error("Error sending WhatsApp message:", err);
     }
   }, []);
-  
-  
+
   const handleFamilyDetailChange = useCallback(
     (index, field, value) => {
       // Allow only digits for the mobile number
       if (field === "mobileNumber" && !/^\d*$/.test(value)) {
         return;
       }
-  
+
       setFormData((prev) => ({
         ...prev,
         familyDetails: prev.familyDetails.map((member, i) =>
           i === index ? { ...member, [field]: value } : member
         ),
       }));
-  
+
       // Clear any existing error on this field if present
       if (errors[`familyDetails.${index}.${field}`]) {
         setErrors((prev) => ({
@@ -1214,7 +1563,7 @@ const RegistrationForm = () => {
           [`familyDetails.${index}.${field}`]: "",
         }));
       }
-  
+
       // Trigger WhatsApp invite only when mobile number reaches 10 digits exactly
       if (field === "mobileNumber" && value.length === 10) {
         sendWhatsAppInvite(value);
@@ -1222,11 +1571,6 @@ const RegistrationForm = () => {
     },
     [errors, sendWhatsAppInvite]
   );
-  
-  
-  
-  
-  
 
   // Optimize add child function
   const addChild = useCallback(() => {
@@ -1300,24 +1644,25 @@ const RegistrationForm = () => {
   const checkEmailExists = async (email) => {
     try {
       const baseUrl = import.meta.env.VITE_PUBLIC_STRAPI_API_URL;
-      const url = `${baseUrl}/api/registration-pages?filters[personal_information][email_address]=${encodeURIComponent(email)}`;
+      const url = `${baseUrl}/api/registration-pages?filters[personal_information][email_address]=${encodeURIComponent(
+        email
+      )}`;
 
       const response = await fetch(url, {
-        method: 'GET',
+        method: "GET",
         headers: {
-          'Content-Type': 'application/json'
-        }
+          "Content-Type": "application/json",
+        },
       });
 
       if (!response.ok) {
-        throw new Error('Failed to check email existence');
+        throw new Error("Failed to check email existence");
       }
 
       const data = await response.json();
       return data.data && data.data.length > 0;
-
     } catch (error) {
-      console.error('Error checking email existence:', error);
+      console.error("Error checking email existence:", error);
       throw error;
     }
   };
@@ -1326,24 +1671,25 @@ const RegistrationForm = () => {
   const checkMobileExists = async (mobileNumber) => {
     try {
       const baseUrl = import.meta.env.VITE_PUBLIC_STRAPI_API_URL;
-      const url = `${baseUrl}/api/registration-pages?filters[personal_information][mobile_number]=${encodeURIComponent(mobileNumber)}`;
+      const url = `${baseUrl}/api/registration-pages?filters[personal_information][mobile_number]=${encodeURIComponent(
+        mobileNumber
+      )}`;
 
       const response = await fetch(url, {
-        method: 'GET',
+        method: "GET",
         headers: {
-          'Content-Type': 'application/json'
-        }
+          "Content-Type": "application/json",
+        },
       });
 
       if (!response.ok) {
-        throw new Error('Failed to check mobile number existence');
+        throw new Error("Failed to check mobile number existence");
       }
 
       const data = await response.json();
       return data.data && data.data.length > 0;
-
     } catch (error) {
-      console.error('Error checking mobile number existence:', error);
+      console.error("Error checking mobile number existence:", error);
       throw error;
     }
   };
@@ -1352,7 +1698,7 @@ const RegistrationForm = () => {
   const handleNext = async () => {
     setSubmitted(true);
     setLoading(true);
-    
+
     try {
       // Only validate email and mobile on the first step
       if (currentStep === 0) {
@@ -1360,9 +1706,10 @@ const RegistrationForm = () => {
         if (formData.email) {
           const emailExists = await checkEmailExists(formData.email);
           if (emailExists) {
-            setErrors(prev => ({
+            setErrors((prev) => ({
               ...prev,
-              email: "This email address is already registered. Please use a different email."
+              email:
+                "This email address is already registered. Please use a different email.",
             }));
             setLoading(false);
             return;
@@ -1373,16 +1720,17 @@ const RegistrationForm = () => {
         if (!location.state?.fromLogin && formData.mobileNumber) {
           const mobileExists = await checkMobileExists(formData.mobileNumber);
           if (mobileExists) {
-            setErrors(prev => ({
+            setErrors((prev) => ({
               ...prev,
-              mobileNumber: "This mobile number is already registered. Please use a different number."
+              mobileNumber:
+                "This mobile number is already registered. Please use a different number.",
             }));
             setLoading(false);
             return;
           }
         }
       }
-      
+
       // Rest of the handleNext function stays the same...
       if (currentStep === formSteps.length - 1) {
         if (!formData.confirmAccuracy) {
@@ -1393,7 +1741,7 @@ const RegistrationForm = () => {
         handleSubmit();
         return;
       }
-      
+
       if (validateCurrentStep()) {
         setCurrentStep(currentStep + 1);
         setSubmitted(false);
@@ -1401,14 +1749,18 @@ const RegistrationForm = () => {
       } else {
         const firstErrorField = document.querySelector(".error-field");
         if (firstErrorField) {
-          firstErrorField.scrollIntoView({ behavior: "smooth", block: "center" });
+          firstErrorField.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+          });
         }
       }
     } catch (error) {
       console.error("Error in handleNext:", error);
-      setErrors(prev => ({
+      setErrors((prev) => ({
         ...prev,
-        [currentStep === 0 ? 'mobileNumber' : 'email']: "Unable to verify. Please try again."
+        [currentStep === 0 ? "mobileNumber" : "email"]:
+          "Unable to verify. Please try again.",
       }));
     } finally {
       setLoading(false);
@@ -1459,72 +1811,81 @@ const RegistrationForm = () => {
     }
   };
 
-  const handleSubmit = async () => {
-    try {
-      setLoading(true);
+ const handleSubmit = async () => {
+  try {
+    setLoading(true);
+    sessionStorage.removeItem("registrationProgress");
 
-      const displayPictureId = formData.display_picture
-        ? await uploadImage(formData.display_picture)
-        : null;
+    const displayPictureId = formData.display_picture
+      ? await uploadImage(formData.display_picture)
+      : null;
 
-      const strapiData = formatFormData(
-        {
-          ...formData,
-          gotraList: Object.keys(gotraAaknaMap),
-          aaknaList: getAaknaOptions(),
-          localPanchayatList: formData.regionalAssembly
-            ? LOCAL_PANCHAYATS[formData.regionalAssembly] || []
-            : [],
-          subLocalPanchayatList: formData.localPanchayat
-            ? SUB_LOCAL_PANCHAYATS[formData.localPanchayat] || []
-            : [],
-        },
-        displayPictureId
+    const strapiData = formatFormData(
+      {
+        ...formData,
+        gotraList: Object.keys(gotraAaknaMap),
+        aaknaList: getAaknaOptions(),
+        localPanchayatList: formData.regionalAssembly
+          ? LOCAL_PANCHAYATS[formData.regionalAssembly] || []
+          : [],
+        subLocalPanchayatList: formData.localPanchayat
+          ? SUB_LOCAL_PANCHAYATS[formData.localPanchayat] || []
+          : [],
+      },
+      displayPictureId
+    );
+
+    console.log("Payload to Strapi:", strapiData);
+
+    const response = await fetch(`${API_BASE}/api/registration-pages`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ data: strapiData }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error("Server error:", errorData);
+      throw new Error(
+        errorData.error?.message ||
+          errorData.error?.details?.errors?.[0]?.message ||
+          "Failed to submit form"
       );
+    }
 
-+     console.log('Payload to Strapi:', strapiData);
+    const result = await response.json();
+    console.log("Form submitted successfully:", result);
 
-      const response = await fetch(
-        // `${import.meta.env.VITE_PUBLIC_STRAPI_API_URL}/api/registration-pages`,
-        `${API_BASE}/api/registration-pages`,
+    const gahoiCode =
+      result.data?.attributes?.gahoi_code || strapiData.gahoi_code;
+
+    if (!gahoiCode) {
+      throw new Error("Gahoi code not found in response");
+    }
+
+    clearProgress();
+    setFinalSubmitted(true);
+
+    if (formData.mobile_number) {
+      await fetch(
+        `${API_BASE}/api/draft-registrations/mobile/${formData.mobile_number}`,
         {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ data: strapiData }),
+          method: "DELETE",
         }
       );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error("Server error:", errorData);
-        throw new Error(
-          errorData.error?.message ||
-            errorData.error?.details?.errors?.[0]?.message ||
-            "Failed to submit form"
-        );
-      }
-
-      const result = await response.json();
-      console.log("Form submitted successfully:", result);
-
-      // Extract gahoi code from the response
-      const gahoiCode = result.data?.attributes?.gahoi_code || strapiData.gahoi_code;
-      
-      if (!gahoiCode) {
-        throw new Error("Gahoi code not found in response");
-      }
-
-      
-      showSuccessMessage(gahoiCode);
-    } catch (error) {
-      console.error("Error submitting form:", error);
-      alert(`Failed to submit form: ${error.message}`);
-    } finally {
-      setLoading(false);
     }
-  };
+
+    showSuccessMessage(gahoiCode);
+  } catch (error) {
+    console.error("Error submitting form:", error);
+    alert(`Failed to submit form: ${error.message}`);
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   // Separate function for showing success message
   const showSuccessMessage = (gahoiCode) => {
@@ -1557,29 +1918,35 @@ const RegistrationForm = () => {
     // Send WhatsApp message
     const sendWhatsAppMessage = async () => {
       try {
-        const mobileNumber = formData.mobileNumber.toString().replace(/\D/g, '');
-        const numberWithCountryCode = mobileNumber.startsWith('91') ? mobileNumber : `91${mobileNumber}`;
-        
-        
-        const response = await fetch('https://admin.gahoishakti.in/api/send-sms', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            number: numberWithCountryCode,
-            message: `Thank you for registering with Gahoi Shakti! Your Gahoi code is: ${gahoiCode}`,
-          }),
-        });
+        const mobileNumber = formData.mobileNumber
+          .toString()
+          .replace(/\D/g, "");
+        const numberWithCountryCode = mobileNumber.startsWith("91")
+          ? mobileNumber
+          : `91${mobileNumber}`;
+
+        const response = await fetch(
+          "https://admin.gahoishakti.in/api/send-sms",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              number: numberWithCountryCode,
+              message: `Thank you for registering with Gahoi Shakti! Your Gahoi code is: ${gahoiCode}`,
+            }),
+          }
+        );
 
         const data = await response.json();
-        console.log('WhatsApp API Response (via backend):', data);
+        console.log("WhatsApp API Response (via backend):", data);
 
         if (!data.status) {
-          console.warn('WhatsApp API reported failure:', data.message);
+          console.warn("WhatsApp API reported failure:", data.message);
         }
       } catch (error) {
-        console.error('Error sending WhatsApp message via backend:', error);
+        console.error("Error sending WhatsApp message via backend:", error);
       }
     };
 
@@ -1608,280 +1975,287 @@ const RegistrationForm = () => {
     switch (currentStep) {
       case 0:
         return (
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Existing fields */}
-              <div className="space-y-3">
-                <label className="text-sm font-medium text-gray-700 flex items-center">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5 mr-2 text-red-700"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  Full Name
-                </label>
-                <input
-                  type="text"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 transition-all duration-200 ${
-                    hasError("name")
-                      ? "border-red-500 bg-red-50 error-field"
-                      : "border-gray-300"
-                  }`}
-                  placeholder="Enter your full name"
-                />
-                {renderError("name")}
-              </div>
+          <>
 
-              <div className="space-y-3">
-                <label className="text-sm font-medium text-gray-700 flex items-center">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5 mr-2 text-red-700"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
-                  </svg>
-                  Mobile Number
-                </label>
-                <input
-                  type="tel"
-                  name="mobileNumber"
-                  value={formData.mobileNumber}
-                  onChange={handleInputChange}
-                  className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 transition-all duration-200 ${
-                    hasError("mobileNumber")
-                      ? "border-red-500 bg-red-50 error-field"
-                      : "border-gray-300"
-                  }`}
-                  pattern="[0-9]*"
-                  inputMode="numeric"
-                  maxLength={10}
-                  placeholder="10-digit mobile number"
-                  disabled={location.state?.fromLogin}
-                />
-                {hasError("mobileNumber") && (
-                  <p className="text-red-500 text-xs">{errors.mobileNumber}</p>
-                )}
-              </div>
-
-              <div className="space-y-3">
-                <label className=" text-sm font-medium text-gray-700 flex items-center">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5 mr-2 text-red-700"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M14.243 5.757a6 6 0 10-9.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  Email Address
-                </label>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 transition-all duration-200 ${
-                    hasError("email")
-                      ? "border-red-500 bg-red-50 error-field"
-                      : "border-gray-300"
-                  }`}
-                  placeholder="Enter your email address"
-                />
-                {hasError("email") && (
-                  <p className="text-red-500 text-xs">{errors.email}</p>
-                )}
-              </div>
-
-              <div className="space-y-3 md:col-span-2">
-                <label className=" text-sm font-medium text-gray-700 flex items-center">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5 mr-2 text-red-700"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M10 2a1 1 0 00-1 1v1a1 1 0 002 0V3a1 1 0 00-1-1zM4 4h3a3 3 0 006 0h3a2 2 0 012 2v9a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2zm2.5 7a1.5 1.5 0 100-3 1.5 1.5 0 000 3zm2.45 4a2.5 2.5 0 10-4.9 0h4.9zM12 9a1 1 0 100 2h3a1 1 0 100-2h-3zm-1 4a1 1 0 011-1h2a1 1 0 110 2h-2a1 1 0 01-1-1z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  Gender
-                </label>
-                <div className="flex items-center space-x-8 px-4 py-2.5 border border-gray-300 rounded-lg bg-white">
-                  <label className="inline-flex items-center cursor-pointer">
-                    <input
-                      type="radio"
-                      name="gender"
-                      value="Male"
-                      checked={formData.gender === "Male"}
-                      onChange={(e) =>
-                        setFormData({ ...formData, gender: e.target.value })
-                      }
-                      className="h-4 w-4 text-red-700 focus:ring-red-500"
-                    />
-                    <span className="ml-2 text-sm text-gray-700">Male</span>
+            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Existing fields */}
+                <div className="space-y-3">
+                  <label className="text-sm font-medium text-gray-700 flex items-center">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5 mr-2 text-red-700"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    Full Name
                   </label>
-                  <label className="inline-flex items-center cursor-pointer">
-                    <input
-                      type="radio"
-                      name="gender"
-                      value="Female"
-                      checked={formData.gender === "Female"}
-                      onChange={(e) =>
-                        setFormData({ ...formData, gender: e.target.value })
-                      }
-                      className="h-4 w-4 text-red-700 focus:ring-red-500"
-                    />
-                    <span className="ml-2 text-sm text-gray-700">Female</span>
-                  </label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 transition-all duration-200 ${
+                      hasError("name")
+                        ? "border-red-500 bg-red-50 error-field"
+                        : "border-gray-300"
+                    }`}
+                    placeholder="Enter your full name"
+                  />
+                  {renderError("name")}
                 </div>
 
-                {hasError("gender") && (
-                  <p className="text-red-500 text-xs">{errors.gender}</p>
-                )}
-              </div>
-
-              {/* Nationality field */}
-              <div className="space-y-3 md:col-span-2">
-                <label className="text-sm font-medium text-gray-700 flex items-center">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5 mr-2 text-red-700"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M3 6a3 3 0 013-3h10a1 1 0 01.8 1.6L14.25 8l2.55 3.4A1 1 0 0116 13H6a1 1 0 00-1 1v3a1 1 0 11-2 0V6z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  Nationality
-                  {hasError("nationality") && (
-                    <span className="ml-2 text-xs text-red-500">*Required</span>
+                <div className="space-y-3">
+                  <label className="text-sm font-medium text-gray-700 flex items-center">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5 mr-2 text-red-700"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
+                    </svg>
+                    Mobile Number
+                  </label>
+                  <input
+                    type="tel"
+                    name="mobileNumber"
+                    value={formData.mobileNumber}
+                    onChange={handleInputChange}
+                    className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 transition-all duration-200 ${
+                      hasError("mobileNumber")
+                        ? "border-red-500 bg-red-50 error-field"
+                        : "border-gray-300"
+                    }`}
+                    pattern="[0-9]*"
+                    inputMode="numeric"
+                    maxLength={10}
+                    placeholder="10-digit mobile number"
+                    disabled={location.state?.fromLogin}
+                  />
+                  {hasError("mobileNumber") && (
+                    <p className="text-red-500 text-xs">
+                      {errors.mobileNumber}
+                    </p>
                   )}
-                </label>
-                <div
-                  className={`flex items-center space-x-8 px-4 py-2.5 border rounded-lg ${
-                    hasError("nationality")
-                      ? "border-red-500 bg-red-50"
-                      : "border-gray-300"
-                  }`}
-                >
-                  <label className="inline-flex items-center cursor-pointer">
-                    <input
-                      type="radio"
-                      name="nationality"
-                      value="Indian"
-                      checked={formData.nationality === "Indian"}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          nationality: e.target.value,
-                        })
-                      }
-                      className="h-4 w-4 text-red-700 focus:ring-red-500"
-                    />
-                    <span className="ml-2 text-sm text-gray-700">Indian</span>
-                  </label>
-                  <label className="inline-flex items-center cursor-pointer">
-                    <input
-                      type="radio"
-                      name="nationality"
-                      value="Non-Indian"
-                      checked={formData.nationality === "Non-Indian"}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          nationality: e.target.value,
-                        })
-                      }
-                      className="h-4 w-4 text-red-700 focus:ring-red-500"
-                    />
-                    <span className="ml-2 text-sm text-gray-700">
-                      Non-Indian
-                    </span>
-                  </label>
                 </div>
-                {hasError("nationality") && (
-                  <p className="text-red-500 text-xs">{errors.nationality}</p>
-                )}
-              </div>
 
-              {/* Gahoi Community field */}
-              <div className="space-y-3 md:col-span-2">
-                <label className="text-sm font-medium text-gray-700 flex items-center">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5 mr-2 text-red-700"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  Are you from Gahoi Community?
-                </label>
-                <div
-                  className={`flex items-center space-x-8 px-4 py-2.5 border rounded-lg ${
-                    hasError("isGahoi")
-                      ? "border-red-500 bg-red-50"
-                      : "border-gray-300"
-                  }`}
-                >
-                  <label className="inline-flex items-center cursor-pointer">
-                    <input
-                      type="radio"
-                      name="isGahoi"
-                      value="Yes"
-                      checked={formData.isGahoi === "Yes"}
-                      onChange={(e) =>
-                        setFormData({ ...formData, isGahoi: e.target.value })
-                      }
-                      className="h-4 w-4 text-red-700 focus:ring-red-500"
-                    />
-                    <span className="ml-2 text-sm text-gray-700">Yes</span>
+                <div className="space-y-3">
+                  <label className=" text-sm font-medium text-gray-700 flex items-center">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5 mr-2 text-red-700"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M10 2a1 1 0 00-1 1v1a1 1 0 002 0V3a1 1 0 00-1-1zM4 4h3a3 3 0 006 0h3a2 2 0 012 2v9a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2zm2.5 7a1.5 1.5 0 100-3 1.5 1.5 0 000 3zm2.45 4a2.5 2.5 0 10-4.9 0h4.9zM12 9a1 1 0 100 2h3a1 1 0 100-2h-3zm-1 4a1 1 0 011-1h2a1 1 0 110 2h-2a1 1 0 01-1-1z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    Email Address
                   </label>
-                  <label className="inline-flex items-center cursor-pointer">
-                    <input
-                      type="radio"
-                      name="isGahoi"
-                      value="No"
-                      checked={formData.isGahoi === "No"}
-                      onChange={(e) =>
-                        setFormData({ ...formData, isGahoi: e.target.value })
-                      }
-                      className="h-4 w-4 text-red-700 focus:ring-red-500"
-                    />
-                    <span className="ml-2 text-sm text-gray-700">No</span>
-                  </label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 transition-all duration-200 ${
+                      hasError("email")
+                        ? "border-red-500 bg-red-50 error-field"
+                        : "border-gray-300"
+                    }`}
+                    placeholder="Enter your email address"
+                  />
+                  {hasError("email") && (
+                    <p className="text-red-500 text-xs">{errors.email}</p>
+                  )}
                 </div>
-                {hasError("isGahoi") && (
-                  <p className="text-red-500 text-xs">{errors.isGahoi}</p>
-                )}
+
+                <div className="space-y-3 md:col-span-2">
+                  <label className=" text-sm font-medium text-gray-700 flex items-center">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5 mr-2 text-red-700"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M14.243 5.757a6 6 0 10-9.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    Gender
+                  </label>
+                  <div className="flex items-center space-x-8 px-4 py-2.5 border border-gray-300 rounded-lg bg-white">
+                    <label className="inline-flex items-center cursor-pointer">
+                      <input
+                        type="radio"
+                        name="gender"
+                        value="Male"
+                        checked={formData.gender === "Male"}
+                        onChange={(e) =>
+                          setFormData({ ...formData, gender: e.target.value })
+                        }
+                        className="h-4 w-4 text-red-700 focus:ring-red-500"
+                      />
+                      <span className="ml-2 text-sm text-gray-700">Male</span>
+                    </label>
+                    <label className="inline-flex items-center cursor-pointer">
+                      <input
+                        type="radio"
+                        name="gender"
+                        value="Female"
+                        checked={formData.gender === "Female"}
+                        onChange={(e) =>
+                          setFormData({ ...formData, gender: e.target.value })
+                        }
+                        className="h-4 w-4 text-red-700 focus:ring-red-500"
+                      />
+                      <span className="ml-2 text-sm text-gray-700">Female</span>
+                    </label>
+                  </div>
+
+                  {hasError("gender") && (
+                    <p className="text-red-500 text-xs">{errors.gender}</p>
+                  )}
+                </div>
+
+                {/* Nationality field */}
+                <div className="space-y-3 md:col-span-2">
+                  <label className="text-sm font-medium text-gray-700 flex items-center">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5 mr-2 text-red-700"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M3 6a3 3 0 013-3h10a1 1 0 01.8 1.6L14.25 8l2.55 3.4A1 1 0 0116 13H6a1 1 0 00-1 1v3a1 1 0 11-2 0V6z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    Nationality
+                    {hasError("nationality") && (
+                      <span className="ml-2 text-xs text-red-500">
+                        *Required
+                      </span>
+                    )}
+                  </label>
+                  <div
+                    className={`flex items-center space-x-8 px-4 py-2.5 border rounded-lg ${
+                      hasError("nationality")
+                        ? "border-red-500 bg-red-50"
+                        : "border-gray-300"
+                    }`}
+                  >
+                    <label className="inline-flex items-center cursor-pointer">
+                      <input
+                        type="radio"
+                        name="nationality"
+                        value="Indian"
+                        checked={formData.nationality === "Indian"}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            nationality: e.target.value,
+                          })
+                        }
+                        className="h-4 w-4 text-red-700 focus:ring-red-500"
+                      />
+                      <span className="ml-2 text-sm text-gray-700">Indian</span>
+                    </label>
+                    <label className="inline-flex items-center cursor-pointer">
+                      <input
+                        type="radio"
+                        name="nationality"
+                        value="Non-Indian"
+                        checked={formData.nationality === "Non-Indian"}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            nationality: e.target.value,
+                          })
+                        }
+                        className="h-4 w-4 text-red-700 focus:ring-red-500"
+                      />
+                      <span className="ml-2 text-sm text-gray-700">
+                        Non-Indian
+                      </span>
+                    </label>
+                  </div>
+                  {hasError("nationality") && (
+                    <p className="text-red-500 text-xs">{errors.nationality}</p>
+                  )}
+                </div>
+
+                {/* Gahoi Community field */}
+                <div className="space-y-3 md:col-span-2">
+                  <label className="text-sm font-medium text-gray-700 flex items-center">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5 mr-2 text-red-700"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    Are you from Gahoi Community?
+                  </label>
+                  <div
+                    className={`flex items-center space-x-8 px-4 py-2.5 border rounded-lg ${
+                      hasError("isGahoi")
+                        ? "border-red-500 bg-red-50"
+                        : "border-gray-300"
+                    }`}
+                  >
+                    <label className="inline-flex items-center cursor-pointer">
+                      <input
+                        type="radio"
+                        name="isGahoi"
+                        value="Yes"
+                        checked={formData.isGahoi === "Yes"}
+                        onChange={(e) =>
+                          setFormData({ ...formData, isGahoi: e.target.value })
+                        }
+                        className="h-4 w-4 text-red-700 focus:ring-red-500"
+                      />
+                      <span className="ml-2 text-sm text-gray-700">Yes</span>
+                    </label>
+                    <label className="inline-flex items-center cursor-pointer">
+                      <input
+                        type="radio"
+                        name="isGahoi"
+                        value="No"
+                        checked={formData.isGahoi === "No"}
+                        onChange={(e) =>
+                          setFormData({ ...formData, isGahoi: e.target.value })
+                        }
+                        className="h-4 w-4 text-red-700 focus:ring-red-500"
+                      />
+                      <span className="ml-2 text-sm text-gray-700">No</span>
+                    </label>
+                  </div>
+                  {hasError("isGahoi") && (
+                    <p className="text-red-500 text-xs">{errors.isGahoi}</p>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
+          </>
         );
 
       case 1:
@@ -1891,7 +2265,7 @@ const RegistrationForm = () => {
               {/* Blood Group */}
               <div className="space-y-3">
                 <label className="block text-sm font-medium flex text-gray-700">
-                <svg
+                  <svg
                     xmlns="http://www.w3.org/2000/svg"
                     className="h-5 w-5 mr-2 text-red-700"
                     viewBox="0 0 20 20"
@@ -1899,7 +2273,7 @@ const RegistrationForm = () => {
                   >
                     <path
                       fillRule="evenodd"
-                      d="M5 2a1 1 0 00-1 1v1h1a1 1 0 000 2H6v1a1 1 0 00-2 0V6H3a1 1 0 000-2h1V3a1 1 0 00-1-1zm0 10a1 1 0 000 2h8a1 1 0 100-2H6z"
+                      d="M5 2a1 1 0 00-1 1v1h1a1 1 0 000 2H6v1a1 1 0 00-2 0V6H3a1 1 0 000-2h1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 10a1 1 0 000 2h8a1 1 0 100-2H6z"
                       clipRule="evenodd"
                     />
                   </svg>
@@ -2168,7 +2542,6 @@ const RegistrationForm = () => {
                               e.target.value
                             )
                           }
-                       
                           className={`block w-full px-4 py-2.5 text-gray-700 border focus:outline-none focus:ring-2 focus:ring-red-500 transition-all duration-200 ${
                             hasFamilyError(index, "name")
                               ? "border-red-300 bg-red-50"
@@ -2187,16 +2560,18 @@ const RegistrationForm = () => {
                                 e.target.value
                               )
                             }
-                            pattern="[0-9]*"    
-                            inputMode="numeric"  
+                            pattern="[0-9]*"
+                            inputMode="numeric"
                             maxLength={10}
-                            className="block flex-1 px-4 py-2.5 text-gray-700 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 transition-all duration-200"                            
+                            className="block flex-1 px-4 py-2.5 text-gray-700 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 transition-all duration-200"
                             placeholder={`${member.relation}'s mobile number`}
                           />
                           {member.mobileNumber?.length === 10 && (
                             <button
                               type="button"
-                              onClick={() => openWhatsAppShare(member.mobileNumber)}
+                              onClick={() =>
+                                openWhatsAppShare(member.mobileNumber)
+                              }
                               className="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200"
                               title="Invite to join"
                             >
@@ -2218,8 +2593,7 @@ const RegistrationForm = () => {
               </div>
             </div>
 
-            
-           {/* Siblings Section */}
+            {/* Siblings Section */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
               <div className="bg-gradient-to-r from-purple-50 to-white px-6 py-4 border-b border-gray-100 flex justify-between items-center">
                 <h3 className="text-lg font-semibold text-gray-800 flex items-center">
@@ -2338,7 +2712,6 @@ const RegistrationForm = () => {
                                       e.target.value
                                     )
                                   }
-                             
                                   className="block flex-1 px-4 py-2.5 text-gray-700 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 transition-all duration-200"
                                   pattern="[0-9]*"
                                   inputMode="numeric"
@@ -2348,7 +2721,9 @@ const RegistrationForm = () => {
                                 {member.mobileNumber?.length === 10 && (
                                   <button
                                     type="button"
-                                    onClick={() => openWhatsAppShare(member.mobileNumber)}
+                                    onClick={() =>
+                                      openWhatsAppShare(member.mobileNumber)
+                                    }
                                     className="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200"
                                     title="Invite to join"
                                   >
@@ -2462,8 +2837,6 @@ const RegistrationForm = () => {
                                 </option>
                               ))}
                             </select>
-
-                           
                           </div>
                         </div>
                       );
@@ -2490,52 +2863,61 @@ const RegistrationForm = () => {
               <div className="p-6">
                 <div className="space-y-4">
                   <div className="flex flex-col space-y-2">
-                    {["Married", "Unmarried", "Widow/Widower", "Divorced"].map((status) => (
-                      <label key={status} className="inline-flex items-center">
-                    <input
-                      type="radio"
-                      name="isMarried"
-                          value={status}
-                          checked={formData.isMarried === status}
-                      onChange={(e) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                              isMarried: e.target.value,
-                              considerSecondMarriage: false,
-                              marriageCommunity: "",
-                              spouseName: "",
-                              spouseMobile: "",
-                              spouseGotra: "",
-                              spouseAakna: "",
-                        }))
-                      }
-                      className="h-4 w-4 text-purple-700 focus:ring-purple-500"
-                    />
-                        <span className="ml-2 text-sm text-gray-700">{status}</span>
-                  </label>
-                    ))}
+                    {["Married", "Unmarried", "Widow/Widower", "Divorced"].map(
+                      (status) => (
+                        <label
+                          key={status}
+                          className="inline-flex items-center"
+                        >
+                          <input
+                            type="radio"
+                            name="isMarried"
+                            value={status}
+                            checked={formData.isMarried === status}
+                            onChange={(e) =>
+                              setFormData((prev) => ({
+                                ...prev,
+                                isMarried: e.target.value,
+                                considerSecondMarriage: false,
+                                marriageCommunity: "",
+                                spouseName: "",
+                                spouseMobile: "",
+                                spouseGotra: "",
+                                spouseAakna: "",
+                              }))
+                            }
+                            className="h-4 w-4 text-purple-700 focus:ring-purple-500"
+                          />
+                          <span className="ml-2 text-sm text-gray-700">
+                            {status}
+                          </span>
+                        </label>
+                      )
+                    )}
                   </div>
 
                   {formData.isMarried === "Married" && (
                     <div className="mt-4 ml-6 space-y-4">
                       <div className="flex flex-col space-y-2">
-                  <label className="inline-flex items-center">
-                    <input
-                      type="radio"
+                        <label className="inline-flex items-center">
+                          <input
+                            type="radio"
                             name="marriageCommunity"
                             value="same"
                             checked={formData.marriageCommunity === "same"}
-                      onChange={(e) =>
-                        setFormData((prev) => ({
-                          ...prev,
+                            onChange={(e) =>
+                              setFormData((prev) => ({
+                                ...prev,
                                 marriageCommunity: e.target.value,
                                 spouseName: "",
                                 spouseMobile: "",
-                        }))
-                      }
-                      className="h-4 w-4 text-purple-700 focus:ring-purple-500"
-                    />
-                          <span className="ml-2 text-sm text-gray-700">Married in same community</span>
+                              }))
+                            }
+                            className="h-4 w-4 text-purple-700 focus:ring-purple-500"
+                          />
+                          <span className="ml-2 text-sm text-gray-700">
+                            Married in same community
+                          </span>
                         </label>
                         <label className="inline-flex items-center">
                           <input
@@ -2553,9 +2935,11 @@ const RegistrationForm = () => {
                             }
                             className="h-4 w-4 text-purple-700 focus:ring-purple-500"
                           />
-                          <span className="ml-2 text-sm text-gray-700">Married in other community</span>
-                  </label>
-                </div>
+                          <span className="ml-2 text-sm text-gray-700">
+                            Married in other community
+                          </span>
+                        </label>
+                      </div>
 
                       {formData.marriageCommunity === "other" && (
                         <div className="space-y-3">
@@ -2584,7 +2968,7 @@ const RegistrationForm = () => {
                             }}
                             className="block w-full px-4 py-2.5 text-gray-700 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all duration-200"
                           />
-              </div>
+                        </div>
                       )}
 
                       {formData.marriageCommunity === "same" && (
@@ -2620,11 +3004,13 @@ const RegistrationForm = () => {
                               className="block w-full px-4 py-2.5 text-gray-700 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all duration-200"
                             >
                               <option value="">Select Spouse's Aakna</option>
-                              {gotraAaknaMap[formData.spouseGotra]?.map((aakna) => (
-                                <option key={aakna} value={aakna}>
-                                  {aakna}
-                                </option>
-                              ))}
+                              {gotraAaknaMap[formData.spouseGotra]?.map(
+                                (aakna) => (
+                                  <option key={aakna} value={aakna}>
+                                    {aakna}
+                                  </option>
+                                )
+                              )}
                             </select>
                           )}
                         </div>
@@ -2632,7 +3018,8 @@ const RegistrationForm = () => {
                     </div>
                   )}
 
-                  {(formData.isMarried === "Widow/Widower" || formData.isMarried === "Divorced") && (
+                  {(formData.isMarried === "Widow/Widower" ||
+                    formData.isMarried === "Divorced") && (
                     <div className="mt-4 ml-6">
                       <span className="text-sm text-gray-700 block mb-3">
                         Are you willing to consider a second marriage?
@@ -2651,7 +3038,9 @@ const RegistrationForm = () => {
                             }
                             className="h-4 w-4 text-purple-700 focus:ring-purple-500"
                           />
-                          <span className="ml-2 text-sm text-gray-700">Yes</span>
+                          <span className="ml-2 text-sm text-gray-700">
+                            Yes
+                          </span>
                         </label>
                         <label className="inline-flex items-center">
                           <input
@@ -2677,296 +3066,305 @@ const RegistrationForm = () => {
 
             {/* Spouse Card - Only show if married */}
             {formData.isMarried === "Married" && (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-              <div className="bg-gradient-to-r from-pink-50 to-white px-6 py-4 border-b border-gray-100">
-                <h3 className="text-lg font-semibold text-gray-800 flex items-center">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5 mr-2 text-pink-600"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z" />
-                  </svg>
-                  Spouse Information
-                </h3>
-              </div>
-              <div className="p-6">
-                {formData.familyDetails.slice(2, 3).map((member, index) => (
-                  <div
-                    key={index + 2}
-                    className="grid grid-cols-1 md:grid-cols-2 gap-6"
-                  >
-                    <input
-                      type="text"
-                      value={member.name}
-                      onChange={(e) =>
-                        handleFamilyDetailChange(
-                          index + 2,
-                          "name",
-                          e.target.value
-                        )
-                      }
-                      className="block w-full px-4 py-2.5 text-gray-700 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 transition-all duration-200"
-                      placeholder="Enter spouse's name"
-                    />
-                    <div className="flex gap-2">
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div className="bg-gradient-to-r from-pink-50 to-white px-6 py-4 border-b border-gray-100">
+                  <h3 className="text-lg font-semibold text-gray-800 flex items-center">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5 mr-2 text-pink-600"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z" />
+                    </svg>
+                    Spouse Information
+                  </h3>
+                </div>
+                <div className="p-6">
+                  {formData.familyDetails.slice(2, 3).map((member, index) => (
+                    <div
+                      key={index + 2}
+                      className="grid grid-cols-1 md:grid-cols-2 gap-6"
+                    >
                       <input
-                        type="tel"
-                        value={member.mobileNumber}
+                        type="text"
+                        value={member.name}
                         onChange={(e) =>
                           handleFamilyDetailChange(
                             index + 2,
-                            "mobileNumber",
+                            "name",
                             e.target.value
                           )
                         }
-                        pattern="[0-9]*"    
-                            inputMode="numeric" 
-                        className="block flex-1 px-4 py-2.5 text-gray-700 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 transition-all duration-200"
-                        maxLength={10}
-                        placeholder="Spouse's mobile number"
+                        className="block w-full px-4 py-2.5 text-gray-700 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 transition-all duration-200"
+                        placeholder="Enter spouse's name"
                       />
-                      {member.mobileNumber?.length === 10 && (
-                        <button
-                          type="button"
-                          onClick={() => openWhatsAppShare(member.mobileNumber)}
-                          className="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200"
-                          title="Invite to join"
-                        >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="h-5 w-5"
-                            viewBox="0 0 20 20"
-                            fill="currentColor"
+                      <div className="flex gap-2">
+                        <input
+                          type="tel"
+                          value={member.mobileNumber}
+                          onChange={(e) =>
+                            handleFamilyDetailChange(
+                              index + 2,
+                              "mobileNumber",
+                              e.target.value
+                            )
+                          }
+                          pattern="[0-9]*"
+                          inputMode="numeric"
+                          className="block flex-1 px-4 py-2.5 text-gray-700 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 transition-all duration-200"
+                          maxLength={10}
+                          placeholder="Spouse's mobile number"
+                        />
+                        {member.mobileNumber?.length === 10 && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              openWhatsAppShare(member.mobileNumber)
+                            }
+                            className="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200"
+                            title="Invite to join"
                           >
-                            <path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z" />
-                          </svg>
-                        </button>
-                      )}
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              className="h-5 w-5"
+                              viewBox="0 0 20 20"
+                              fill="currentColor"
+                            >
+                              <path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z" />
+                            </svg>
+                          </button>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
             )}
 
             {/* Children Section - Only show if married */}
             {formData.isMarried === "Married" && (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-              <div className="bg-gradient-to-r from-blue-50 to-white px-6 py-4 border-b border-gray-100 flex justify-between items-center">
-                <h3 className="text-lg font-semibold text-gray-800 flex items-center">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5 mr-2 text-blue-600"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
-                  </svg>
-                  Children Information
-                </h3>
-                {formData.familyDetails.filter(
-                  (member) => member.relation === "Child"
-                ).length < MAX_CHILDREN && (
-                  <button
-                    type="button"
-                    onClick={addChild}
-                    className="inline-flex items-center px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors duration-200"
-                  >
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div className="bg-gradient-to-r from-blue-50 to-white px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+                  <h3 className="text-lg font-semibold text-gray-800 flex items-center">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      className="h-4 w-4 mr-1"
+                      className="h-5 w-5 mr-2 text-blue-600"
                       viewBox="0 0 20 20"
                       fill="currentColor"
                     >
-                      <path
-                        fillRule="evenodd"
-                        d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"
-                        clipRule="evenodd"
-                      />
+                      <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
                     </svg>
-                    Add Child
-                  </button>
-                )}
-              </div>
-              <div className="p-6">
-                <div className="space-y-6">
-                  {formData.familyDetails
-                    .filter((member) => member.relation === "Child")
-                    .map((member, childIndex) => {
-                      const index = formData.familyDetails.indexOf(member);
-                      return (
-                        <div
-                          key={index}
-                          className="bg-gray-50 rounded-lg p-4 space-y-4 relative"
-                        >
-                          {/* Add Remove Button for Children */}
-                          {index > 2 && (
-                            <button
-                              type="button"
-                              onClick={() => removeChild(index)}
-                              className="absolute -top-2 -right-2 text-red-600 hover:text-red-800 transition-colors duration-200"
-                            >
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                className="h-5 w-5"
-                                viewBox="0 0 20 20"
-                                fill="currentColor"
+                    Children Information
+                  </h3>
+                  {formData.familyDetails.filter(
+                    (member) => member.relation === "Child"
+                  ).length < MAX_CHILDREN && (
+                    <button
+                      type="button"
+                      onClick={addChild}
+                      className="inline-flex items-center px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors duration-200"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-4 w-4 mr-1"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                      Add Child
+                    </button>
+                  )}
+                </div>
+                <div className="p-6">
+                  <div className="space-y-6">
+                    {formData.familyDetails
+                      .filter((member) => member.relation === "Child")
+                      .map((member, childIndex) => {
+                        const index = formData.familyDetails.indexOf(member);
+                        return (
+                          <div
+                            key={index}
+                            className="bg-gray-50 rounded-lg p-4 space-y-4 relative"
+                          >
+                            {/* Add Remove Button for Children */}
+                            {index > 2 && (
+                              <button
+                                type="button"
+                                onClick={() => removeChild(index)}
+                                className="absolute -top-2 -right-2 text-red-600 hover:text-red-800 transition-colors duration-200"
                               >
-                                <path
-                                  fillRule="evenodd"
-                                  d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                                  clipRule="evenodd"
-                                />
-                              </svg>
-                            </button>
-                          )}
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="space-y-1">
-                              <input
-                                type="text"
-                                value={member.name}
-                                onChange={(e) =>
-                                  handleFamilyDetailChange(
-                                    index,
-                                    "name",
-                                    e.target.value
-                                  )
-                                }
-                            //     pattern="[0-9]*"    
-                            // inputMode="numeric" 
-                                className={`block w-full px-4 py-2.5 text-gray-700 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 transition-all duration-200 ${
-                                  hasFamilyError(index, "name")
-                                    ? "border-red-500 bg-red-50"
-                                    : "border-gray-300"
-                                }`}
-                                placeholder={`Child ${childIndex + 1}'s name`}
-                              />
-                              {hasFamilyError(index, "name") && (
-                                <p className="text-red-500 text-xs">
-                                  {errors[`familyDetails.${index}.name`]}
-                                </p>
-                              )}
-                            </div>
-                            <div className="space-y-1">
-                              <div className="flex gap-2">
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  className="h-5 w-5"
+                                  viewBox="0 0 20 20"
+                                  fill="currentColor"
+                                >
+                                  <path
+                                    fillRule="evenodd"
+                                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                                    clipRule="evenodd"
+                                  />
+                                </svg>
+                              </button>
+                            )}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div className="space-y-1">
                                 <input
-                                  type="tel"
-                                  value={member.mobileNumber}
+                                  type="text"
+                                  value={member.name}
                                   onChange={(e) =>
                                     handleFamilyDetailChange(
                                       index,
-                                      "mobileNumber",
+                                      "name",
                                       e.target.value
                                     )
                                   }
-                                  className={`block flex-1 px-4 py-2.5 text-gray-700 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 transition-all duration-200 ${
-                                    hasFamilyError(index, "mobileNumber")
+                                  //     pattern="[0-9]*"
+                                  // inputMode="numeric"
+                                  className={`block w-full px-4 py-2.5 text-gray-700 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 transition-all duration-200 ${
+                                    hasFamilyError(index, "name")
                                       ? "border-red-500 bg-red-50"
                                       : "border-gray-300"
                                   }`}
-                                  pattern="[0-9]*"
-                                  inputMode="numeric"
-                                  maxLength={10}
-                                  placeholder="Mobile number (optional)"
+                                  placeholder={`Child ${childIndex + 1}'s name`}
                                 />
-                                {member.mobileNumber?.length === 10 && (
-                                  <button
-                                    type="button"
-                                    onClick={() => openWhatsAppShare(member.mobileNumber)}
-                                    className="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200"
-                                    title="Invite to join"
-                                  >
-                                    <svg
-                                      xmlns="http://www.w3.org/2000/svg"
-                                      className="h-5 w-5"
-                                      viewBox="0 0 20 20"
-                                      fill="currentColor"
-                                    >
-                                      <path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z" />
-                                    </svg>
-                                  </button>
+                                {hasFamilyError(index, "name") && (
+                                  <p className="text-red-500 text-xs">
+                                    {errors[`familyDetails.${index}.name`]}
+                                  </p>
                                 )}
                               </div>
-                              {hasFamilyError(index, "mobileNumber") && (
+                              <div className="space-y-1">
+                                <div className="flex gap-2">
+                                  <input
+                                    type="tel"
+                                    value={member.mobileNumber}
+                                    onChange={(e) =>
+                                      handleFamilyDetailChange(
+                                        index,
+                                        "mobileNumber",
+                                        e.target.value
+                                      )
+                                    }
+                                    className={`block flex-1 px-4 py-2.5 text-gray-700 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 transition-all duration-200 ${
+                                      hasFamilyError(index, "mobileNumber")
+                                        ? "border-red-500 bg-red-50"
+                                        : "border-gray-300"
+                                    }`}
+                                    pattern="[0-9]*"
+                                    inputMode="numeric"
+                                    maxLength={10}
+                                    placeholder="Mobile number (optional)"
+                                  />
+                                  {member.mobileNumber?.length === 10 && (
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        openWhatsAppShare(member.mobileNumber)
+                                      }
+                                      className="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200"
+                                      title="Invite to join"
+                                    >
+                                      <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        className="h-5 w-5"
+                                        viewBox="0 0 20 20"
+                                        fill="currentColor"
+                                      >
+                                        <path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z" />
+                                      </svg>
+                                    </button>
+                                  )}
+                                </div>
+                                {hasFamilyError(index, "mobileNumber") && (
+                                  <p className="text-red-500 text-xs">
+                                    {
+                                      errors[
+                                        `familyDetails.${index}.mobileNumber`
+                                      ]
+                                    }
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                            <div className="space-y-1">
+                              <div
+                                className={`flex items-center space-x-6 px-4 py-2.5 border rounded-lg ${
+                                  hasFamilyError(index, "gender")
+                                    ? "border-red-500 bg-red-50"
+                                    : "border-gray-300"
+                                }`}
+                              >
+                                <label className="inline-flex items-center">
+                                  <input
+                                    type="radio"
+                                    name={`child-gender-${index}`}
+                                    value="Male"
+                                    checked={member.gender === "Male"}
+                                    onChange={(e) =>
+                                      handleFamilyDetailChange(
+                                        index,
+                                        "gender",
+                                        e.target.value
+                                      )
+                                    }
+                                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                                  />
+                                  <span className="ml-2 text-sm text-gray-700">
+                                    Male
+                                  </span>
+                                </label>
+                                <label className="inline-flex items-center">
+                                  <input
+                                    type="radio"
+                                    name={`child-gender-${index}`}
+                                    value="Female"
+                                    checked={member.gender === "Female"}
+                                    onChange={(e) =>
+                                      handleFamilyDetailChange(
+                                        index,
+                                        "gender",
+                                        e.target.value
+                                      )
+                                    }
+                                    className="h-4 w-4 text-pink-600 focus:ring-pink-500 border-gray-300"
+                                  />
+                                  <span className="ml-2 text-sm text-gray-700">
+                                    Female
+                                  </span>
+                                </label>
+                              </div>
+                              {hasFamilyError(index, "gender") && (
                                 <p className="text-red-500 text-xs">
-                                  {errors[`familyDetails.${index}.mobileNumber`]}
+                                  {errors[`familyDetails.${index}.gender`]}
                                 </p>
                               )}
                             </div>
                           </div>
-                          <div className="space-y-1">
-                            <div
-                              className={`flex items-center space-x-6 px-4 py-2.5 border rounded-lg ${
-                                hasFamilyError(index, "gender")
-                                  ? "border-red-500 bg-red-50"
-                                  : "border-gray-300"
-                              }`}
-                            >
-                              <label className="inline-flex items-center">
-                                <input
-                                  type="radio"
-                                  name={`child-gender-${index}`}
-                                  value="Male"
-                                  checked={member.gender === "Male"}
-                                  onChange={(e) =>
-                                    handleFamilyDetailChange(
-                                      index,
-                                      "gender",
-                                      e.target.value
-                                    )
-                                  }
-                                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
-                                />
-                                <span className="ml-2 text-sm text-gray-700">
-                                  Male
-                                </span>
-                              </label>
-                              <label className="inline-flex items-center">
-                                <input
-                                  type="radio"
-                                  name={`child-gender-${index}`}
-                                  value="Female"
-                                  checked={member.gender === "Female"}
-                                  onChange={(e) =>
-                                    handleFamilyDetailChange(
-                                      index,
-                                      "gender",
-                                      e.target.value
-                                    )
-                                  }
-                                  className="h-4 w-4 text-pink-600 focus:ring-pink-500 border-gray-300"
-                                />
-                                <span className="ml-2 text-sm text-gray-700">
-                                  Female
-                                </span>
-                              </label>
-                            </div>
-                            {hasFamilyError(index, "gender") && (
-                              <p className="text-red-500 text-xs">
-                                {errors[`familyDetails.${index}.gender`]}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                  </div>
                 </div>
               </div>
-            </div>
             )}
-
 
             {/* Previous Marriage Section - Only show if Widow/Widower or Divorced AND considerSecondMarriage is true */}
-            {( (formData.isMarried === "Widow/Widower" || formData.isMarried === "Divorced") && formData.considerSecondMarriage === true ) && (
-              <PreviousMarriageSection 
-                formData={formData}
-                setFormData={setFormData}
-                errors={errors}
-                setErrors={setErrors}
-              />
-            )}
+            {(formData.isMarried === "Widow/Widower" ||
+              formData.isMarried === "Divorced") &&
+              formData.considerSecondMarriage === true && (
+                <PreviousMarriageSection
+                  formData={formData}
+                  setFormData={setFormData}
+                  errors={errors}
+                  setErrors={setErrors}
+                />
+              )}
           </div>
         );
 
@@ -3000,8 +3398,8 @@ const RegistrationForm = () => {
                 </label>
                 <div className="flex items-center space-x-8 px-4 py-2.5 border border-gray-300 rounded-lg bg-white">
                   <label className="inline-flex items-center cursor-pointer">
-                  <input
-                    type="radio"
+                    <input
+                      type="radio"
                       name="workCategory"
                       value="business_owner"
                       checked={formData.workCategory === "business_owner"}
@@ -3011,13 +3409,15 @@ const RegistrationForm = () => {
                           ...formData,
                           workCategory: value,
                           workType: "Business Owner",
-                          employmentType: "Business Owner"
+                          employmentType: "Business Owner",
                         });
                       }}
-                    className="h-4 w-4 text-red-700 focus:ring-red-500"
-                  />
-                    <span className="ml-2 text-sm text-gray-700">Business Owner</span>
-                </label>
+                      className="h-4 w-4 text-red-700 focus:ring-red-500"
+                    />
+                    <span className="ml-2 text-sm text-gray-700">
+                      Business Owner
+                    </span>
+                  </label>
                   <label className="inline-flex items-center cursor-pointer">
                     <input
                       type="radio"
@@ -3031,12 +3431,14 @@ const RegistrationForm = () => {
                           workCategory: value,
                           workType: "Professional",
                           businessType: "",
-                          businessYears: ""
+                          businessYears: "",
                         });
                       }}
                       className="h-4 w-4 text-red-700 focus:ring-red-500"
                     />
-                    <span className="ml-2 text-sm text-gray-700">Professional/Employee</span>
+                    <span className="ml-2 text-sm text-gray-700">
+                      Professional/Employee
+                    </span>
                   </label>
                 </div>
               </div>
@@ -3087,11 +3489,19 @@ const RegistrationForm = () => {
                       }`}
                     >
                       <option value="">Select Business Type</option>
-                      <option value="sole_proprietorship">Sole Proprietorship</option>
+                      <option value="sole_proprietorship">
+                        Sole Proprietorship
+                      </option>
                       <option value="partnership">Partnership</option>
-                      <option value="private_limited">Private Limited Company</option>
-                      <option value="public_limited">Public Limited Company</option>
-                      <option value="llp">Limited Liability Partnership (LLP)</option>
+                      <option value="private_limited">
+                        Private Limited Company
+                      </option>
+                      <option value="public_limited">
+                        Public Limited Company
+                      </option>
+                      <option value="llp">
+                        Limited Liability Partnership (LLP)
+                      </option>
                       <option value="other">Other</option>
                     </select>
                     {hasError("businessType") && (
@@ -3134,13 +3544,17 @@ const RegistrationForm = () => {
               {/* Show these fields only if Professional/Employee is selected */}
               {formData.workCategory === "professional" && (
                 <div className="md:col-span-2 space-y-3">
-                    <label className="block text-sm font-medium text-gray-700">
+                  <label className="block text-sm font-medium text-gray-700">
                     Employment Type
-                    </label>
+                  </label>
                   <div className="flex flex-col space-y-2">
-                    {["Central Government Employee", "State Government Employee", "Private Sector Employee"].map((type) => (
+                    {[
+                      "Central Government Employee",
+                      "State Government Employee",
+                      "Private Sector Employee",
+                    ].map((type) => (
                       <label key={type} className="inline-flex items-center">
-                    <input
+                        <input
                           type="radio"
                           name="employmentType"
                           value={type}
@@ -3148,24 +3562,26 @@ const RegistrationForm = () => {
                           onChange={(e) =>
                             setFormData({
                               ...formData,
-                              employmentType: e.target.checked ? e.target.value : ""
+                              employmentType: e.target.checked
+                                ? e.target.value
+                                : "",
                             })
                           }
                           className="h-4 w-4 text-red-700 focus:ring-red-500"
                         />
-                        <span className="ml-2 text-sm text-gray-700">{type}</span>
-                    </label>
+                        <span className="ml-2 text-sm text-gray-700">
+                          {type}
+                        </span>
+                      </label>
                     ))}
                   </div>
                   {hasError("employmentType") && (
-                      <p className="text-red-500 text-xs">
+                    <p className="text-red-500 text-xs">
                       Please select your employment type
-                      </p>
-                    )}
-                  </div>
+                    </p>
+                  )}
+                </div>
               )}
-
-             
             </div>
 
             <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
@@ -3235,19 +3651,22 @@ const RegistrationForm = () => {
                     name="confirmAccuracy"
                     checked={formData.confirmAccuracy}
                     onChange={(e) => {
-                      setFormData(prev => ({
+                      setFormData((prev) => ({
                         ...prev,
-                        confirmAccuracy: e.target.checked
+                        confirmAccuracy: e.target.checked,
                       }));
                     }}
                     className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
                   />
                   <div className="ml-3 text-sm font-medium text-gray-700">
-                    By submitting this form, I confirm that the information provided is accurate to the best of my knowledge.
+                    By submitting this form, I confirm that the information
+                    provided is accurate to the best of my knowledge.
                   </div>
                 </div>
                 {submitted && !formData.confirmAccuracy && (
-                  <p className="mt-2 text-sm text-red-600">Please confirm that the information is accurate</p>
+                  <p className="mt-2 text-sm text-red-600">
+                    Please confirm that the information is accurate
+                  </p>
                 )}
               </div>
 
@@ -3361,7 +3780,16 @@ const RegistrationForm = () => {
       if (formData.district === "Jhansi") {
         return ["Bundelkhand Regional Assembly"];
       }
-      if (["Jalaun", "Lucknow", "Kanpur Nagar", "Chitrakoot", "Banda", "Auraiya"].includes(formData.district)) {
+      if (
+        [
+          "Jalaun",
+          "Lucknow",
+          "Kanpur Nagar",
+          "Chitrakoot",
+          "Banda",
+          "Auraiya",
+        ].includes(formData.district)
+      ) {
         return ["Ganga Jamuna Regional Assembly"];
       }
     }
@@ -3376,20 +3804,44 @@ const RegistrationForm = () => {
     // For Madhya Pradesh, filter assemblies based on district
     if (formData.state === "Madhya Pradesh") {
       // Mahakaushal Regional Assembly districts
-      if (["Jabalpur", "Katni", "Rewa", "Narsinghpur", "Umariya", "Sagar", "Seoni", "Katni", "Chhindwara", "Panna", "Hoshangabad", "Mandla", "Damoh", "Shahdol", "Dindori",
-        "Guna"
-      ].includes(formData.district)) {
+      if (
+        [
+          "Jabalpur",
+          "Katni",
+          "Rewa",
+          "Narsinghpur",
+          "Umariya",
+          "Sagar",
+          "Seoni",
+          "Katni",
+          "Chhindwara",
+          "Panna",
+          "Hoshangabad",
+          "Mandla",
+          "Damoh",
+          "Shahdol",
+          "Dindori",
+          "Guna",
+        ].includes(formData.district)
+      ) {
         if (formData.district === "Panna") {
           return ["Mahakaushal Regional Assembly", "Vindhya Regional Assembly"];
         }
         if (formData.district === "Guna") {
-          return ["Mahakaushal Regional Assembly", "Chaurasi Regional Assembly"];
+          return [
+            "Mahakaushal Regional Assembly",
+            "Chaurasi Regional Assembly",
+          ];
         }
         return ["Mahakaushal Regional Assembly"];
       }
 
       // Vindhya Regional Assembly districts
-      if (["Satna", "Shahdol", "Sidhi", "Chhatarpur", "Panna", "Rewa"].includes(formData.district)) {
+      if (
+        ["Satna", "Shahdol", "Sidhi", "Chhatarpur", "Panna", "Rewa"].includes(
+          formData.district
+        )
+      ) {
         if (formData.district === "Panna") {
           return ["Mahakaushal Regional Assembly", "Vindhya Regional Assembly"];
         }
@@ -3397,14 +3849,13 @@ const RegistrationForm = () => {
       }
 
       // Chaurasi Regional Assembly districts
-      if (["Shivpuri", "Rewa", "Satna", "Ashoknagar", "Guna"].includes(formData.district)) {
+      if (
+        ["Shivpuri", "Rewa", "Satna", "Ashoknagar", "Guna"].includes(
+          formData.district
+        )
+      ) {
         return ["Chaurasi Regional Assembly"];
       }
-
-     
-   
-     
-
 
       // Chambal Regional Assembly districts
       if (["Gwalior", "Bhind", "Datia", "Morena"].includes(formData.district)) {
@@ -3412,7 +3863,11 @@ const RegistrationForm = () => {
       }
 
       // Central Malwa Regional Assembly districts
-      if (["Indore", "Dewas", "Ujjain", "Bhopal", "Vidisha", "Raisen"].includes(formData.district)) {
+      if (
+        ["Indore", "Dewas", "Ujjain", "Bhopal", "Vidisha", "Raisen"].includes(
+          formData.district
+        )
+      ) {
         return ["Central Malwa Regional Assembly"];
       }
 
@@ -3439,19 +3894,33 @@ const RegistrationForm = () => {
 
     // For Chhattisgarh
     if (formData.state === "Chhattisgarh") {
-      if (["Durg", "Rajnandgaon", "Dhamtari", "Raipur", "Bilaspur", "Bastar", "Koriya"].includes(formData.district)) {
+      if (
+        [
+          "Durg",
+          "Rajnandgaon",
+          "Dhamtari",
+          "Raipur",
+          "Bilaspur",
+          "Bastar",
+          "Koriya",
+        ].includes(formData.district)
+      ) {
         return ["Chhattisgarh Regional Assembly"];
       }
     }
 
     // For Maharashtra
     if (formData.state === "Maharashtra") {
-      if (["Nagpur", "Pune", "Amravati", "Mumbai", "Jalgaon"].includes(formData.district)) {
+      if (
+        ["Nagpur", "Pune", "Amravati", "Mumbai", "Jalgaon"].includes(
+          formData.district
+        )
+      ) {
         return ["Southern Regional Assembly"];
       }
     }
 
-      return [];
+    return [];
   }, [formData.state, formData.district]);
 
   const getFilteredLocalPanchayatNames = () => {
@@ -3465,7 +3934,7 @@ const RegistrationForm = () => {
             "Shri Daudayal Gahoi Vaishya Seva Samiti",
             "Gahoi Vaishya Seva Samiti",
             "Gahoi Vaishya Panchayat",
-            "Shri Gahoi Vaishya Panchayat"
+            "Shri Gahoi Vaishya Panchayat",
           ];
         }
       }
@@ -3496,8 +3965,14 @@ const RegistrationForm = () => {
     // Chambal Regional Assembly cases
     if (formData.regionalAssembly === "Chambal Regional Assembly") {
       // For Gwalior
-      if (formData.state === "Madhya Pradesh" && formData.district === "Gwalior") {
-        return ["Gahoi Vaishya Samaj Register Brahttar Gwalior", "Gahoi Vaishya Panchayat"];
+      if (
+        formData.state === "Madhya Pradesh" &&
+        formData.district === "Gwalior"
+      ) {
+        return [
+          "Gahoi Vaishya Samaj Register Brahttar Gwalior",
+          "Gahoi Vaishya Panchayat",
+        ];
       }
 
       // if (formData.state === "Madhya Pradesh" && formData.district === "Gwalior" && formData.city === "Gwalior") {
@@ -3505,15 +3980,24 @@ const RegistrationForm = () => {
       // }
 
       // For Bhind
-      if (formData.state === "Madhya Pradesh" && formData.district === "Bhind") {
+      if (
+        formData.state === "Madhya Pradesh" &&
+        formData.district === "Bhind"
+      ) {
         return ["Gahoi Vaishya Sabha", "Gahoi Vaishya Panchayat"];
       }
       // For Datia
-      if (formData.state === "Madhya Pradesh" && formData.district === "Datia") {
+      if (
+        formData.state === "Madhya Pradesh" &&
+        formData.district === "Datia"
+      ) {
         return ["Gahoi Vaishya Panchayat"];
       }
       // For Morena
-      if (formData.state === "Madhya Pradesh" && formData.district === "Morena") {
+      if (
+        formData.state === "Madhya Pradesh" &&
+        formData.district === "Morena"
+      ) {
         return ["Gahoi Vaishya Samaj"];
       }
       // For Jaipur
@@ -3527,7 +4011,10 @@ const RegistrationForm = () => {
       if (formData.state === "Delhi" && formData.district === "Delhi") {
         return ["Shri Gahoi Vaishya Association"];
       }
-      if (formData.state === "Uttar Pradesh" && formData.district === "Mathura") {
+      if (
+        formData.state === "Uttar Pradesh" &&
+        formData.district === "Mathura"
+      ) {
         return ["Gahoi Vaishya Vikas Sansthan"];
       }
     }
@@ -3537,7 +4024,10 @@ const RegistrationForm = () => {
       if (formData.state === "Bihar" && formData.district === "Patna") {
         return ["Shri Gahoi Vaishya Sabha"];
       }
-      if (formData.state === "Uttar Pradesh" && formData.district === "Mahoba") {
+      if (
+        formData.state === "Uttar Pradesh" &&
+        formData.district === "Mahoba"
+      ) {
         return ["Gahoi Vaishya Samaj"];
       }
       // Add new Madhya Pradesh cases for Central Malwa
@@ -3562,34 +4052,37 @@ const RegistrationForm = () => {
         }
       }
 
-    //Chattrapur, Panna, Reva, Satna case
-      if (formData.regionalAssembly === "Vindhya Regional Assembly" && 
-          formData.state === "Madhya Pradesh" && 
-          ["Laundi", "Nowgong", "Chhatarpur", "Harpalpur", "Bada Malhera"].includes(formData.district)) {
-          return ["Gahoi Vaishya Panchayat"];
-      }
-     
-
-
-          if (formData.district === "Panna" && formData.city === "Amanganj") {
-                return ["Gahoi Vaishya Panchayat"];
-              
-      }
-      if (formData.district === "Panna" && formData.city === "Ajaigarh") {
-                return ["Gahoi Vaishya Panchayat"];
-              
-      }
-      if (formData.district === "Panna" && formData.city === "Panna") {
-                return ["Gahoi Vaishya Panchayat"];
-              
-      }
-
-     
-      if (formData.state === "Madhya Pradesh" && formData.district === "Satna") {
+      //Chattrapur, Panna, Reva, Satna case
+      if (
+        formData.regionalAssembly === "Vindhya Regional Assembly" &&
+        formData.state === "Madhya Pradesh" &&
+        [
+          "Laundi",
+          "Nowgong",
+          "Chhatarpur",
+          "Harpalpur",
+          "Bada Malhera",
+        ].includes(formData.district)
+      ) {
         return ["Gahoi Vaishya Panchayat"];
       }
-      
 
+      if (formData.district === "Panna" && formData.city === "Amanganj") {
+        return ["Gahoi Vaishya Panchayat"];
+      }
+      if (formData.district === "Panna" && formData.city === "Ajaigarh") {
+        return ["Gahoi Vaishya Panchayat"];
+      }
+      if (formData.district === "Panna" && formData.city === "Panna") {
+        return ["Gahoi Vaishya Panchayat"];
+      }
+
+      if (
+        formData.state === "Madhya Pradesh" &&
+        formData.district === "Satna"
+      ) {
+        return ["Gahoi Vaishya Panchayat"];
+      }
     }
 
     // Mahakaushal Regional Assembly case
@@ -3597,16 +4090,22 @@ const RegistrationForm = () => {
       if (formData.state === "Uttar Pradesh" && formData.city === "Sultanpur") {
         return ["Gahoi Vaishya Panchayat"];
       }
-      if (formData.state === "Madhya Pradesh" && formData.city === "Gotegaon" ) {
+      if (formData.state === "Madhya Pradesh" && formData.city === "Gotegaon") {
         return ["Gahoi Vaishya Panchayat"];
       }
-      if (formData.state === "Madhya Pradesh" && formData.city === "Gadarwara") {
+      if (
+        formData.state === "Madhya Pradesh" &&
+        formData.city === "Gadarwara"
+      ) {
         return ["Gahoi Vaishya Panchayat"];
       }
       if (formData.state === "Madhya Pradesh" && formData.city === "Barheta") {
         return ["Gahoi Vaishya Panchayat"];
       }
-      if (formData.state === "Madhya Pradesh" && formData.district === "Narsinghpur") {
+      if (
+        formData.state === "Madhya Pradesh" &&
+        formData.district === "Narsinghpur"
+      ) {
         return ["Gahoi Vaishya Panchayat"];
       }
       if (formData.state === "Madhya Pradesh" && formData.district === "Rewa") {
@@ -3615,104 +4114,156 @@ const RegistrationForm = () => {
       if (formData.state === "Madhya Pradesh" && formData.city === "Chichli") {
         return ["Gahoi Vaishya Panchayat"];
       }
-        if (formData.state === "Madhya Pradesh" && formData.city === "Saikeda") {
+      if (formData.state === "Madhya Pradesh" && formData.city === "Saikeda") {
         return ["Gahoi Vaishya Panchayat"];
       }
 
-      if (formData.city === "Kareli" ) {
+      if (formData.city === "Kareli") {
         return ["Gahoi Vaishya Samaj Panchayat"];
       }
-        if (formData.city === "Paloha" ) {
-       return ["Gahoi Vaishya Samaj Panchayat"];
+      if (formData.city === "Paloha") {
+        return ["Gahoi Vaishya Samaj Panchayat"];
       }
-       if (formData.city === "Tendukheda(NP)" ) {
-      return ["Gahoi Vaishya Samaj Panchayat"];
+      if (formData.city === "Tendukheda(NP)") {
+        return ["Gahoi Vaishya Samaj Panchayat"];
       }
-        if (formData.city === "Narsinghpur" ) {
-      return ["Gahoi Vaishya Samaj Panchayat"];
+      if (formData.city === "Narsinghpur") {
+        return ["Gahoi Vaishya Samaj Panchayat"];
       }
 
       if (formData.district === "Jabalpur") {
         return ["Gahoi Vaishya Panchayat", "Shri Gahoi Vaishya Samaj"];
       }
-         if (formData.city === "Sihora") {
+      if (formData.city === "Sihora") {
         return ["Gahoi Vaishya Panchayat"];
       }
 
-       if (formData.state === "Madhya Pradesh" && formData.district === "Umariya" ) {
+      if (
+        formData.state === "Madhya Pradesh" &&
+        formData.district === "Umariya"
+      ) {
         return ["Shri Gahoi Vaishya Panchayat"];
       }
 
-      if (formData.state === "Madhya Pradesh" && formData.district === "Katni") {
+      if (
+        formData.state === "Madhya Pradesh" &&
+        formData.district === "Katni"
+      ) {
         return ["Gahoi Vaishya Samaj", "Gahoi Vaishya Panchayat Parishad"];
       }
 
-// Chindwara 
-      if (formData.state === "Madhya Pradesh" && formData.district === "Chhindwara") {
+      // Chindwara
+      if (
+        formData.state === "Madhya Pradesh" &&
+        formData.district === "Chhindwara"
+      ) {
         return ["Gahoi Vaishya Panchayat", "Shri Gahoi Vaishya Panchayat"];
       }
 
- // Panna
-      if (formData.state === "Madhya Pradesh" && formData.district === "Panna") {
+      // Panna
+      if (
+        formData.state === "Madhya Pradesh" &&
+        formData.district === "Panna"
+      ) {
         return ["Gahoi Vaishya Panchayat"];
       }
 
-
-//Hoshangabad
-      if (formData.state === "Madhya Pradesh" && formData.district === "Hoshangabad") {
-        return ["Gahoi Vaishya Panchayat"];
-      } 
-// Mandla
-      if (formData.state === "Madhya Pradesh" && formData.district === "Mandla") {
+      //Hoshangabad
+      if (
+        formData.state === "Madhya Pradesh" &&
+        formData.district === "Hoshangabad"
+      ) {
         return ["Gahoi Vaishya Panchayat"];
       }
-// Damoh
+      // Mandla
+      if (
+        formData.state === "Madhya Pradesh" &&
+        formData.district === "Mandla"
+      ) {
+        return ["Gahoi Vaishya Panchayat"];
+      }
+      // Damoh
       if (formData.state === "Madhya Pradesh" && formData.city === "Hatta") {
         return ["Shri Gahoi Vaishya Panchayat"];
       }
-// Shahdol
-      if (formData.state === "Madhya Pradesh" && formData.district === "Shahdol") {
+      // Shahdol
+      if (
+        formData.state === "Madhya Pradesh" &&
+        formData.district === "Shahdol"
+      ) {
         return ["Shri Gahoi Vaishya Panchayat"];
       }
-// Dindori
-      if (formData.state === "Madhya Pradesh" && formData.district === "Dindori") {
+      // Dindori
+      if (
+        formData.state === "Madhya Pradesh" &&
+        formData.district === "Dindori"
+      ) {
         return ["Gahoi Vaishya Panchayat"];
       }
-// Guna
+      // Guna
       if (formData.state === "Madhya Pradesh" && formData.district === "Guna") {
         return ["Gahoi Vaishya Panchayat"];
       }
 
-//Sagar
-if (formData.state === "Madhya Pradesh" && formData.district === "Sagar") {
-  return ["Gahoi Vaishya Panchayat", "Shri Gahoi Vaishya Panchayat", "Gahoi Vaishya Samaj"];
-}
+      //Sagar
+      if (
+        formData.state === "Madhya Pradesh" &&
+        formData.district === "Sagar"
+      ) {
+        return [
+          "Gahoi Vaishya Panchayat",
+          "Shri Gahoi Vaishya Panchayat",
+          "Gahoi Vaishya Samaj",
+        ];
+      }
 
-
-if (formData.state === "Madhya Pradesh" && (formData.city === "Lakhnadon" || formData.district === "Seoni")) {
-    return ["Gahoi Vaishya Panchayat"];
-}
-
-}
-
-
+      if (
+        formData.state === "Madhya Pradesh" &&
+        (formData.city === "Lakhnadon" || formData.district === "Seoni")
+      ) {
+        return ["Gahoi Vaishya Panchayat"];
+      }
+    }
 
     // Bundelkhand Regional Assembly cases
     if (formData.regionalAssembly === "Bundelkhand Regional Assembly") {
-      if (formData.state === "Uttar Pradesh" && formData.district === "Jhansi") {
-        if (["Garautha", "Barua Sagar", "Simriddha", "Tahrauli", "Gursarai", "Bamor", 
-            "Poonchh", "Erich", "Bhel Simrawali", "Babina Cantt", "Bangra Uldan Ranipur", 
-            "Mauranipur"].includes(formData.city)) {
-            return ["Gahoi Vaishya Panchayat"];
-          }
-        if (["Baragaon", "Ranipur", "Jhansi", "Samthar", "Archara"].includes(formData.city)) {
+      if (
+        formData.state === "Uttar Pradesh" &&
+        formData.district === "Jhansi"
+      ) {
+        if (
+          [
+            "Garautha",
+            "Barua Sagar",
+            "Simriddha",
+            "Tahrauli",
+            "Gursarai",
+            "Bamor",
+            "Poonchh",
+            "Erich",
+            "Bhel Simrawali",
+            "Babina Cantt",
+            "Bangra Uldan Ranipur",
+            "Mauranipur",
+          ].includes(formData.city)
+        ) {
+          return ["Gahoi Vaishya Panchayat"];
+        }
+        if (
+          ["Baragaon", "Ranipur", "Jhansi", "Samthar", "Archara"].includes(
+            formData.city
+          )
+        ) {
           return ["Shri Gahoi Vaishya Panchayat"];
         }
         if (formData.city === "Moth") {
           return ["Shri Gahoi Vaishya Seva Samiti"];
         }
       }
-      if (formData.state === "Madhya Pradesh" && formData.district === "Tikamgarh") {
+      if (
+        formData.state === "Madhya Pradesh" &&
+        formData.district === "Tikamgarh"
+      ) {
         return ["Shri Gahoi Vaishya Panchayat"];
       }
     }
@@ -3721,7 +4272,10 @@ if (formData.state === "Madhya Pradesh" && (formData.city === "Lakhnadon" || for
     if (formData.regionalAssembly === "Ganga Jamuna Regional Assembly") {
       if (formData.state === "Uttar Pradesh") {
         if (formData.district === "Jalaun") {
-          return ["Gahoi Vaishya Samaj Panchayat", "Gahoi Vaishya Panchayat Samiti"];
+          return [
+            "Gahoi Vaishya Samaj Panchayat",
+            "Gahoi Vaishya Panchayat Samiti",
+          ];
         }
         if (formData.district === "Lucknow") {
           return ["Gahoi Vaishya Panchayat"];
@@ -3733,8 +4287,8 @@ if (formData.state === "Madhya Pradesh" && (formData.city === "Lakhnadon" || for
           return ["Gahoi Vaishya Samaj"];
         }
         if (formData.district === "Banda") {
-            return ["Gahoi Vaishya Samaj Panchayat"];
-          }
+          return ["Gahoi Vaishya Samaj Panchayat"];
+        }
         if (formData.district === "Auraiya") {
           return ["Gahoi Vaishya Yuva Samiti"];
         }
@@ -3744,9 +4298,13 @@ if (formData.state === "Madhya Pradesh" && (formData.city === "Lakhnadon" || for
     // Chhattisgarh Regional Assembly cases
     if (formData.regionalAssembly === "Chhattisgarh Regional Assembly") {
       if (formData.state === "Chhattisgarh") {
-        if (["Durg", "Rajnandgaon", "Dhamtari", "Raipur", "Bilaspur"].includes(formData.district)) {
-            return ["Gahoi Vaishya Panchayat"];
-          }
+        if (
+          ["Durg", "Rajnandgaon", "Dhamtari", "Raipur", "Bilaspur"].includes(
+            formData.district
+          )
+        ) {
+          return ["Gahoi Vaishya Panchayat"];
+        }
         if (["Bastar", "Koriya"].includes(formData.district)) {
           return ["Gahoi Vaishya Samaj"];
         }
@@ -3788,18 +4346,30 @@ if (formData.state === "Madhya Pradesh" && (formData.city === "Lakhnadon" || for
     if (!formData.regionalAssembly || !formData.localPanchayatName) return [];
 
     // Central Malwa Regional Assembly cases
-    if (formData.regionalAssembly === "Central Malwa Regional Assembly" && formData.state === "Madhya Pradesh") {
-      if (formData.localPanchayatName === "Gahoi Vaishya Samaj" && formData.district === "Indore") {
+    if (
+      formData.regionalAssembly === "Central Malwa Regional Assembly" &&
+      formData.state === "Madhya Pradesh"
+    ) {
+      if (
+        formData.localPanchayatName === "Gahoi Vaishya Samaj" &&
+        formData.district === "Indore"
+      ) {
         return ["Indore"];
       }
       if (formData.localPanchayatName === "Gahoi Vaishya Panchayat") {
         if (formData.district === "Ujjain") return ["Ujjain"];
         if (formData.district === "Bhopal") return ["Bhopal"];
       }
-      if (formData.localPanchayatName === "Gahoi Vaishya Samaj Kalyan Samiti" && formData.district === "Vidisha") {
+      if (
+        formData.localPanchayatName === "Gahoi Vaishya Samaj Kalyan Samiti" &&
+        formData.district === "Vidisha"
+      ) {
         return ["Vidisha"];
       }
-      if (formData.localPanchayatName === "Shri Gahoi Vaishya Samaj Panchayat" && formData.district === "Raisen") {
+      if (
+        formData.localPanchayatName === "Shri Gahoi Vaishya Samaj Panchayat" &&
+        formData.district === "Raisen"
+      ) {
         return ["Raisen"];
       }
       return [];
@@ -3807,48 +4377,63 @@ if (formData.state === "Madhya Pradesh" && (formData.city === "Lakhnadon" || for
 
     // Bundelkhand Regional Assembly cases
     if (formData.regionalAssembly === "Bundelkhand Regional Assembly") {
-      if (formData.state === "Uttar Pradesh" && formData.district === "Lalitpur") {
+      if (
+        formData.state === "Uttar Pradesh" &&
+        formData.district === "Lalitpur"
+      ) {
         return ["Lalitpur"];
       }
     }
 
     // Chaurasi Regional Assembly cases
-    if (formData.regionalAssembly === "Chaurasi Regional Assembly" && formData.state === "Madhya Pradesh") {
+    if (
+      formData.regionalAssembly === "Chaurasi Regional Assembly" &&
+      formData.state === "Madhya Pradesh"
+    ) {
       return [formData.district];
-
     }
-    if (formData.regionalAssembly === "Chaurasi Regional Assembly" && formData.state === "Gujarat") {
+    if (
+      formData.regionalAssembly === "Chaurasi Regional Assembly" &&
+      formData.state === "Gujarat"
+    ) {
       return [formData.district];
-
-      
-
     }
-
 
     // Chambal Regional Assembly cases
     if (formData.regionalAssembly === "Chambal Regional Assembly") {
       // For Gwalior
-      if (formData.state === "Madhya Pradesh" && formData.district === "Gwalior") {
-        if (formData.localPanchayatName === "Gahoi Vaishya Samaj Register Brahttar Gwalior" ||
-            formData.localPanchayatName === "Gahoi Vaishya Panchayat") {
+      if (
+        formData.state === "Madhya Pradesh" &&
+        formData.district === "Gwalior"
+      ) {
+        if (
+          formData.localPanchayatName ===
+            "Gahoi Vaishya Samaj Register Brahttar Gwalior" ||
+          formData.localPanchayatName === "Gahoi Vaishya Panchayat"
+        ) {
           return ["Gwalior"];
         }
       }
 
-        // For Gwalior
-        // if (formData.state === "Madhya Pradesh" && formData.district === "Gwalior") {
-        //   return ["Gwalior"];
-        // }
       // For Bhind
-      if (formData.state === "Madhya Pradesh" && formData.district === "Bhind") {
+      if (
+        formData.state === "Madhya Pradesh" &&
+        formData.district === "Bhind"
+      ) {
         return ["Bhind"];
       }
       // For Datia
-      if (formData.state === "Madhya Pradesh" && formData.district === "Datia") {
+      if (
+        formData.state === "Madhya Pradesh" &&
+        formData.district === "Datia"
+      ) {
         return ["Datia"];
       }
       // For Morena
-      if (formData.state === "Madhya Pradesh" && formData.district === "Morena") {
+      if (
+        formData.state === "Madhya Pradesh" &&
+        formData.district === "Morena"
+      ) {
         return ["Morena"];
       }
       // For Jaipur
@@ -3862,7 +4447,10 @@ if (formData.state === "Madhya Pradesh" && (formData.city === "Lakhnadon" || for
       if (formData.state === "Delhi" && formData.district === "Delhi") {
         return ["Delhi"];
       }
-      if (formData.state === "Uttar Pradesh" && formData.district === "Mathura") {
+      if (
+        formData.state === "Uttar Pradesh" &&
+        formData.district === "Mathura"
+      ) {
         return ["Mathura"];
       }
     }
@@ -3872,31 +4460,43 @@ if (formData.state === "Madhya Pradesh" && (formData.city === "Lakhnadon" || for
       if (formData.state === "Bihar" && formData.district === "Patna") {
         return ["Patna"];
       }
-      if (formData.state === "Uttar Pradesh" && formData.district === "Mahoba") {
-          return ["Mahoba"];
-        }
+      if (
+        formData.state === "Uttar Pradesh" &&
+        formData.district === "Mahoba"
+      ) {
+        return ["Mahoba"];
+      }
     }
 
-   //Vrindha - Chattapur, Panna, Reva, Satna case
-    if (formData.regionalAssembly === "Vindhya Regional Assembly" &&
-        formData.state === "Madhya Pradesh" &&
-        ["Laundi", "Nowgong", "Chhatarpur", "Harpalpur", "Bada Malhera"].includes(formData.city)) {
+    //Vrindha - Chattapur, Panna, Reva, Satna case
+    if (
+      formData.regionalAssembly === "Vindhya Regional Assembly" &&
+      formData.state === "Madhya Pradesh" &&
+      ["Laundi", "Nowgong", "Chhatarpur", "Harpalpur", "Bada Malhera"].includes(
+        formData.city
+      )
+    ) {
       return ["Chhatarpur"];
     }
 
     if (formData.district === "Chhatarpur") {
-      if (formData.regionalAssembly === "Vindhya Regional Assembly" && formData.localPanchayatName === "Gahoi Vaishya Panchayat") 
+      if (
+        formData.regionalAssembly === "Vindhya Regional Assembly" &&
+        formData.localPanchayatName === "Gahoi Vaishya Panchayat"
+      )
         return ["Chhatarpur"];
     }
 
-    if (formData.regionalAssembly === "Vindhya Regional Assembly" &&
-        formData.state === "Madhya Pradesh" &&
-        formData.district === "Panna" &&
-        ["Amanganj", "Panna", "Ajaigarh"].includes(formData.city)) {
+    if (
+      formData.regionalAssembly === "Vindhya Regional Assembly" &&
+      formData.state === "Madhya Pradesh" &&
+      formData.district === "Panna" &&
+      ["Amanganj", "Panna", "Ajaigarh"].includes(formData.city)
+    ) {
       return ["Panna"];
     }
 
-if (formData.regionalAssembly === "Vindhya Regional Assembly") {
+    if (formData.regionalAssembly === "Vindhya Regional Assembly") {
       if (formData.district === "Satna") {
         return ["Satna"];
       }
@@ -3908,141 +4508,182 @@ if (formData.regionalAssembly === "Vindhya Regional Assembly") {
       }
     }
 
+    // Mahakaushal Regional Assembly case
+    if (formData.regionalAssembly === "Mahakaushal Regional Assembly") {
+      if (
+        formData.state === "Uttar Pradesh" &&
+        formData.district === "Sultanpur" &&
+        formData.localPanchayatName === "Gahoi Vaishya Panchayat"
+      ) {
+        return ["Sultanpur"];
+      }
+      if (formData.localPanchayatName === "Gahoi Vaishya Panchayat") {
+        if (
+          formData.district === "Narsinghpur" &&
+          formData.localPanchayatName === "Gahoi Vaishya Panchayat"
+        )
+          return ["Narsinghpur"];
+      }
+      if (formData.localPanchayatName === "Gahoi Vaishya Samaj Panchayat") {
+        if (formData.localPanchayatName === "Gahoi Vaishya Samaj Panchayat")
+          return ["Narsinghpur"];
+      }
 
-        // Mahakaushal Regional Assembly case
-        if (formData.regionalAssembly === "Mahakaushal Regional Assembly") {
-          if (formData.state === "Uttar Pradesh" && formData.district === "Sultanpur" && formData.localPanchayatName === "Gahoi Vaishya Panchayat" ) {
-            return ["Sultanpur"];
-            
-          }
-          if (formData.localPanchayatName === "Gahoi Vaishya Panchayat") {
-            if (formData.district === "Narsinghpur" && formData.localPanchayatName === "Gahoi Vaishya Panchayat") return ["Narsinghpur"];       
-          }
-            if (formData.localPanchayatName === "Gahoi Vaishya Samaj Panchayat") {
-            if (formData.localPanchayatName === "Gahoi Vaishya Samaj Panchayat") return ["Narsinghpur"];       
-          }
-    
-           if (formData.localPanchayatName === "Gahoi Vaishya Panchayat") {
-            if (formData.city === "Sihora" && formData.localPanchayatName === "Gahoi Vaishya Panchayat") return ["Jabalpur"];       
-          }
-    
-             if (formData.localPanchayatName === "Gahoi Vaishya Panchayat") {
-            if (formData.district === "Jabalpur" && formData.localPanchayatName === "Gahoi Vaishya Panchayat") return ["Jabalpur"];       
-          }
-          
-           if (formData.localPanchayatName === "Shri Gahoi Vaishya Samaj") {
-            if (formData.district === "Jabalpur" && formData.localPanchayatName === "Shri Gahoi Vaishya Samaj") return ["Jabalpur"];       
-          }
-    
-          if (formData.localPanchayatName === "Shri Gahoi Vaishya Panchayat") {
-            if (formData.district === "Umariya" && formData.localPanchayatName === "Shri Gahoi Vaishya Panchayat") return ["Umariya"];       
-          }
+      if (formData.localPanchayatName === "Gahoi Vaishya Panchayat") {
+        if (
+          formData.city === "Sihora" &&
+          formData.localPanchayatName === "Gahoi Vaishya Panchayat"
+        )
+          return ["Jabalpur"];
+      }
 
-          if (formData.localPanchayatName === "Gahoi Vaishya Panchayat") {
-            if (formData.district === "Rewa" && formData.localPanchayatName === "Gahoi Vaishya Panchayat") return ["Rewa"];       
-          }
+      if (formData.localPanchayatName === "Gahoi Vaishya Panchayat") {
+        if (
+          formData.district === "Jabalpur" &&
+          formData.localPanchayatName === "Gahoi Vaishya Panchayat"
+        )
+          return ["Jabalpur"];
+      }
 
-          
-    
-          //Sagar
-    
-          if (
-                  (formData.localPanchayatName === "Gahoi Vaishya Panchayat" && 
-                  (formData.city === "Rehli" || formData.district === "Sagar")) ||
-                  (formData.localPanchayatName === "Shri Gahoi Vaishya Panchayat" && 
-                  (formData.city === "Garhakota" || formData.district === "Sagar")) ||
-                  (formData.localPanchayatName === "Gahoi Vaishya Samaj" && 
-                  formData.district === "Sagar")
-                ) {
-                  return ["Sagar"];
-                }
-    
-            if (formData.localPanchayatName === "Gahoi Vaishya Panchayat" && 
-              (formData.district === "Seoni" || formData.city === "Lakhnadon")) {
-            return ["Seoni"];
-          }
-    
-    
-          //Katni
-          if (formData.state === "Madhya Pradesh" && formData.district === "Katni") {
-            if (formData.localPanchayatName === "Gahoi Vaishya Samaj") {
-              return ["Katni"];
-            }
-            if (formData.localPanchayatName === "Gahoi Vaishya Panchayat Parishad") {
-              return ["Katni"];
-            }
-          }
-          
+      if (formData.localPanchayatName === "Shri Gahoi Vaishya Samaj") {
+        if (
+          formData.district === "Jabalpur" &&
+          formData.localPanchayatName === "Shri Gahoi Vaishya Samaj"
+        )
+          return ["Jabalpur"];
+      }
+
+      if (formData.localPanchayatName === "Shri Gahoi Vaishya Panchayat") {
+        if (
+          formData.district === "Umariya" &&
+          formData.localPanchayatName === "Shri Gahoi Vaishya Panchayat"
+        )
+          return ["Umariya"];
+      }
+
+      if (formData.localPanchayatName === "Gahoi Vaishya Panchayat") {
+        if (
+          formData.district === "Rewa" &&
+          formData.localPanchayatName === "Gahoi Vaishya Panchayat"
+        )
+          return ["Rewa"];
+      }
+
+      //Sagar
+
+      if (
+        (formData.localPanchayatName === "Gahoi Vaishya Panchayat" &&
+          (formData.city === "Rehli" || formData.district === "Sagar")) ||
+        (formData.localPanchayatName === "Shri Gahoi Vaishya Panchayat" &&
+          (formData.city === "Garhakota" || formData.district === "Sagar")) ||
+        (formData.localPanchayatName === "Gahoi Vaishya Samaj" &&
+          formData.district === "Sagar")
+      ) {
+        return ["Sagar"];
+      }
+
+      if (
+        formData.localPanchayatName === "Gahoi Vaishya Panchayat" &&
+        (formData.district === "Seoni" || formData.city === "Lakhnadon")
+      ) {
+        return ["Seoni"];
+      }
+
+      //Katni
+      if (
+        formData.state === "Madhya Pradesh" &&
+        formData.district === "Katni"
+      ) {
+        if (formData.localPanchayatName === "Gahoi Vaishya Samaj") {
+          return ["Katni"];
         }
-
-        // if (formData.state === "Madhya Pradesh" && formData.district === "Jabalpur" && formData.regionalAssembly === "Mahakaushal Regional Assembly" && formData.localPanchayatName === "Gahoi Vaishya Panchayat" ) {
-        //   return ["Jabalpur"];
-          
-        // }
+        if (
+          formData.localPanchayatName === "Gahoi Vaishya Panchayat Parishad"
+        ) {
+          return ["Katni"];
+        }
+      }
+    }
 
     //Chindwara
 
-     if (formData.state === "Madhya Pradesh" && formData.district === "Chhindwara") {
-        if (formData.localPanchayatName === "Gahoi Vaishya Panchayat") {
-          return ["Chhindwara"];
-        }
-        if (formData.localPanchayatName === "Shri Gahoi Vaishya Panchayat") {
-          return ["Chhindwara"];
-        }
+    if (
+      formData.state === "Madhya Pradesh" &&
+      formData.district === "Chhindwara"
+    ) {
+      if (formData.localPanchayatName === "Gahoi Vaishya Panchayat") {
+        return ["Chhindwara"];
       }
-      
-  //Panna
+      if (formData.localPanchayatName === "Shri Gahoi Vaishya Panchayat") {
+        return ["Chhindwara"];
+      }
+    }
+
+    //Panna
     if (formData.state === "Madhya Pradesh" && formData.district === "Panna") {
       if (formData.localPanchayatName === "Gahoi Vaishya Panchayat") {
         return ["Panna"];
       }
     }
 
-// Hoshangabad
-    if (formData.state === "Madhya Pradesh" && formData.district === "Hoshangabad") {
+    // Hoshangabad
+    if (
+      formData.state === "Madhya Pradesh" &&
+      formData.district === "Hoshangabad"
+    ) {
       if (formData.localPanchayatName === "Gahoi Vaishya Panchayat") {
         return ["Hoshangabad"];
       }
     }
-// Mandla
-    if (formData.state === "Madhya Pradesh" && formData.district === "Mandla") {    
+    // Mandla
+    if (formData.state === "Madhya Pradesh" && formData.district === "Mandla") {
       if (formData.localPanchayatName === "Gahoi Vaishya Panchayat") {
         return ["Mandla"];
       }
     }
-// Damoh
+    // Damoh
     if (formData.state === "Madhya Pradesh" && formData.city === "Hatta") {
       if (formData.localPanchayatName === "Shri Gahoi Vaishya Panchayat") {
         return ["Hatta"];
       }
     }
-// Shahdol
-    if (formData.state === "Madhya Pradesh" && formData.district === "Shahdol") {
+    // Shahdol
+    if (
+      formData.state === "Madhya Pradesh" &&
+      formData.district === "Shahdol"
+    ) {
       if (formData.localPanchayatName === "Shri Gahoi Vaishya Panchayat") {
         return ["Shahdol"];
       }
     }
-// Dindori
-    if (formData.state === "Madhya Pradesh" && formData.district === "Dindori") {
+    // Dindori
+    if (
+      formData.state === "Madhya Pradesh" &&
+      formData.district === "Dindori"
+    ) {
       if (formData.localPanchayatName === "Gahoi Vaishya Panchayat") {
         return ["Dindori"];
       }
     }
-// Guna
+    // Guna
     if (formData.state === "Madhya Pradesh" && formData.district === "Guna") {
       if (formData.localPanchayatName === "Gahoi Vaishya Panchayat") {
         return ["Guna"];
       }
     }
 
-
-
-// Bundelkhand Regional Assembly cases
+    // Bundelkhand Regional Assembly cases
     if (formData.regionalAssembly === "Bundelkhand Regional Assembly") {
-      if (formData.state === "Uttar Pradesh" && formData.district === "Jhansi") {
+      if (
+        formData.state === "Uttar Pradesh" &&
+        formData.district === "Jhansi"
+      ) {
         return ["Jhansi"];
       }
-      if (formData.state === "Madhya Pradesh" && formData.district === "Tikamgarh") {
+      if (
+        formData.state === "Madhya Pradesh" &&
+        formData.district === "Tikamgarh"
+      ) {
         return ["Tikamgarh"];
       }
     }
@@ -4063,8 +4704,8 @@ if (formData.regionalAssembly === "Vindhya Regional Assembly") {
           return ["Chitrakoot"];
         }
         if (formData.district === "Banda") {
-            return ["Banda"];
-          }
+          return ["Banda"];
+        }
         if (formData.district === "Auraiya") {
           return ["Auraiya"];
         }
@@ -4074,9 +4715,13 @@ if (formData.regionalAssembly === "Vindhya Regional Assembly") {
     // Chhattisgarh Regional Assembly cases
     if (formData.regionalAssembly === "Chhattisgarh Regional Assembly") {
       if (formData.state === "Chhattisgarh") {
-        if (["Durg", "Rajnandgaon", "Dhamtari", "Raipur", "Bilaspur"].includes(formData.district)) {
-            return ["Gahoi Vaishya Panchayat"];
-          }
+        if (
+          ["Durg", "Rajnandgaon", "Dhamtari", "Raipur", "Bilaspur"].includes(
+            formData.district
+          )
+        ) {
+          return ["Gahoi Vaishya Panchayat"];
+        }
         if (["Bastar", "Koriya"].includes(formData.district)) {
           return ["Gahoi Vaishya Samaj"];
         }
@@ -4090,45 +4735,60 @@ if (formData.regionalAssembly === "Vindhya Regional Assembly") {
           return [formData.city];
         }
       }
-
-
     }
 
-      return [];
+    return [];
   };
 
-  
-
   const getFilteredSubLocalPanchayats = () => {
-    if (!formData.regionalAssembly || !formData.localPanchayatName || !formData.localPanchayat) return [];
+    if (
+      !formData.regionalAssembly ||
+      !formData.localPanchayatName ||
+      !formData.localPanchayat
+    )
+      return [];
 
     // Mahakaushal Regional Assembly cases
-    if (formData.regionalAssembly === "Mahakaushal Regional Assembly" && formData.state === "Madhya Pradesh") {
+    if (
+      formData.regionalAssembly === "Mahakaushal Regional Assembly" &&
+      formData.state === "Madhya Pradesh"
+    ) {
       // Narsinghpur district cases
       if (formData.district === "Narsinghpur") {
         if (formData.localPanchayatName === "Gahoi Vaishya Panchayat") {
-          if (formData.localPanchayat === "Narsinghpur") return ["Gotegaon", "Gadarwara", "Barheta", "Narsinghpur", "Chichli", "Saikeda"];
+          if (formData.localPanchayat === "Narsinghpur")
+            return [
+              "Gotegaon",
+              "Gadarwara",
+              "Barheta",
+              "Narsinghpur",
+              "Chichli",
+              "Saikeda",
+            ];
         }
         if (formData.localPanchayatName === "Gahoi Vaishya Samaj Panchayat") {
-          if (formData.localPanchayat === "Narsinghpur") return ["Kareli", "Tendukheda(NP)", "Paloha", "Bedu"];
+          if (formData.localPanchayat === "Narsinghpur")
+            return ["Kareli", "Tendukheda(NP)", "Paloha", "Bedu"];
         }
 
-         if (formData.localPanchayatName === "Gahoi Vaishya Panchayat") {
-          if (formData.localPanchayat === "Seoni") return ["Seoni", "Ganesh Ganj"];
+        if (formData.localPanchayatName === "Gahoi Vaishya Panchayat") {
+          if (formData.localPanchayat === "Seoni")
+            return ["Seoni", "Ganesh Ganj"];
         }
-      
       }
 
-        //katni 
+      //katni
       if (formData.district === "Katni") {
         if (formData.localPanchayatName === "Gahoi Vaishya Samaj") {
           if (formData.localPanchayat === "Katni") return ["Kanhwara"];
         }
-        if (formData.localPanchayatName === "Gahoi Vaishya Panchayat Parishad") {
+        if (
+          formData.localPanchayatName === "Gahoi Vaishya Panchayat Parishad"
+        ) {
           if (formData.localPanchayat === "Katni") return ["Katni "];
         }
-      } 
-      
+      }
+
       // Chindwara
       if (formData.district === "Chhindwara") {
         if (formData.localPanchayatName === "Gahoi Vaishya Panchayat") {
@@ -4137,17 +4797,17 @@ if (formData.regionalAssembly === "Vindhya Regional Assembly") {
         if (formData.localPanchayatName === "Shri Gahoi Vaishya Panchayat") {
           if (formData.localPanchayat === "Chhindwara") return ["Chhindwara"];
         }
-      } 
+      }
 
       //Panna
       if (formData.district === "Panna") {
         if (formData.localPanchayatName === "Gahoi Vaishya Panchayat") {
-          if (formData.localPanchayat === "Panna") return ["Shah Nagar", "Pawai", "Kishangarh"];
+          if (formData.localPanchayat === "Panna")
+            return ["Shah Nagar", "Pawai", "Kishangarh"];
         }
-       
       }
 
-// Hoshangabad district cases
+      // Hoshangabad district cases
       if (formData.district === "Hoshangabad") {
         if (formData.localPanchayatName === "Gahoi Vaishya Panchayat") {
           if (formData.localPanchayat === "Hoshangabad") return ["Pipariya"];
@@ -4155,29 +4815,27 @@ if (formData.regionalAssembly === "Vindhya Regional Assembly") {
       }
 
       //Mandla
- if (formData.district === "Mandla") {
+      if (formData.district === "Mandla") {
         if (formData.localPanchayatName === "Gahoi Vaishya Panchayat") {
           if (formData.localPanchayat === "Mandla") return ["Mandla"];
         }
       }
 
-    //Damoh
-    if (formData.district === "Damoh") {
-
+      //Damoh
+      if (formData.district === "Damoh") {
         if (formData.localPanchayatName === "Shri Gahoi Vaishya Panchayat") {
           if (formData.localPanchayat === "Hatta") return ["Madhiya Do"];
         }
       }
 
-      // Shahdol district cases 
+      // Shahdol district cases
       if (formData.district === "Shahdol") {
-
         if (formData.localPanchayatName === "Shri Gahoi Vaishya Panchayat") {
           if (formData.localPanchayat === "Shahdol") return ["Shahdol"];
         }
       }
 
-      // Dindori district cases 
+      // Dindori district cases
       if (formData.district === "Dindori") {
         if (formData.localPanchayatName === "Gahoi Vaishya Panchayat") {
           if (formData.localPanchayat === "Dindori") return ["Dindori"];
@@ -4191,23 +4849,21 @@ if (formData.regionalAssembly === "Vindhya Regional Assembly") {
         }
       }
 
-
       // Guna district cases
       if (formData.district === "Rewa") {
         if (formData.localPanchayatName === "Gahoi Vaishya Panchayat") {
           if (formData.localPanchayat === "Rewa") return ["Rewa"];
         }
       }
-      
+
       // Jabalpur district cases
       if (formData.district === "Jabalpur") {
         if (formData.localPanchayatName === "Gahoi Vaishya Panchayat") {
           if (formData.localPanchayat === "Jabalpur") {
-         
             if (formData.city === "Sihora") {
               return ["Khitola", "Sihora"];
             }
-           
+
             return ["Jabalpur"];
           }
         }
@@ -4220,32 +4876,36 @@ if (formData.regionalAssembly === "Vindhya Regional Assembly") {
       if (formData.district === "Sagar") {
         if (formData.localPanchayatName === "Gahoi Vaishya Panchayat") {
           if (formData.localPanchayat === "Sagar")
-
-            if (formData.city === "Rehli" && formData.localPanchayatName === "Gahoi Vaishya Panchayat") {
+            if (
+              formData.city === "Rehli" &&
+              formData.localPanchayatName === "Gahoi Vaishya Panchayat"
+            ) {
               return ["Rehli"];
             }
-                    
-            return ["Sagar"];
-          }     
+
+          return ["Sagar"];
+        }
       }
       if (formData.localPanchayatName === "Shri Gahoi Vaishya Panchayat") {
-          if (formData.localPanchayat === "Sagar") return ["Garhakota" , "Deori"];
-        }
-        if (formData.localPanchayatName === "Gahoi Vaishya Samaj") {
-          if (formData.localPanchayat === "Sagar") return ["Shahgarh"];
-        }
+        if (formData.localPanchayat === "Sagar") return ["Garhakota", "Deori"];
+      }
+      if (formData.localPanchayatName === "Gahoi Vaishya Samaj") {
+        if (formData.localPanchayat === "Sagar") return ["Shahgarh"];
+      }
 
       // Umariya district cases
       if (formData.district === "Umariya") {
         if (formData.localPanchayatName === "Shri Gahoi Vaishya Panchayat") {
-          if (formData.localPanchayat === "Umariya") return ["Silaudi", "Masur Pani", "Dhuldhuli", "Deori"];
+          if (formData.localPanchayat === "Umariya")
+            return ["Silaudi", "Masur Pani", "Dhuldhuli", "Deori"];
         }
       }
 
       // Seoni district cases
       if (formData.district === "Seoni") {
         if (formData.localPanchayatName === "Gahoi Vaishya Panchayat") {
-          if (formData.localPanchayat === "Seoni") return ["Seoni", "Ganesh Ganj"];
+          if (formData.localPanchayat === "Seoni")
+            return ["Seoni", "Ganesh Ganj"];
         }
       }
 
@@ -4256,12 +4916,10 @@ if (formData.regionalAssembly === "Vindhya Regional Assembly") {
         }
       }
 
-
       return [];
     }
 
     // Central Malwa Regional Assembly cases
-    
 
     // Use SUB_LOCAL_PANCHAYATS mapping for all other assemblies
     if (SUB_LOCAL_PANCHAYATS[formData.localPanchayat]) {
@@ -4272,7 +4930,10 @@ if (formData.regionalAssembly === "Vindhya Regional Assembly") {
     if (formData.regionalAssembly === "Bundelkhand Regional Assembly") {
       if (formData.state === "Uttar Pradesh") {
         if (formData.district === "Lalitpur") {
-          if (formData.localPanchayatName === "Shri Daudayal Gahoi Vaishya Seva Samiti") {
+          if (
+            formData.localPanchayatName ===
+            "Shri Daudayal Gahoi Vaishya Seva Samiti"
+          ) {
             return ["Bansi"];
           }
           if (formData.localPanchayatName === "Gahoi Vaishya Seva Samiti") {
@@ -4299,24 +4960,23 @@ if (formData.regionalAssembly === "Vindhya Regional Assembly") {
               "Bhel Simrawali",
               "Babina Cantt",
               "Bangra Uldan Ranipur",
-              "Mauranipur"
+              "Mauranipur",
             ];
           }
           if (formData.localPanchayatName === "Shri Gahoi Vaishya Panchayat") {
-            return [
-              "Baragaon",
-              "Ranipur",
-              "Jhansi",
-              "Samthar",
-              "Archara"
-            ];
+            return ["Baragaon", "Ranipur", "Jhansi", "Samthar", "Archara"];
           }
-          if (formData.localPanchayatName === "Shri Gahoi Vaishya Seva Samiti") {
+          if (
+            formData.localPanchayatName === "Shri Gahoi Vaishya Seva Samiti"
+          ) {
             return ["Moth"];
           }
         }
       }
-      if (formData.state === "Madhya Pradesh" && formData.district === "Tikamgarh") {
+      if (
+        formData.state === "Madhya Pradesh" &&
+        formData.district === "Tikamgarh"
+      ) {
         return [
           "Tikamgarh",
           "Baldeogarh",
@@ -4329,7 +4989,7 @@ if (formData.regionalAssembly === "Vindhya Regional Assembly") {
           "Mohangarh",
           "Digoda",
           "Lidhora",
-          "Khargapur"
+          "Khargapur",
         ];
       }
     }
@@ -4339,7 +4999,14 @@ if (formData.regionalAssembly === "Vindhya Regional Assembly") {
       switch (formData.district) {
         case "Shivpuri":
           if (formData.localPanchayatName === "Gahoi Vaishya Panchayat") {
-            return ["Shivpuri", "Mahalwani", "Pipara", "Bamour Damaron", "Manpura", "Pichhore"];
+            return [
+              "Shivpuri",
+              "Mahalwani",
+              "Pipara",
+              "Bamour Damaron",
+              "Manpura",
+              "Pichhore",
+            ];
           }
           if (formData.localPanchayatName === "Shri Gahoi Vaishya Sabha") {
             return ["Karera", "Bhauti"];
@@ -4373,14 +5040,12 @@ if (formData.regionalAssembly === "Vindhya Regional Assembly") {
       }
     }
 
-
     // Ahmedabad city cases
     if (formData.city === "Ahmedabad") {
       if (formData.localPanchayatName === "Gahoi Vaishya Panchayat") {
         if (formData.localPanchayat === "Ahmedabad") return ["Gandhi Nagar"];
       }
-     } 
-
+    }
 
     // Ganga Jamuna Regional Assembly cases
     if (formData.regionalAssembly === "Ganga Jamuna Regional Assembly") {
@@ -4447,114 +5112,150 @@ if (formData.regionalAssembly === "Vindhya Regional Assembly") {
           return ["Patna City"];
         }
       }
-      if (formData.state === "Uttar Pradesh" && formData.district === "Mahoba") {
+      if (
+        formData.state === "Uttar Pradesh" &&
+        formData.district === "Mahoba"
+      ) {
         if (formData.localPanchayatName === "Gahoi Vaishya Samaj") {
           return ["Mahoba"];
         }
       }
 
-      if (formData.state === "Madhya Pradesh" && formData.district === "Panna") {
+      if (
+        formData.state === "Madhya Pradesh" &&
+        formData.district === "Panna"
+      ) {
         if (formData.localPanchayatName === "Gahoi Vaishya Panchayat") {
-          return ["Panna" , "Gunnor", "Mohendra", "Simariya", "Sunwani Kala", "Kishangarh" ];
+          return [
+            "Panna",
+            "Gunnor",
+            "Mohendra",
+            "Simariya",
+            "Sunwani Kala",
+            "Kishangarh",
+          ];
         }
       }
     }
 
-    // Vindhya - Chattapur, Panna, Reva, Satna 
+    // Vindhya - Chattapur, Panna, Reva, Satna
 
     if (formData.district === "Chhatarpur") {
-      if (formData.regionalAssembly === "Vindhya Regional Assembly" && formData.localPanchayatName === "Gahoi Vaishya Panchayat" && formData.localPanchayat === "Chhatarpur") 
-        return ["Chhatarpur", "Lavkush Nagar","Alipur", "Tatam", "Harpalpur", "Bada Malhera", "Amanganj", "Panna", "Ishanagar"];
+      if (
+        formData.regionalAssembly === "Vindhya Regional Assembly" &&
+        formData.localPanchayatName === "Gahoi Vaishya Panchayat" &&
+        formData.localPanchayat === "Chhatarpur"
+      )
+        return [
+          "Chhatarpur",
+          "Lavkush Nagar",
+          "Alipur",
+          "Tatam",
+          "Harpalpur",
+          "Bada Malhera",
+          "Amanganj",
+          "Panna",
+          "Ishanagar",
+        ];
     }
 
     if (formData.district === "Satna") {
-      if (formData.regionalAssembly === "Vindhya Regional Assembly" && formData.localPanchayatName === "Gahoi Vaishya Panchayat" && formData.localPanchayat === "Satna") 
+      if (
+        formData.regionalAssembly === "Vindhya Regional Assembly" &&
+        formData.localPanchayatName === "Gahoi Vaishya Panchayat" &&
+        formData.localPanchayat === "Satna"
+      )
         return ["Satna", "Nayagaon Chitrkoot"];
     }
-
-
-
 
     if (formData.city === "Laundi") {
       if (formData.localPanchayatName === "Gahoi Vaishya Panchayat") {
         if (formData.localPanchayat === "Chhatarpur") return ["Lavkush Nagar"];
       }
-     } 
+    }
 
-
-     if (formData.city === "Laundi") {
-        if (formData.localPanchayatName === "Gahoi Vaishya Panchayat") {
-          if (formData.localPanchayat === "Chhatarpur") return ["Lavkush Nagar"];
-        }
-       } 
-
-       if (formData.city === "Nowgong") {
-        if (formData.localPanchayatName === "Gahoi Vaishya Panchayat") {
-          if (formData.localPanchayat === "Chhatarpur") return ["Alipur"];
-        }
-       } 
-
-        if (formData.city === "Chattarpur") {
-        if (formData.localPanchayatName === "Gahoi Vaishya Panchayat") {
-          if (formData.localPanchayat === "Chhatarpur") return ["Tatam"];
-        }
-       }
-
-        if (formData.city === "Harpalpur") {
-        if (formData.localPanchayatName === "Gahoi Vaishya Panchayat") {
-          if (formData.localPanchayat === "Chhatarpur") return ["Harpalpur"];
-        }
-       }
-
-         if (formData.city === "Chattarpur") {
-        if (formData.localPanchayatName === "Gahoi Vaishya Panchayat") {
-          if (formData.localPanchayat === "Chhatarpur") return ["Ishanagar"];
-        }
-       }
-
-           if (formData.city === "Bada Malhera") {
-        if (formData.localPanchayatName === "Gahoi Vaishya Panchayat") {
-          if (formData.localPanchayat === "Chhatarpur") return ["Bada Malhera"];
-        }
-       }
-
-        if (formData.city === "Amanganj") {
-        if (formData.localPanchayatName === "Gahoi Vaishya Panchayat") {
-          if (formData.localPanchayat === "Panna") return ["Amanganj"];
-        }
-        
-       } 
-
-        if (formData.district === "Panna") {
-       if (formData.localPanchayatName === "Gahoi Vaishya Panchayat") {
-          if (formData.localPanchayat === "Panna") return ["Panna" , "Gunnor", "Mohendra", "Simariya", "Sunwani Kala", "Kishangarh" ];
-        } 
+    if (formData.city === "Laundi") {
+      if (formData.localPanchayatName === "Gahoi Vaishya Panchayat") {
+        if (formData.localPanchayat === "Chhatarpur") return ["Lavkush Nagar"];
       }
+    }
 
-       if (formData.city === "Ajaigarh") {
-       if (formData.localPanchayatName === "Gahoi Vaishya Panchayat") {
-          if (formData.localPanchayat === "Panna") return ["Ajaigarh"];
-        } 
+    if (formData.city === "Nowgong") {
+      if (formData.localPanchayatName === "Gahoi Vaishya Panchayat") {
+        if (formData.localPanchayat === "Chhatarpur") return ["Alipur"];
       }
+    }
 
-      if (formData.city === "Chitrakoot") {
-       if (formData.localPanchayatName === "Gahoi Vaishya Panchayat") {
-          if (formData.localPanchayat === "Satna") return ["Nayagaon Chitrakoot"];
-        } 
+    if (formData.city === "Chattarpur") {
+      if (formData.localPanchayatName === "Gahoi Vaishya Panchayat") {
+        if (formData.localPanchayat === "Chhatarpur") return ["Tatam"];
       }
+    }
 
-         if (formData.city === "Satna") {
-       if (formData.localPanchayatName === "Gahoi Vaishya Panchayat") {
-          if (formData.localPanchayat === "Satna") return ["Satna"];
-        } 
+    if (formData.city === "Harpalpur") {
+      if (formData.localPanchayatName === "Gahoi Vaishya Panchayat") {
+        if (formData.localPanchayat === "Chhatarpur") return ["Harpalpur"];
       }
+    }
 
+    if (formData.city === "Chattarpur") {
+      if (formData.localPanchayatName === "Gahoi Vaishya Panchayat") {
+        if (formData.localPanchayat === "Chhatarpur") return ["Ishanagar"];
+      }
+    }
 
+    if (formData.city === "Bada Malhera") {
+      if (formData.localPanchayatName === "Gahoi Vaishya Panchayat") {
+        if (formData.localPanchayat === "Chhatarpur") return ["Bada Malhera"];
+      }
+    }
+
+    if (formData.city === "Amanganj") {
+      if (formData.localPanchayatName === "Gahoi Vaishya Panchayat") {
+        if (formData.localPanchayat === "Panna") return ["Amanganj"];
+      }
+    }
+
+    if (formData.district === "Panna") {
+      if (formData.localPanchayatName === "Gahoi Vaishya Panchayat") {
+        if (formData.localPanchayat === "Panna")
+          return [
+            "Panna",
+            "Gunnor",
+            "Mohendra",
+            "Simariya",
+            "Sunwani Kala",
+            "Kishangarh",
+          ];
+      }
+    }
+
+    if (formData.city === "Ajaigarh") {
+      if (formData.localPanchayatName === "Gahoi Vaishya Panchayat") {
+        if (formData.localPanchayat === "Panna") return ["Ajaigarh"];
+      }
+    }
+
+    if (formData.city === "Chitrakoot") {
+      if (formData.localPanchayatName === "Gahoi Vaishya Panchayat") {
+        if (formData.localPanchayat === "Satna") return ["Nayagaon Chitrakoot"];
+      }
+    }
+
+    if (formData.city === "Satna") {
+      if (formData.localPanchayatName === "Gahoi Vaishya Panchayat") {
+        if (formData.localPanchayat === "Satna") return ["Satna"];
+      }
+    }
 
     // Chhattisgarh Regional Assembly cases
     if (formData.regionalAssembly === "Chhattisgarh Regional Assembly") {
       if (formData.state === "Chhattisgarh") {
-        if (["Durg", "Rajnandgaon", "Dhamtari", "Raipur", "Bilaspur"].includes(formData.district)) {
+        if (
+          ["Durg", "Rajnandgaon", "Dhamtari", "Raipur", "Bilaspur"].includes(
+            formData.district
+          )
+        ) {
           if (formData.localPanchayatName === "Gahoi Vaishya Panchayat") {
             return [formData.district];
           }
@@ -4576,17 +5277,23 @@ if (formData.regionalAssembly === "Vindhya Regional Assembly") {
       }
     }
 
-
-
-    
-
     return [];
   };
 
   // Mapping for Local Panchayat based on Local Panchayat Name
   const localPanchayatMapping = {
     "Gahoi Vaishya Samaj Register Brahttar Gwalior": ["Gwalior"],
-    "Gahoi Vaishya Panchayat": ["Gwalior", "Bhind", "Datia", "Jaipur", "Shivpuri", "Rewa", "Satna", "Guna", "Ashoknagar"],
+    "Gahoi Vaishya Panchayat": [
+      "Gwalior",
+      "Bhind",
+      "Datia",
+      "Jaipur",
+      "Shivpuri",
+      "Rewa",
+      "Satna",
+      "Guna",
+      "Ashoknagar",
+    ],
     "Gahoi Vaishya Sabha": ["Bhind"],
     "Shri Gahoi Vaishya Sabha": ["Shivpuri"],
     "Gahoi Vaishya Samaj": ["Morena", "Ashoknagar"],
@@ -4660,7 +5367,6 @@ if (formData.regionalAssembly === "Vindhya Regional Assembly") {
       "Gahoi Vaishya Samaj Panchayat": ["Banda"],
     },
   };
-
   // Update the regional information section to use filtered dropdowns
   const renderRegionalInformation = () => (
     <div className="md:col-span-2 mt-6 mb-4">
@@ -4765,7 +5471,6 @@ if (formData.regionalAssembly === "Vindhya Regional Assembly") {
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
           {/* City - Changed to Local Body */}
           <div className="space-y-3">
             <label className="text-sm font-medium text-gray-700 flex items-center">
@@ -4797,7 +5502,10 @@ if (formData.regionalAssembly === "Vindhya Regional Assembly") {
               <option value="">Select Local Body</option>
               {formData.district === "Ashoknagar" ? (
                 <>
-                  {[...ASHOKNAGAR_LOCAL_BODIES.NAGAR_PALIKA, ...ASHOKNAGAR_LOCAL_BODIES.JANPAD_PANCHAYAT].map((localBody, index) => (
+                  {[
+                    ...ASHOKNAGAR_LOCAL_BODIES.NAGAR_PALIKA,
+                    ...ASHOKNAGAR_LOCAL_BODIES.JANPAD_PANCHAYAT,
+                  ].map((localBody, index) => (
                     <option key={index} value={localBody}>
                       {localBody}
                     </option>
@@ -4805,7 +5513,10 @@ if (formData.regionalAssembly === "Vindhya Regional Assembly") {
                 </>
               ) : formData.district === "Alirajpur" ? (
                 <>
-                  {[...ALIRAJPUR_LOCAL_BODIES.NAGAR_PALIKA, ...ALIRAJPUR_LOCAL_BODIES.JANPAD_PANCHAYAT].map((localBody, index) => (
+                  {[
+                    ...ALIRAJPUR_LOCAL_BODIES.NAGAR_PALIKA,
+                    ...ALIRAJPUR_LOCAL_BODIES.JANPAD_PANCHAYAT,
+                  ].map((localBody, index) => (
                     <option key={index} value={localBody}>
                       {localBody}
                     </option>
@@ -4813,7 +5524,10 @@ if (formData.regionalAssembly === "Vindhya Regional Assembly") {
                 </>
               ) : formData.district === "Anuppur" ? (
                 <>
-                  {[...ANUPPUR_LOCAL_BODIES.NAGAR_PALIKA, ...ANUPPUR_LOCAL_BODIES.JANPAD_PANCHAYAT].map((localBody, index) => (
+                  {[
+                    ...ANUPPUR_LOCAL_BODIES.NAGAR_PALIKA,
+                    ...ANUPPUR_LOCAL_BODIES.JANPAD_PANCHAYAT,
+                  ].map((localBody, index) => (
                     <option key={index} value={localBody}>
                       {localBody}
                     </option>
@@ -4821,7 +5535,10 @@ if (formData.regionalAssembly === "Vindhya Regional Assembly") {
                 </>
               ) : formData.district === "Balaghat" ? (
                 <>
-                  {[...BALAGHAT_LOCAL_BODIES.NAGAR_PALIKA, ...BALAGHAT_LOCAL_BODIES.JANPAD_PANCHAYAT].map((localBody, index) => (
+                  {[
+                    ...BALAGHAT_LOCAL_BODIES.NAGAR_PALIKA,
+                    ...BALAGHAT_LOCAL_BODIES.JANPAD_PANCHAYAT,
+                  ].map((localBody, index) => (
                     <option key={index} value={localBody}>
                       {localBody}
                     </option>
@@ -4829,7 +5546,10 @@ if (formData.regionalAssembly === "Vindhya Regional Assembly") {
                 </>
               ) : formData.district === "Barwani" ? (
                 <>
-                  {[...BARWANI_LOCAL_BODIES.NAGAR_PALIKA, ...BARWANI_LOCAL_BODIES.JANPAD_PANCHAYAT].map((localBody, index) => (
+                  {[
+                    ...BARWANI_LOCAL_BODIES.NAGAR_PALIKA,
+                    ...BARWANI_LOCAL_BODIES.JANPAD_PANCHAYAT,
+                  ].map((localBody, index) => (
                     <option key={index} value={localBody}>
                       {localBody}
                     </option>
@@ -4837,7 +5557,10 @@ if (formData.regionalAssembly === "Vindhya Regional Assembly") {
                 </>
               ) : formData.district === "Betul" ? (
                 <>
-                  {[...BETUL_LOCAL_BODIES.NAGAR_PALIKA, ...BETUL_LOCAL_BODIES.JANPAD_PANCHAYAT].map((localBody, index) => (
+                  {[
+                    ...BETUL_LOCAL_BODIES.NAGAR_PALIKA,
+                    ...BETUL_LOCAL_BODIES.JANPAD_PANCHAYAT,
+                  ].map((localBody, index) => (
                     <option key={index} value={localBody}>
                       {localBody}
                     </option>
@@ -4845,7 +5568,10 @@ if (formData.regionalAssembly === "Vindhya Regional Assembly") {
                 </>
               ) : formData.district === "Bhind" ? (
                 <>
-                  {[...BHIND_LOCAL_BODIES.NAGAR_PALIKA, ...BHIND_LOCAL_BODIES.JANPAD_PANCHAYAT].map((localBody, index) => (
+                  {[
+                    ...BHIND_LOCAL_BODIES.NAGAR_PALIKA,
+                    ...BHIND_LOCAL_BODIES.JANPAD_PANCHAYAT,
+                  ].map((localBody, index) => (
                     <option key={index} value={localBody}>
                       {localBody}
                     </option>
@@ -4853,7 +5579,10 @@ if (formData.regionalAssembly === "Vindhya Regional Assembly") {
                 </>
               ) : formData.district === "Bhopal" ? (
                 <>
-                  {[...BHOPAL_LOCAL_BODIES.NAGAR_PALIKA, ...BHOPAL_LOCAL_BODIES.JANPAD_PANCHAYAT].map((localBody, index) => (
+                  {[
+                    ...BHOPAL_LOCAL_BODIES.NAGAR_PALIKA,
+                    ...BHOPAL_LOCAL_BODIES.JANPAD_PANCHAYAT,
+                  ].map((localBody, index) => (
                     <option key={index} value={localBody}>
                       {localBody}
                     </option>
@@ -4861,338 +5590,465 @@ if (formData.regionalAssembly === "Vindhya Regional Assembly") {
                 </>
               ) : formData.district === "Burhanpur" ? (
                 <>
-                  {[...BURHANPUR_LOCAL_BODIES.NAGAR_PALIKA, ...BURHANPUR_LOCAL_BODIES.JANPAD_PANCHAYAT].map((localBody, index) => (
+                  {[
+                    ...BURHANPUR_LOCAL_BODIES.NAGAR_PALIKA,
+                    ...BURHANPUR_LOCAL_BODIES.JANPAD_PANCHAYAT,
+                  ].map((localBody, index) => (
                     <option key={index} value={localBody}>
                       {localBody}
                     </option>
                   ))}
                 </>
-                  ) : formData.district === "Chhatarpur" ? (
+              ) : formData.district === "Chhatarpur" ? (
                 <>
-                  {[...CHHATARPUR_LOCAL_BODIES.NAGAR_PALIKA, ...CHHATARPUR_LOCAL_BODIES.JANPAD_PANCHAYAT].map((localBody, index) => (
+                  {[
+                    ...CHHATARPUR_LOCAL_BODIES.NAGAR_PALIKA,
+                    ...CHHATARPUR_LOCAL_BODIES.JANPAD_PANCHAYAT,
+                  ].map((localBody, index) => (
                     <option key={index} value={localBody}>
                       {localBody}
                     </option>
                   ))}
                 </>
-                 ) : formData.district === "Chhindwara" ? (
+              ) : formData.district === "Chhindwara" ? (
                 <>
-                  {[...CHHINDWARA_LOCAL_BODIES.NAGAR_PALIKA, ...CHHINDWARA_LOCAL_BODIES.JANPAD_PANCHAYAT].map((localBody, index) => (
+                  {[
+                    ...CHHINDWARA_LOCAL_BODIES.NAGAR_PALIKA,
+                    ...CHHINDWARA_LOCAL_BODIES.JANPAD_PANCHAYAT,
+                  ].map((localBody, index) => (
                     <option key={index} value={localBody}>
                       {localBody}
                     </option>
                   ))}
                 </>
-                 ) : formData.district === "Damoh" ? (
+              ) : formData.district === "Damoh" ? (
                 <>
-                  {[...DAMOH_LOCAL_BODIES.NAGAR_PALIKA, ...DAMOH_LOCAL_BODIES.JANPAD_PANCHAYAT].map((localBody, index) => (
+                  {[
+                    ...DAMOH_LOCAL_BODIES.NAGAR_PALIKA,
+                    ...DAMOH_LOCAL_BODIES.JANPAD_PANCHAYAT,
+                  ].map((localBody, index) => (
                     <option key={index} value={localBody}>
                       {localBody}
                     </option>
                   ))}
                 </>
-                ) : formData.district === "Datia" ? (
+              ) : formData.district === "Datia" ? (
                 <>
-                  {[...DATIA_LOCAL_BODIES.NAGAR_PALIKA, ...DATIA_LOCAL_BODIES.JANPAD_PANCHAYAT].map((localBody, index) => (
+                  {[
+                    ...DATIA_LOCAL_BODIES.NAGAR_PALIKA,
+                    ...DATIA_LOCAL_BODIES.JANPAD_PANCHAYAT,
+                  ].map((localBody, index) => (
                     <option key={index} value={localBody}>
                       {localBody}
                     </option>
                   ))}
                 </>
-                ) : formData.district === "Dewas" ? (
+              ) : formData.district === "Dewas" ? (
                 <>
-                  {[...DEWAS_LOCAL_BODIES.NAGAR_PALIKA, ...DEWAS_LOCAL_BODIES.JANPAD_PANCHAYAT].map((localBody, index) => (
+                  {[
+                    ...DEWAS_LOCAL_BODIES.NAGAR_PALIKA,
+                    ...DEWAS_LOCAL_BODIES.JANPAD_PANCHAYAT,
+                  ].map((localBody, index) => (
                     <option key={index} value={localBody}>
                       {localBody}
                     </option>
                   ))}
                 </>
-                 ) : formData.district === "Dhar" ? (
+              ) : formData.district === "Dhar" ? (
                 <>
-                  {[...DHAR_LOCAL_BODIES.NAGAR_PALIKA, ...DHAR_LOCAL_BODIES.JANPAD_PANCHAYAT].map((localBody, index) => (
+                  {[
+                    ...DHAR_LOCAL_BODIES.NAGAR_PALIKA,
+                    ...DHAR_LOCAL_BODIES.JANPAD_PANCHAYAT,
+                  ].map((localBody, index) => (
                     <option key={index} value={localBody}>
                       {localBody}
                     </option>
                   ))}
                 </>
-                 ) : formData.district === "Dindori" ? (
+              ) : formData.district === "Dindori" ? (
                 <>
-                  {[...DINDORI_LOCAL_BODIES.NAGAR_PALIKA, ...DINDORI_LOCAL_BODIES.JANPAD_PANCHAYAT].map((localBody, index) => (
+                  {[
+                    ...DINDORI_LOCAL_BODIES.NAGAR_PALIKA,
+                    ...DINDORI_LOCAL_BODIES.JANPAD_PANCHAYAT,
+                  ].map((localBody, index) => (
                     <option key={index} value={localBody}>
                       {localBody}
                     </option>
                   ))}
                 </>
-                ) : formData.district === "Guna" ? (
+              ) : formData.district === "Guna" ? (
                 <>
-                  {[...GUNA_LOCAL_BODIES.NAGAR_PALIKA, ...GUNA_LOCAL_BODIES.JANPAD_PANCHAYAT].map((localBody, index) => (
+                  {[
+                    ...GUNA_LOCAL_BODIES.NAGAR_PALIKA,
+                    ...GUNA_LOCAL_BODIES.JANPAD_PANCHAYAT,
+                  ].map((localBody, index) => (
                     <option key={index} value={localBody}>
                       {localBody}
                     </option>
                   ))}
                 </>
-                 ) : formData.district === "Gwalior" ? (
+              ) : formData.district === "Gwalior" ? (
                 <>
-                  {[...GWALIOR_LOCAL_BODIES.NAGAR_PALIKA, ...GWALIOR_LOCAL_BODIES.JANPAD_PANCHAYAT].map((localBody, index) => (
+                  {[
+                    ...GWALIOR_LOCAL_BODIES.NAGAR_PALIKA,
+                    ...GWALIOR_LOCAL_BODIES.JANPAD_PANCHAYAT,
+                  ].map((localBody, index) => (
                     <option key={index} value={localBody}>
                       {localBody}
                     </option>
                   ))}
                 </>
-                ) : formData.district === "Harda" ? (
+              ) : formData.district === "Harda" ? (
                 <>
-                  {[...HARDA_LOCAL_BODIES.NAGAR_PALIKA, ...HARDA_LOCAL_BODIES.JANPAD_PANCHAYAT].map((localBody, index) => (
+                  {[
+                    ...HARDA_LOCAL_BODIES.NAGAR_PALIKA,
+                    ...HARDA_LOCAL_BODIES.JANPAD_PANCHAYAT,
+                  ].map((localBody, index) => (
                     <option key={index} value={localBody}>
                       {localBody}
                     </option>
                   ))}
                 </>
-                 ) : formData.district === "Indore" ? (
+              ) : formData.district === "Indore" ? (
                 <>
-                  {[...INDORE_LOCAL_BODIES.NAGAR_PALIKA, ...INDORE_LOCAL_BODIES.JANPAD_PANCHAYAT].map((localBody, index) => (
+                  {[
+                    ...INDORE_LOCAL_BODIES.NAGAR_PALIKA,
+                    ...INDORE_LOCAL_BODIES.JANPAD_PANCHAYAT,
+                  ].map((localBody, index) => (
                     <option key={index} value={localBody}>
                       {localBody}
                     </option>
                   ))}
                 </>
-                ) : formData.district === "Jabalpur" ? (
+              ) : formData.district === "Jabalpur" ? (
                 <>
-                  {[...JABALPUR_LOCAL_BODIES.NAGAR_PALIKA, ...JABALPUR_LOCAL_BODIES.JANPAD_PANCHAYAT].map((localBody, index) => (
+                  {[
+                    ...JABALPUR_LOCAL_BODIES.NAGAR_PALIKA,
+                    ...JABALPUR_LOCAL_BODIES.JANPAD_PANCHAYAT,
+                  ].map((localBody, index) => (
                     <option key={index} value={localBody}>
                       {localBody}
                     </option>
                   ))}
                 </>
-                ) : formData.district === "Jhabua" ? (
+              ) : formData.district === "Jhabua" ? (
                 <>
-                  {[...JHABUA_LOCAL_BODIES.NAGAR_PALIKA, ...JHABUA_LOCAL_BODIES.JANPAD_PANCHAYAT].map((localBody, index) => (
+                  {[
+                    ...JHABUA_LOCAL_BODIES.NAGAR_PALIKA,
+                    ...JHABUA_LOCAL_BODIES.JANPAD_PANCHAYAT,
+                  ].map((localBody, index) => (
                     <option key={index} value={localBody}>
                       {localBody}
                     </option>
                   ))}
                 </>
-                ) : formData.district === "Katni" ? (
+              ) : formData.district === "Katni" ? (
                 <>
-                  {[...KATNI_LOCAL_BODIES.NAGAR_PALIKA, ...KATNI_LOCAL_BODIES.JANPAD_PANCHAYAT].map((localBody, index) => (
+                  {[
+                    ...KATNI_LOCAL_BODIES.NAGAR_PALIKA,
+                    ...KATNI_LOCAL_BODIES.JANPAD_PANCHAYAT,
+                  ].map((localBody, index) => (
                     <option key={index} value={localBody}>
                       {localBody}
                     </option>
                   ))}
                 </>
-                 ) : formData.district === "Khandwa (East Nimar)" ? (
+              ) : formData.district === "Khandwa (East Nimar)" ? (
                 <>
-                  {[...KHANDWA_LOCAL_BODIES.NAGAR_PALIKA, ...KHANDWA_LOCAL_BODIES.JANPAD_PANCHAYAT].map((localBody, index) => (
+                  {[
+                    ...KHANDWA_LOCAL_BODIES.NAGAR_PALIKA,
+                    ...KHANDWA_LOCAL_BODIES.JANPAD_PANCHAYAT,
+                  ].map((localBody, index) => (
                     <option key={index} value={localBody}>
                       {localBody}
                     </option>
                   ))}
                 </>
-                ) : formData.district === "Khargone (West Nimar)" ? (
+              ) : formData.district === "Khargone (West Nimar)" ? (
                 <>
-                  {[...KHARGONE_LOCAL_BODIES.NAGAR_PALIKA, ...KHARGONE_LOCAL_BODIES.JANPAD_PANCHAYAT].map((localBody, index) => (
+                  {[
+                    ...KHARGONE_LOCAL_BODIES.NAGAR_PALIKA,
+                    ...KHARGONE_LOCAL_BODIES.JANPAD_PANCHAYAT,
+                  ].map((localBody, index) => (
                     <option key={index} value={localBody}>
                       {localBody}
                     </option>
                   ))}
                 </>
-                 ) : formData.district === "Mandla" ? (
+              ) : formData.district === "Mandla" ? (
                 <>
-                  {[...MANDLA_LOCAL_BODIES.NAGAR_PALIKA, ...MANDLA_LOCAL_BODIES.JANPAD_PANCHAYAT].map((localBody, index) => (
+                  {[
+                    ...MANDLA_LOCAL_BODIES.NAGAR_PALIKA,
+                    ...MANDLA_LOCAL_BODIES.JANPAD_PANCHAYAT,
+                  ].map((localBody, index) => (
                     <option key={index} value={localBody}>
                       {localBody}
                     </option>
                   ))}
                 </>
-                ) : formData.district === "Mandsaur" ? (
+              ) : formData.district === "Mandsaur" ? (
                 <>
-                  {[...MANDSAUR_LOCAL_BODIES.NAGAR_PALIKA, ...MANDSAUR_LOCAL_BODIES.JANPAD_PANCHAYAT].map((localBody, index) => (
+                  {[
+                    ...MANDSAUR_LOCAL_BODIES.NAGAR_PALIKA,
+                    ...MANDSAUR_LOCAL_BODIES.JANPAD_PANCHAYAT,
+                  ].map((localBody, index) => (
                     <option key={index} value={localBody}>
                       {localBody}
                     </option>
                   ))}
                 </>
-                 ) : formData.district === "Morena" ? (
+              ) : formData.district === "Morena" ? (
                 <>
-                  {[...MORENA_LOCAL_BODIES.NAGAR_PALIKA, ...MORENA_LOCAL_BODIES.JANPAD_PANCHAYAT].map((localBody, index) => (
+                  {[
+                    ...MORENA_LOCAL_BODIES.NAGAR_PALIKA,
+                    ...MORENA_LOCAL_BODIES.JANPAD_PANCHAYAT,
+                  ].map((localBody, index) => (
                     <option key={index} value={localBody}>
                       {localBody}
                     </option>
                   ))}
                 </>
-                ) : formData.district === "Narsinghpur" ? (
+              ) : formData.district === "Narsinghpur" ? (
                 <>
-                  {[...NARSINGHPUR_LOCAL_BODIES.NAGAR_PALIKA, ...NARSINGHPUR_LOCAL_BODIES.JANPAD_PANCHAYAT].map((localBody, index) => (
+                  {[
+                    ...NARSINGHPUR_LOCAL_BODIES.NAGAR_PALIKA,
+                    ...NARSINGHPUR_LOCAL_BODIES.JANPAD_PANCHAYAT,
+                  ].map((localBody, index) => (
                     <option key={index} value={localBody}>
                       {localBody}
                     </option>
                   ))}
                 </>
-                ) : formData.district === "Neemuch" ? (
+              ) : formData.district === "Neemuch" ? (
                 <>
-                  {[...NEEMUCH_LOCAL_BODIES.NAGAR_PALIKA, ...NEEMUCH_LOCAL_BODIES.JANPAD_PANCHAYAT].map((localBody, index) => (
+                  {[
+                    ...NEEMUCH_LOCAL_BODIES.NAGAR_PALIKA,
+                    ...NEEMUCH_LOCAL_BODIES.JANPAD_PANCHAYAT,
+                  ].map((localBody, index) => (
                     <option key={index} value={localBody}>
                       {localBody}
                     </option>
                   ))}
                 </>
-                ) : formData.district === "Panna" ? (
+              ) : formData.district === "Panna" ? (
                 <>
-                  {[...PANNA_LOCAL_BODIES.NAGAR_PALIKA, ...PANNA_LOCAL_BODIES.JANPAD_PANCHAYAT].map((localBody, index) => (
+                  {[
+                    ...PANNA_LOCAL_BODIES.NAGAR_PALIKA,
+                    ...PANNA_LOCAL_BODIES.JANPAD_PANCHAYAT,
+                  ].map((localBody, index) => (
                     <option key={index} value={localBody}>
                       {localBody}
                     </option>
                   ))}
                 </>
-                ) : formData.district === "Raisen" ? (
+              ) : formData.district === "Raisen" ? (
                 <>
-                  {[...RAISEN_LOCAL_BODIES.NAGAR_PALIKA, ...RAISEN_LOCAL_BODIES.JANPAD_PANCHAYAT].map((localBody, index) => (
+                  {[
+                    ...RAISEN_LOCAL_BODIES.NAGAR_PALIKA,
+                    ...RAISEN_LOCAL_BODIES.JANPAD_PANCHAYAT,
+                  ].map((localBody, index) => (
                     <option key={index} value={localBody}>
                       {localBody}
                     </option>
                   ))}
                 </>
-                ) : formData.district === "Rajgarh" ? (
+              ) : formData.district === "Rajgarh" ? (
                 <>
-                  {[...RAJGARH_LOCAL_BODIES.NAGAR_PALIKA, ...RAJGARH_LOCAL_BODIES.JANPAD_PANCHAYAT].map((localBody, index) => (
+                  {[
+                    ...RAJGARH_LOCAL_BODIES.NAGAR_PALIKA,
+                    ...RAJGARH_LOCAL_BODIES.JANPAD_PANCHAYAT,
+                  ].map((localBody, index) => (
                     <option key={index} value={localBody}>
                       {localBody}
                     </option>
                   ))}
                 </>
-                ) : formData.district === "Ratlam" ? (
+              ) : formData.district === "Ratlam" ? (
                 <>
-                  {[...RATLAM_LOCAL_BODIES.NAGAR_PALIKA, ...RATLAM_LOCAL_BODIES.JANPAD_PANCHAYAT].map((localBody, index) => (
+                  {[
+                    ...RATLAM_LOCAL_BODIES.NAGAR_PALIKA,
+                    ...RATLAM_LOCAL_BODIES.JANPAD_PANCHAYAT,
+                  ].map((localBody, index) => (
                     <option key={index} value={localBody}>
                       {localBody}
                     </option>
                   ))}
                 </>
-                ) : formData.district === "Rewa" ? (
+              ) : formData.district === "Rewa" ? (
                 <>
-                  {[...REWA_LOCAL_BODIES.NAGAR_PALIKA, ...REWA_LOCAL_BODIES.JANPAD_PANCHAYAT].map((localBody, index) => (
+                  {[
+                    ...REWA_LOCAL_BODIES.NAGAR_PALIKA,
+                    ...REWA_LOCAL_BODIES.JANPAD_PANCHAYAT,
+                  ].map((localBody, index) => (
                     <option key={index} value={localBody}>
                       {localBody}
                     </option>
                   ))}
                 </>
-                ) : formData.district === "Sagar" ? (
+              ) : formData.district === "Sagar" ? (
                 <>
-                  {[...SAGAR_LOCAL_BODIES.NAGAR_PALIKA, ...SAGAR_LOCAL_BODIES.JANPAD_PANCHAYAT].map((localBody, index) => (
+                  {[
+                    ...SAGAR_LOCAL_BODIES.NAGAR_PALIKA,
+                    ...SAGAR_LOCAL_BODIES.JANPAD_PANCHAYAT,
+                  ].map((localBody, index) => (
                     <option key={index} value={localBody}>
                       {localBody}
                     </option>
                   ))}
                 </>
-                ) : formData.district === "Satna" ? (
+              ) : formData.district === "Satna" ? (
                 <>
-                  {[...SATNA_LOCAL_BODIES.NAGAR_PALIKA, ...SATNA_LOCAL_BODIES.JANPAD_PANCHAYAT].map((localBody, index) => (
+                  {[
+                    ...SATNA_LOCAL_BODIES.NAGAR_PALIKA,
+                    ...SATNA_LOCAL_BODIES.JANPAD_PANCHAYAT,
+                  ].map((localBody, index) => (
                     <option key={index} value={localBody}>
                       {localBody}
                     </option>
                   ))}
                 </>
-                ) : formData.district === "Sehore" ? (
+              ) : formData.district === "Sehore" ? (
                 <>
-                  {[...SEHORE_LOCAL_BODIES.NAGAR_PALIKA, ...SEHORE_LOCAL_BODIES.JANPAD_PANCHAYAT].map((localBody, index) => (
+                  {[
+                    ...SEHORE_LOCAL_BODIES.NAGAR_PALIKA,
+                    ...SEHORE_LOCAL_BODIES.JANPAD_PANCHAYAT,
+                  ].map((localBody, index) => (
                     <option key={index} value={localBody}>
                       {localBody}
                     </option>
                   ))}
                 </>
-                 ) : formData.district === "Seoni" ? (
+              ) : formData.district === "Seoni" ? (
                 <>
-                  {[...SEONI_LOCAL_BODIES.NAGAR_PALIKA, ...SEONI_LOCAL_BODIES.JANPAD_PANCHAYAT].map((localBody, index) => (
+                  {[
+                    ...SEONI_LOCAL_BODIES.NAGAR_PALIKA,
+                    ...SEONI_LOCAL_BODIES.JANPAD_PANCHAYAT,
+                  ].map((localBody, index) => (
                     <option key={index} value={localBody}>
                       {localBody}
                     </option>
                   ))}
-                   </>
-                    ) : formData.district === "Shahdol" ? (
+                </>
+              ) : formData.district === "Shahdol" ? (
                 <>
-                  {[...SHAHDOL_LOCAL_BODIES.NAGAR_PALIKA, ...SHAHDOL_LOCAL_BODIES.JANPAD_PANCHAYAT].map((localBody, index) => (
+                  {[
+                    ...SHAHDOL_LOCAL_BODIES.NAGAR_PALIKA,
+                    ...SHAHDOL_LOCAL_BODIES.JANPAD_PANCHAYAT,
+                  ].map((localBody, index) => (
                     <option key={index} value={localBody}>
                       {localBody}
                     </option>
                   ))}
-                   </>
-                   ) : formData.district === "Shajapur" ? (
+                </>
+              ) : formData.district === "Shajapur" ? (
                 <>
-                  {[...SHAJAPUR_LOCAL_BODIES.NAGAR_PALIKA, ...SHAJAPUR_LOCAL_BODIES.JANPAD_PANCHAYAT].map((localBody, index) => (
+                  {[
+                    ...SHAJAPUR_LOCAL_BODIES.NAGAR_PALIKA,
+                    ...SHAJAPUR_LOCAL_BODIES.JANPAD_PANCHAYAT,
+                  ].map((localBody, index) => (
                     <option key={index} value={localBody}>
                       {localBody}
                     </option>
                   ))}
-                   </>
-                   ) : formData.district === "Sheopur" ? (
+                </>
+              ) : formData.district === "Sheopur" ? (
                 <>
-                  {[...SHEOPUR_LOCAL_BODIES.NAGAR_PALIKA, ...SHEOPUR_LOCAL_BODIES.JANPAD_PANCHAYAT].map((localBody, index) => (
+                  {[
+                    ...SHEOPUR_LOCAL_BODIES.NAGAR_PALIKA,
+                    ...SHEOPUR_LOCAL_BODIES.JANPAD_PANCHAYAT,
+                  ].map((localBody, index) => (
                     <option key={index} value={localBody}>
                       {localBody}
                     </option>
                   ))}
-                   </>
-                    ) : formData.district === "Shivpuri" ? (
+                </>
+              ) : formData.district === "Shivpuri" ? (
                 <>
-                  {[...SHIVPURI_LOCAL_BODIES.NAGAR_PALIKA, ...SHIVPURI_LOCAL_BODIES.JANPAD_PANCHAYAT].map((localBody, index) => (
+                  {[
+                    ...SHIVPURI_LOCAL_BODIES.NAGAR_PALIKA,
+                    ...SHIVPURI_LOCAL_BODIES.JANPAD_PANCHAYAT,
+                  ].map((localBody, index) => (
                     <option key={index} value={localBody}>
                       {localBody}
                     </option>
                   ))}
-                   </>
-                   ) : formData.district === "Sidhi" ? (
+                </>
+              ) : formData.district === "Sidhi" ? (
                 <>
-                  {[...SIDHI_LOCAL_BODIES.NAGAR_PALIKA, ...SIDHI_LOCAL_BODIES.JANPAD_PANCHAYAT].map((localBody, index) => (
+                  {[
+                    ...SIDHI_LOCAL_BODIES.NAGAR_PALIKA,
+                    ...SIDHI_LOCAL_BODIES.JANPAD_PANCHAYAT,
+                  ].map((localBody, index) => (
                     <option key={index} value={localBody}>
                       {localBody}
                     </option>
                   ))}
-                   </>
-                    ) : formData.district === "Singrauli" ? (
+                </>
+              ) : formData.district === "Singrauli" ? (
                 <>
-                  {[...SINGRAULI_LOCAL_BODIES.NAGAR_PALIKA, ...SINGRAULI_LOCAL_BODIES.JANPAD_PANCHAYAT].map((localBody, index) => (
+                  {[
+                    ...SINGRAULI_LOCAL_BODIES.NAGAR_PALIKA,
+                    ...SINGRAULI_LOCAL_BODIES.JANPAD_PANCHAYAT,
+                  ].map((localBody, index) => (
                     <option key={index} value={localBody}>
                       {localBody}
                     </option>
                   ))}
-                   </>
-                   ) : formData.district === "Tikamgarh" ? (
+                </>
+              ) : formData.district === "Tikamgarh" ? (
                 <>
-                  {[...TIKAMGARH_LOCAL_BODIES.NAGAR_PALIKA, ...TIKAMGARH_LOCAL_BODIES.JANPAD_PANCHAYAT].map((localBody, index) => (
+                  {[
+                    ...TIKAMGARH_LOCAL_BODIES.NAGAR_PALIKA,
+                    ...TIKAMGARH_LOCAL_BODIES.JANPAD_PANCHAYAT,
+                  ].map((localBody, index) => (
                     <option key={index} value={localBody}>
                       {localBody}
                     </option>
                   ))}
-                   </>
-                    ) : formData.district === "Ujjain" ? (
+                </>
+              ) : formData.district === "Ujjain" ? (
                 <>
-                  {[...UJJAIN_LOCAL_BODIES.NAGAR_PALIKA, ...UJJAIN_LOCAL_BODIES.JANPAD_PANCHAYAT].map((localBody, index) => (
+                  {[
+                    ...UJJAIN_LOCAL_BODIES.NAGAR_PALIKA,
+                    ...UJJAIN_LOCAL_BODIES.JANPAD_PANCHAYAT,
+                  ].map((localBody, index) => (
                     <option key={index} value={localBody}>
                       {localBody}
                     </option>
                   ))}
-                   </>
-                   ) : formData.district === "Umariya" ? (
+                </>
+              ) : formData.district === "Umariya" ? (
                 <>
-                  {[...UMARIYA_LOCAL_BODIES.NAGAR_PALIKA, ...UMARIYA_LOCAL_BODIES.JANPAD_PANCHAYAT].map((localBody, index) => (
+                  {[
+                    ...UMARIYA_LOCAL_BODIES.NAGAR_PALIKA,
+                    ...UMARIYA_LOCAL_BODIES.JANPAD_PANCHAYAT,
+                  ].map((localBody, index) => (
                     <option key={index} value={localBody}>
                       {localBody}
                     </option>
                   ))}
-                   </>
-                   ) : formData.district === "Vidisha" ? (
+                </>
+              ) : formData.district === "Vidisha" ? (
                 <>
-                  {[...VIDISHA_LOCAL_BODIES.NAGAR_PALIKA, ...VIDISHA_LOCAL_BODIES.JANPAD_PANCHAYAT].map((localBody, index) => (
+                  {[
+                    ...VIDISHA_LOCAL_BODIES.NAGAR_PALIKA,
+                    ...VIDISHA_LOCAL_BODIES.JANPAD_PANCHAYAT,
+                  ].map((localBody, index) => (
                     <option key={index} value={localBody}>
                       {localBody}
                     </option>
                   ))}
-                   </>
+                </>
               ) : (
-                formData.state && formData.district && DISTRICT_TO_CITIES[formData.state]?.[formData.district]?.map((city, index) => (
-                <option key={index} value={city}>
-                  {city}
-                </option>
-                ))
+                formData.state &&
+                formData.district &&
+                DISTRICT_TO_CITIES[formData.state]?.[formData.district]?.map(
+                  (city, index) => (
+                    <option key={index} value={city}>
+                      {city}
+                    </option>
+                  )
+                )
               )}
             </select>
             {hasError("city") && (
@@ -5200,339 +6056,439 @@ if (formData.regionalAssembly === "Vindhya Regional Assembly") {
             )}
           </div>
 
-     {/* Gram Panchayat */}
-        <div className="space-y-3">
-          <label className="text-sm font-medium text-gray-700 flex items-center">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5 mr-2 text-red-700"
-              viewBox="0 0 20 20"
-              fill="currentColor"
+          {/* Gram Panchayat */}
+          <div className="space-y-3">
+            <label className="text-sm font-medium text-gray-700 flex items-center">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5 mr-2 text-red-700"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M14.243 5.757a6 6 0 10-.986 9.284 1 1 0 111.087 1.678A8 8 0 1118 10a3 3 0 01-4.8 2.401A4 4 0 1114 10a1 1 0 102 0c0-1.537-.586-3.07-1.757-4.243zM12 10a2 2 0 10-4 0 2 2 0 004 0z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              Gram Panchayat
+            </label>
+            <select
+              name="gramPanchayat"
+              value={formData.gramPanchayat || ""}
+              onChange={handleInputChange}
+              className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 transition-all duration-200 ${
+                hasError("gramPanchayat")
+                  ? "border-red-500 bg-red-50 error-field"
+                  : "border-gray-300"
+              }`}
+              disabled={!formData.city}
             >
-              <path
-                fillRule="evenodd"
-                d="M14.243 5.757a6 6 0 10-.986 9.284 1 1 0 111.087 1.678A8 8 0 1118 10a3 3 0 01-4.8 2.401A4 4 0 1114 10a1 1 0 102 0c0-1.537-.586-3.07-1.757-4.243zM12 10a2 2 0 10-4 0 2 2 0 004 0z"
-                clipRule="evenodd"
-              />
-            </svg>
-            Gram Panchayat
-          </label>
-          <select
-            name="gramPanchayat"
-            value={formData.gramPanchayat || ""}
-            onChange={handleInputChange}
-            className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 transition-all duration-200 ${
-              hasError("gramPanchayat")
-                ? "border-red-500 bg-red-50 error-field"
-                : "border-gray-300"
-            }`}
-            disabled={!formData.city}
-          >
-            <option value="">Select Gram Panchayat</option>
-            {formData.city && ASHOKNAGAR_GRAM_PANCHAYATS[formData.city] ? (
-              ASHOKNAGAR_GRAM_PANCHAYATS[formData.city].map((panchayat, index) => (
-                <option key={index} value={panchayat}>
-                  {panchayat}
-                </option>
-              ))
-            ) : formData.city && ALIRAJPUR_GRAM_PANCHAYATS[formData.city] ? (
-              ALIRAJPUR_GRAM_PANCHAYATS[formData.city].map((panchayat, index) => (
-                <option key={index} value={panchayat}>
-                  {panchayat}
-                </option>
-              ))
-            ) : formData.city && ANUPPUR_GRAM_PANCHAYATS[formData.city] ? (
-              ANUPPUR_GRAM_PANCHAYATS[formData.city].map((panchayat, index) => (
-                <option key={index} value={panchayat}>
-                  {panchayat}
-                </option>
-              ))
-            ) : formData.city && BALAGHAT_GRAM_PANCHAYATS[formData.city] ? (
-              BALAGHAT_GRAM_PANCHAYATS[formData.city].map((panchayat, index) => (
-                <option key={index} value={panchayat}>
-                  {panchayat}
-                </option>
-              ))
-            ) : formData.city && BARWANI_GRAM_PANCHAYATS[formData.city] ? (
-              BARWANI_GRAM_PANCHAYATS[formData.city].map((panchayat, index) => (
-                <option key={index} value={panchayat}>
-                  {panchayat}
-                </option>
-              ))
-            ) : formData.city && BETUL_GRAM_PANCHAYATS[formData.city] ? (
-              BETUL_GRAM_PANCHAYATS[formData.city].map((panchayat, index) => (
-                <option key={index} value={panchayat}>
-                  {panchayat}
-                </option>
-              ))
-            ) : formData.city && BHIND_GRAM_PANCHAYATS[formData.city] ? (
-              BHIND_GRAM_PANCHAYATS[formData.city].map((panchayat, index) => (
-                <option key={index} value={panchayat}>
-                  {panchayat}
-                </option>
-              ))
-            ) : formData.city && BHOPAL_GRAM_PANCHAYATS[formData.city] ? (
-              BHOPAL_GRAM_PANCHAYATS[formData.city].map((panchayat, index) => (
-                <option key={index} value={panchayat}>
-                  {panchayat}
-                </option>
-              ))
-               ) : formData.city && BURHANPUR_GRAM_PANCHAYATS[formData.city] ? (
-              BURHANPUR_GRAM_PANCHAYATS[formData.city].map((panchayat, index) => (
-                <option key={index} value={panchayat}>
-                  {panchayat}
-                </option>
-              ))
-              ) : formData.city && CHHATARPUR_GRAM_PANCHAYATS[formData.city] ? (
-              CHHATARPUR_GRAM_PANCHAYATS[formData.city].map((panchayat, index) => (
-                <option key={index} value={panchayat}>
-                  {panchayat}
-                </option>
-              ))
-               ) : formData.city && CHHINDWARA_GRAM_PANCHAYATS[formData.city] ? (
-              CHHINDWARA_GRAM_PANCHAYATS[formData.city].map((panchayat, index) => (
-                <option key={index} value={panchayat}>
-                  {panchayat}
-                </option>
-              ))
-              ) : formData.city && DAMOH_GRAM_PANCHAYATS[formData.city] ? (
-              DAMOH_GRAM_PANCHAYATS[formData.city].map((panchayat, index) => (
-                <option key={index} value={panchayat}>
-                  {panchayat}
-                </option>
-              ))
-               ) : formData.city && DATIA_GRAM_PANCHAYATS[formData.city] ? (
-              DATIA_GRAM_PANCHAYATS[formData.city].map((panchayat, index) => (
-                <option key={index} value={panchayat}>
-                  {panchayat}
-                </option>
-              ))
-              ) : formData.city && DEWAS_GRAM_PANCHAYATS[formData.city] ? (
-              DEWAS_GRAM_PANCHAYATS[formData.city].map((panchayat, index) => (
-                <option key={index} value={panchayat}>
-                  {panchayat}
-                </option>
-              ))
-               ) : formData.city && DHAR_GRAM_PANCHAYATS[formData.city] ? (
-              DHAR_GRAM_PANCHAYATS[formData.city].map((panchayat, index) => (
-                <option key={index} value={panchayat}>
-                  {panchayat}
-                </option>
-              ))
-               ) : formData.city && DINDORI_GRAM_PANCHAYATS[formData.city] ? (
-              DINDORI_GRAM_PANCHAYATS[formData.city].map((panchayat, index) => (
-                <option key={index} value={panchayat}>
-                  {panchayat}
-                </option>
-              ))
-               ) : formData.city && GUNA_GRAM_PANCHAYATS[formData.city] ? (
-              GUNA_GRAM_PANCHAYATS[formData.city].map((panchayat, index) => (
-                <option key={index} value={panchayat}>
-                  {panchayat}
-                </option>
-              ))
-              ) : formData.city && GWALIOR_GRAM_PANCHAYATS[formData.city] ? (
-              GWALIOR_GRAM_PANCHAYATS[formData.city].map((panchayat, index) => (
-                <option key={index} value={panchayat}>
-                  {panchayat}
-                </option>
-              ))
-               ) : formData.city && HARDA_GRAM_PANCHAYATS[formData.city] ? (
-              HARDA_GRAM_PANCHAYATS[formData.city].map((panchayat, index) => (
-                <option key={index} value={panchayat}>
-                  {panchayat}
-                </option>
-              ))
-               ) : formData.city && INDORE_GRAM_PANCHAYATS[formData.city] ? (
-              INDORE_GRAM_PANCHAYATS[formData.city].map((panchayat, index) => (
-                <option key={index} value={panchayat}>
-                  {panchayat}
-                </option>
-              ))
-               ) : formData.city && JABALPUR_GRAM_PANCHAYATS[formData.city] ? (
-              JABALPUR_GRAM_PANCHAYATS[formData.city].map((panchayat, index) => (
-                <option key={index} value={panchayat}>
-                  {panchayat}
-                </option>
-              ))
-               ) : formData.city && JHABUA_GRAM_PANCHAYATS[formData.city] ? (
-              JHABUA_GRAM_PANCHAYATS[formData.city].map((panchayat, index) => (
-                <option key={index} value={panchayat}>
-                  {panchayat}
-                </option>
-              ))
-                   ) : formData.city && KATNI_GRAM_PANCHAYATS[formData.city] ? (
-              KATNI_GRAM_PANCHAYATS[formData.city].map((panchayat, index) => (
-                <option key={index} value={panchayat}>
-                  {panchayat}
-                </option>
-              ))
-              ) : formData.city && KHANDWA_GRAM_PANCHAYATS[formData.city] ? (
-              KHANDWA_GRAM_PANCHAYATS[formData.city].map((panchayat, index) => (
-                <option key={index} value={panchayat}>
-                  {panchayat}
-                </option>
-              ))
-               ) : formData.city && KHARGONE_GRAM_PANCHAYATS[formData.city] ? (
-              KHARGONE_GRAM_PANCHAYATS[formData.city].map((panchayat, index) => (
-                <option key={index} value={panchayat}>
-                  {panchayat}
-                </option>
-              ))
-               ) : formData.city && MANDLA_GRAM_PANCHAYATS[formData.city] ? (
-              MANDLA_GRAM_PANCHAYATS[formData.city].map((panchayat, index) => (
-                <option key={index} value={panchayat}>
-                  {panchayat}
-                </option>
-              ))
-               ) : formData.city && MANDSAUR_GRAM_PANCHAYATS[formData.city] ? (
-              MANDSAUR_GRAM_PANCHAYATS[formData.city].map((panchayat, index) => (
-                <option key={index} value={panchayat}>
-                  {panchayat}
-                </option>
-              ))
-            ) : formData.city && MORENA_GRAM_PANCHAYATS[formData.city] ? (
-              MORENA_GRAM_PANCHAYATS[formData.city].map((panchayat, index) => (
-                <option key={index} value={panchayat}>
-                  {panchayat}
-                </option>
-              ))
-              ) : formData.city && NARSINGHPUR_GRAM_PANCHAYATS[formData.city] ? (
-              NARSINGHPUR_GRAM_PANCHAYATS[formData.city].map((panchayat, index) => (
-                <option key={index} value={panchayat}>
-                  {panchayat}
-                </option>
-              ))
-               ) : formData.city && NEEMUCH_GRAM_PANCHAYATS[formData.city] ? (
-              NEEMUCH_GRAM_PANCHAYATS[formData.city].map((panchayat, index) => (
-                <option key={index} value={panchayat}>
-                  {panchayat}
-                </option>
-              ))
-               ) : formData.city && PANNA_GRAM_PANCHAYATS[formData.city] ? (
-              PANNA_GRAM_PANCHAYATS[formData.city].map((panchayat, index) => (
-                <option key={index} value={panchayat}>
-                  {panchayat}
-                </option>
-              ))
-               ) : formData.city && RAISEN_GRAM_PANCHAYATS[formData.city] ? (
-              RAISEN_GRAM_PANCHAYATS[formData.city].map((panchayat, index) => (
-                <option key={index} value={panchayat}>
-                  {panchayat}
-                </option>
-              ))
-               ) : formData.city && RAJGARH_GRAM_PANCHAYATS[formData.city] ? (
-              RAJGARH_GRAM_PANCHAYATS[formData.city].map((panchayat, index) => (
-                <option key={index} value={panchayat}>
-                  {panchayat}
-                </option>
-              ))
-               ) : formData.city && RATLAM_GRAM_PANCHAYATS[formData.city] ? (
-              RATLAM_GRAM_PANCHAYATS[formData.city].map((panchayat, index) => (
-                <option key={index} value={panchayat}>
-                  {panchayat}
-                </option>
-              ))
-              ) : formData.city && REWA_GRAM_PANCHAYATS[formData.city] ? (
-              REWA_GRAM_PANCHAYATS[formData.city].map((panchayat, index) => (
-                <option key={index} value={panchayat}>
-                  {panchayat}
-                </option>
-              ))
-               ) : formData.city && SAGAR_GRAM_PANCHAYATS[formData.city] ? (
-              SAGAR_GRAM_PANCHAYATS[formData.city].map((panchayat, index) => (
-                <option key={index} value={panchayat}>
-                  {panchayat}
-                </option>
-              ))
-            ) : formData.city && SATNA_GRAM_PANCHAYATS[formData.city] ? (
-              SATNA_GRAM_PANCHAYATS[formData.city].map((panchayat, index) => (
-                <option key={index} value={panchayat}>
-                  {panchayat}
-                </option>
-              ))
-              ) : formData.city && SEHORE_GRAM_PANCHAYATS[formData.city] ? (
-              SEHORE_GRAM_PANCHAYATS[formData.city].map((panchayat, index) => (
-                <option key={index} value={panchayat}>
-                  {panchayat}
-                </option>
-              ))
-               ) : formData.city && SEONI_GRAM_PANCHAYATS[formData.city] ? (
-              SEONI_GRAM_PANCHAYATS[formData.city].map((panchayat, index) => (
-                <option key={index} value={panchayat}>
-                  {panchayat}
-                </option>
-              ))
-              ) : formData.city && SHAHDOL_GRAM_PANCHAYATS[formData.city] ? (
-              SHAHDOL_GRAM_PANCHAYATS[formData.city].map((panchayat, index) => (
-                <option key={index} value={panchayat}>
-                  {panchayat}
-                </option>
-              ))
-              ) : formData.city && SHAJAPUR_GRAM_PANCHAYATS[formData.city] ? (
-              SHAJAPUR_GRAM_PANCHAYATS[formData.city].map((panchayat, index) => (
-                <option key={index} value={panchayat}>
-                  {panchayat}
-                </option>
-              ))
-               ) : formData.city && SHEOPUR_GRAM_PANCHAYATS[formData.city] ? (
-              SHEOPUR_GRAM_PANCHAYATS[formData.city].map((panchayat, index) => (
-                <option key={index} value={panchayat}>
-                  {panchayat}
-                </option>
-              ))
-               ) : formData.city && SHIVPURI_GRAM_PANCHAYATS[formData.city] ? (
-              SHIVPURI_GRAM_PANCHAYATS[formData.city].map((panchayat, index) => (
-                <option key={index} value={panchayat}>
-                  {panchayat}
-                </option>
-              ))
-               ) : formData.city && SIDHI_GRAM_PANCHAYATS[formData.city] ? (
-              SIDHI_GRAM_PANCHAYATS[formData.city].map((panchayat, index) => (
-                <option key={index} value={panchayat}>
-                  {panchayat}
-                </option>
-              ))
-               ) : formData.city && SINGRAULI_GRAM_PANCHAYATS[formData.city] ? (
-              SINGRAULI_GRAM_PANCHAYATS[formData.city].map((panchayat, index) => (
-                <option key={index} value={panchayat}>
-                  {panchayat}
-                </option>
-              ))
-               ) : formData.city && TIKAMGARH_GRAM_PANCHAYATS[formData.city] ? (
-              TIKAMGARH_GRAM_PANCHAYATS[formData.city].map((panchayat, index) => (
-                <option key={index} value={panchayat}>
-                  {panchayat}
-                </option>
-              ))
-               ) : formData.city && UJJAIN_GRAM_PANCHAYATS[formData.city] ? (
-              UJJAIN_GRAM_PANCHAYATS[formData.city].map((panchayat, index) => (
-                <option key={index} value={panchayat}>
-                  {panchayat}
-                </option>
-              ))
-               ) : formData.city && UMARIYA_GRAM_PANCHAYATS[formData.city] ? (
-              UMARIYA_GRAM_PANCHAYATS[formData.city].map((panchayat, index) => (
-                <option key={index} value={panchayat}>
-                  {panchayat}
-                </option>
-              ))
-               ) : formData.city && VIDISHA_GRAM_PANCHAYATS[formData.city] ? (
-              VIDISHA_GRAM_PANCHAYATS[formData.city].map((panchayat, index) => (
-                <option key={index} value={panchayat}>
-                  {panchayat}
-                </option>
-              ))
-            ) : (
-              formData.state && formData.district && DISTRICT_TO_CITIES[formData.state]?.[formData.district]?.map((panchayat, index) => (
-                <option key={index} value={panchayat}>
-                  {panchayat}
-                </option>
-              ))
-            )}
-          </select>
-          {hasError("gramPanchayat") && (
-            <p className="text-red-500 text-xs">{errors.gramPanchayat}</p>
+              <option value="">Select Gram Panchayat</option>
+              {formData.city && ASHOKNAGAR_GRAM_PANCHAYATS[formData.city]
+                ? ASHOKNAGAR_GRAM_PANCHAYATS[formData.city].map(
+                    (panchayat, index) => (
+                      <option key={index} value={panchayat}>
+                        {panchayat}
+                      </option>
+                    )
+                  )
+                : formData.city && ALIRAJPUR_GRAM_PANCHAYATS[formData.city]
+                ? ALIRAJPUR_GRAM_PANCHAYATS[formData.city].map(
+                    (panchayat, index) => (
+                      <option key={index} value={panchayat}>
+                        {panchayat}
+                      </option>
+                    )
+                  )
+                : formData.city && ANUPPUR_GRAM_PANCHAYATS[formData.city]
+                ? ANUPPUR_GRAM_PANCHAYATS[formData.city].map(
+                    (panchayat, index) => (
+                      <option key={index} value={panchayat}>
+                        {panchayat}
+                      </option>
+                    )
+                  )
+                : formData.city && BALAGHAT_GRAM_PANCHAYATS[formData.city]
+                ? BALAGHAT_GRAM_PANCHAYATS[formData.city].map(
+                    (panchayat, index) => (
+                      <option key={index} value={panchayat}>
+                        {panchayat}
+                      </option>
+                    )
+                  )
+                : formData.city && BARWANI_GRAM_PANCHAYATS[formData.city]
+                ? BARWANI_GRAM_PANCHAYATS[formData.city].map(
+                    (panchayat, index) => (
+                      <option key={index} value={panchayat}>
+                        {panchayat}
+                      </option>
+                    )
+                  )
+                : formData.city && BETUL_GRAM_PANCHAYATS[formData.city]
+                ? BETUL_GRAM_PANCHAYATS[formData.city].map(
+                    (panchayat, index) => (
+                      <option key={index} value={panchayat}>
+                        {panchayat}
+                      </option>
+                    )
+                  )
+                : formData.city && BHIND_GRAM_PANCHAYATS[formData.city]
+                ? BHIND_GRAM_PANCHAYATS[formData.city].map(
+                    (panchayat, index) => (
+                      <option key={index} value={panchayat}>
+                        {panchayat}
+                      </option>
+                    )
+                  )
+                : formData.city && BHOPAL_GRAM_PANCHAYATS[formData.city]
+                ? BHOPAL_GRAM_PANCHAYATS[formData.city].map(
+                    (panchayat, index) => (
+                      <option key={index} value={panchayat}>
+                        {panchayat}
+                      </option>
+                    )
+                  )
+                : formData.city && BURHANPUR_GRAM_PANCHAYATS[formData.city]
+                ? BURHANPUR_GRAM_PANCHAYATS[formData.city].map(
+                    (panchayat, index) => (
+                      <option key={index} value={panchayat}>
+                        {panchayat}
+                      </option>
+                    )
+                  )
+                : formData.city && CHHATARPUR_GRAM_PANCHAYATS[formData.city]
+                ? CHHATARPUR_GRAM_PANCHAYATS[formData.city].map(
+                    (panchayat, index) => (
+                      <option key={index} value={panchayat}>
+                        {panchayat}
+                      </option>
+                    )
+                  )
+                : formData.city && CHHINDWARA_GRAM_PANCHAYATS[formData.city]
+                ? CHHINDWARA_GRAM_PANCHAYATS[formData.city].map(
+                    (panchayat, index) => (
+                      <option key={index} value={panchayat}>
+                        {panchayat}
+                      </option>
+                    )
+                  )
+                : formData.city && DAMOH_GRAM_PANCHAYATS[formData.city]
+                ? DAMOH_GRAM_PANCHAYATS[formData.city].map(
+                    (panchayat, index) => (
+                      <option key={index} value={panchayat}>
+                        {panchayat}
+                      </option>
+                    )
+                  )
+                : formData.city && DATIA_GRAM_PANCHAYATS[formData.city]
+                ? DATIA_GRAM_PANCHAYATS[formData.city].map(
+                    (panchayat, index) => (
+                      <option key={index} value={panchayat}>
+                        {panchayat}
+                      </option>
+                    )
+                  )
+                : formData.city && DEWAS_GRAM_PANCHAYATS[formData.city]
+                ? DEWAS_GRAM_PANCHAYATS[formData.city].map(
+                    (panchayat, index) => (
+                      <option key={index} value={panchayat}>
+                        {panchayat}
+                      </option>
+                    )
+                  )
+                : formData.city && DHAR_GRAM_PANCHAYATS[formData.city]
+                ? DHAR_GRAM_PANCHAYATS[formData.city].map(
+                    (panchayat, index) => (
+                      <option key={index} value={panchayat}>
+                        {panchayat}
+                      </option>
+                    )
+                  )
+                : formData.city && DINDORI_GRAM_PANCHAYATS[formData.city]
+                ? DINDORI_GRAM_PANCHAYATS[formData.city].map(
+                    (panchayat, index) => (
+                      <option key={index} value={panchayat}>
+                        {panchayat}
+                      </option>
+                    )
+                  )
+                : formData.city && GUNA_GRAM_PANCHAYATS[formData.city]
+                ? GUNA_GRAM_PANCHAYATS[formData.city].map(
+                    (panchayat, index) => (
+                      <option key={index} value={panchayat}>
+                        {panchayat}
+                      </option>
+                    )
+                  )
+                : formData.city && GWALIOR_GRAM_PANCHAYATS[formData.city]
+                ? GWALIOR_GRAM_PANCHAYATS[formData.city].map(
+                    (panchayat, index) => (
+                      <option key={index} value={panchayat}>
+                        {panchayat}
+                      </option>
+                    )
+                  )
+                : formData.city && HARDA_GRAM_PANCHAYATS[formData.city]
+                ? HARDA_GRAM_PANCHAYATS[formData.city].map(
+                    (panchayat, index) => (
+                      <option key={index} value={panchayat}>
+                        {panchayat}
+                      </option>
+                    )
+                  )
+                : formData.city && INDORE_GRAM_PANCHAYATS[formData.city]
+                ? INDORE_GRAM_PANCHAYATS[formData.city].map(
+                    (panchayat, index) => (
+                      <option key={index} value={panchayat}>
+                        {panchayat}
+                      </option>
+                    )
+                  )
+                : formData.city && JABALPUR_GRAM_PANCHAYATS[formData.city]
+                ? JABALPUR_GRAM_PANCHAYATS[formData.city].map(
+                    (panchayat, index) => (
+                      <option key={index} value={panchayat}>
+                        {panchayat}
+                      </option>
+                    )
+                  )
+                : formData.city && JHABUA_GRAM_PANCHAYATS[formData.city]
+                ? JHABUA_GRAM_PANCHAYATS[formData.city].map(
+                    (panchayat, index) => (
+                      <option key={index} value={panchayat}>
+                        {panchayat}
+                      </option>
+                    )
+                  )
+                : formData.city && KATNI_GRAM_PANCHAYATS[formData.city]
+                ? KATNI_GRAM_PANCHAYATS[formData.city].map(
+                    (panchayat, index) => (
+                      <option key={index} value={panchayat}>
+                        {panchayat}
+                      </option>
+                    )
+                  )
+                : formData.city && KHANDWA_GRAM_PANCHAYATS[formData.city]
+                ? KHANDWA_GRAM_PANCHAYATS[formData.city].map(
+                    (panchayat, index) => (
+                      <option key={index} value={panchayat}>
+                        {panchayat}
+                      </option>
+                    )
+                  )
+                : formData.city && KHARGONE_GRAM_PANCHAYATS[formData.city]
+                ? KHARGONE_GRAM_PANCHAYATS[formData.city].map(
+                    (panchayat, index) => (
+                      <option key={index} value={panchayat}>
+                        {panchayat}
+                      </option>
+                    )
+                  )
+                : formData.city && MANDLA_GRAM_PANCHAYATS[formData.city]
+                ? MANDLA_GRAM_PANCHAYATS[formData.city].map(
+                    (panchayat, index) => (
+                      <option key={index} value={panchayat}>
+                        {panchayat}
+                      </option>
+                    )
+                  )
+                : formData.city && MANDSAUR_GRAM_PANCHAYATS[formData.city]
+                ? MANDSAUR_GRAM_PANCHAYATS[formData.city].map(
+                    (panchayat, index) => (
+                      <option key={index} value={panchayat}>
+                        {panchayat}
+                      </option>
+                    )
+                  )
+                : formData.city && MORENA_GRAM_PANCHAYATS[formData.city]
+                ? MORENA_GRAM_PANCHAYATS[formData.city].map(
+                    (panchayat, index) => (
+                      <option key={index} value={panchayat}>
+                        {panchayat}
+                      </option>
+                    )
+                  )
+                : formData.city && NARSINGHPUR_GRAM_PANCHAYATS[formData.city]
+                ? NARSINGHPUR_GRAM_PANCHAYATS[formData.city].map(
+                    (panchayat, index) => (
+                      <option key={index} value={panchayat}>
+                        {panchayat}
+                      </option>
+                    )
+                  )
+                : formData.city && NEEMUCH_GRAM_PANCHAYATS[formData.city]
+                ? NEEMUCH_GRAM_PANCHAYATS[formData.city].map(
+                    (panchayat, index) => (
+                      <option key={index} value={panchayat}>
+                        {panchayat}
+                      </option>
+                    )
+                  )
+                : formData.city && PANNA_GRAM_PANCHAYATS[formData.city]
+                ? PANNA_GRAM_PANCHAYATS[formData.city].map(
+                    (panchayat, index) => (
+                      <option key={index} value={panchayat}>
+                        {panchayat}
+                      </option>
+                    )
+                  )
+                : formData.city && RAISEN_GRAM_PANCHAYATS[formData.city]
+                ? RAISEN_GRAM_PANCHAYATS[formData.city].map(
+                    (panchayat, index) => (
+                      <option key={index} value={panchayat}>
+                        {panchayat}
+                      </option>
+                    )
+                  )
+                : formData.city && RAJGARH_GRAM_PANCHAYATS[formData.city]
+                ? RAJGARH_GRAM_PANCHAYATS[formData.city].map(
+                    (panchayat, index) => (
+                      <option key={index} value={panchayat}>
+                        {panchayat}
+                      </option>
+                    )
+                  )
+                : formData.city && RATLAM_GRAM_PANCHAYATS[formData.city]
+                ? RATLAM_GRAM_PANCHAYATS[formData.city].map(
+                    (panchayat, index) => (
+                      <option key={index} value={panchayat}>
+                        {panchayat}
+                      </option>
+                    )
+                  )
+                : formData.city && REWA_GRAM_PANCHAYATS[formData.city]
+                ? REWA_GRAM_PANCHAYATS[formData.city].map(
+                    (panchayat, index) => (
+                      <option key={index} value={panchayat}>
+                        {panchayat}
+                      </option>
+                    )
+                  )
+                : formData.city && SAGAR_GRAM_PANCHAYATS[formData.city]
+                ? SAGAR_GRAM_PANCHAYATS[formData.city].map(
+                    (panchayat, index) => (
+                      <option key={index} value={panchayat}>
+                        {panchayat}
+                      </option>
+                    )
+                  )
+                : formData.city && SATNA_GRAM_PANCHAYATS[formData.city]
+                ? SATNA_GRAM_PANCHAYATS[formData.city].map(
+                    (panchayat, index) => (
+                      <option key={index} value={panchayat}>
+                        {panchayat}
+                      </option>
+                    )
+                  )
+                : formData.city && SEHORE_GRAM_PANCHAYATS[formData.city]
+                ? SEHORE_GRAM_PANCHAYATS[formData.city].map(
+                    (panchayat, index) => (
+                      <option key={index} value={panchayat}>
+                        {panchayat}
+                      </option>
+                    )
+                  )
+                : formData.city && SEONI_GRAM_PANCHAYATS[formData.city]
+                ? SEONI_GRAM_PANCHAYATS[formData.city].map(
+                    (panchayat, index) => (
+                      <option key={index} value={panchayat}>
+                        {panchayat}
+                      </option>
+                    )
+                  )
+                : formData.city && SHAHDOL_GRAM_PANCHAYATS[formData.city]
+                ? SHAHDOL_GRAM_PANCHAYATS[formData.city].map(
+                    (panchayat, index) => (
+                      <option key={index} value={panchayat}>
+                        {panchayat}
+                      </option>
+                    )
+                  )
+                : formData.city && SHAJAPUR_GRAM_PANCHAYATS[formData.city]
+                ? SHAJAPUR_GRAM_PANCHAYATS[formData.city].map(
+                    (panchayat, index) => (
+                      <option key={index} value={panchayat}>
+                        {panchayat}
+                      </option>
+                    )
+                  )
+                : formData.city && SHEOPUR_GRAM_PANCHAYATS[formData.city]
+                ? SHEOPUR_GRAM_PANCHAYATS[formData.city].map(
+                    (panchayat, index) => (
+                      <option key={index} value={panchayat}>
+                        {panchayat}
+                      </option>
+                    )
+                  )
+                : formData.city && SHIVPURI_GRAM_PANCHAYATS[formData.city]
+                ? SHIVPURI_GRAM_PANCHAYATS[formData.city].map(
+                    (panchayat, index) => (
+                      <option key={index} value={panchayat}>
+                        {panchayat}
+                      </option>
+                    )
+                  )
+                : formData.city && SIDHI_GRAM_PANCHAYATS[formData.city]
+                ? SIDHI_GRAM_PANCHAYATS[formData.city].map(
+                    (panchayat, index) => (
+                      <option key={index} value={panchayat}>
+                        {panchayat}
+                      </option>
+                    )
+                  )
+                : formData.city && SINGRAULI_GRAM_PANCHAYATS[formData.city]
+                ? SINGRAULI_GRAM_PANCHAYATS[formData.city].map(
+                    (panchayat, index) => (
+                      <option key={index} value={panchayat}>
+                        {panchayat}
+                      </option>
+                    )
+                  )
+                : formData.city && TIKAMGARH_GRAM_PANCHAYATS[formData.city]
+                ? TIKAMGARH_GRAM_PANCHAYATS[formData.city].map(
+                    (panchayat, index) => (
+                      <option key={index} value={panchayat}>
+                        {panchayat}
+                      </option>
+                    )
+                  )
+                : formData.city && UJJAIN_GRAM_PANCHAYATS[formData.city]
+                ? UJJAIN_GRAM_PANCHAYATS[formData.city].map(
+                    (panchayat, index) => (
+                      <option key={index} value={panchayat}>
+                        {panchayat}
+                      </option>
+                    )
+                  )
+                : formData.city && UMARIYA_GRAM_PANCHAYATS[formData.city]
+                ? UMARIYA_GRAM_PANCHAYATS[formData.city].map(
+                    (panchayat, index) => (
+                      <option key={index} value={panchayat}>
+                        {panchayat}
+                      </option>
+                    )
+                  )
+                : formData.city && VIDISHA_GRAM_PANCHAYATS[formData.city]
+                ? VIDISHA_GRAM_PANCHAYATS[formData.city].map(
+                    (panchayat, index) => (
+                      <option key={index} value={panchayat}>
+                        {panchayat}
+                      </option>
+                    )
+                  )
+                : formData.state &&
+                  formData.district &&
+                  DISTRICT_TO_CITIES[formData.state]?.[formData.district]?.map(
+                    (panchayat, index) => (
+                      <option key={index} value={panchayat}>
+                        {panchayat}
+                      </option>
+                    )
+                  )}
+            </select>
+            {hasError("gramPanchayat") && (
+              <p className="text-red-500 text-xs">{errors.gramPanchayat}</p>
             )}
           </div>
         </div>
@@ -5579,7 +6535,7 @@ if (formData.regionalAssembly === "Vindhya Regional Assembly") {
               htmlFor="regionalAssembly"
               className="block text-sm font-medium text-gray-700 mb-2"
             >
-              Regional Assembly 
+              Regional Assembly
             </label>
             <select
               id="regionalAssembly"
@@ -5590,12 +6546,11 @@ if (formData.regionalAssembly === "Vindhya Regional Assembly") {
               disabled={!formData.state || !STATE_TO_ASSEMBLIES[formData.state]}
             >
               <option value="">
-                {!formData.state 
+                {!formData.state
                   ? "Select State First"
                   : !STATE_TO_ASSEMBLIES[formData.state]
                   ? "No Regional Assembly for Selected State"
-                  : "Select Regional Assembly"
-                }
+                  : "Select Regional Assembly"}
               </option>
               {getFilteredRegionalAssemblies().map((assembly, index) => (
                 <option key={index} value={assembly}>
@@ -5616,7 +6571,7 @@ if (formData.regionalAssembly === "Vindhya Regional Assembly") {
               htmlFor="localPanchayatName"
               className="block text-sm font-medium text-gray-700 mb-2"
             >
-              Local Panchayat Trust 
+              Local Panchayat Trust
             </label>
             <select
               id="localPanchayatName"
@@ -5624,17 +6579,19 @@ if (formData.regionalAssembly === "Vindhya Regional Assembly") {
               value={formData.localPanchayatName || ""}
               onChange={handleInputChange}
               className="w-full p-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 bg-white transition-all duration-200 text-sm"
-              disabled={!formData.regionalAssembly || !STATE_TO_ASSEMBLIES[formData.state]}
+              disabled={
+                !formData.regionalAssembly ||
+                !STATE_TO_ASSEMBLIES[formData.state]
+              }
             >
               <option value="">
-                {!formData.state 
+                {!formData.state
                   ? "Select State First"
                   : !STATE_TO_ASSEMBLIES[formData.state]
                   ? "No Local Panchayat for Selected State"
                   : !formData.regionalAssembly
                   ? "Select Regional Assembly First"
-                  : "Select Local Panchayat Name"
-                }
+                  : "Select Local Panchayat Name"}
               </option>
               {getFilteredLocalPanchayatNames().map((name, index) => (
                 <option key={index} value={name}>
@@ -5666,17 +6623,19 @@ if (formData.regionalAssembly === "Vindhya Regional Assembly") {
               value={formData.localPanchayat || ""}
               onChange={handleInputChange}
               className="w-full p-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 bg-white transition-all duration-200 text-sm"
-              disabled={!formData.localPanchayatName || !STATE_TO_ASSEMBLIES[formData.state]}
+              disabled={
+                !formData.localPanchayatName ||
+                !STATE_TO_ASSEMBLIES[formData.state]
+              }
             >
               <option value="">
-                {!formData.state 
+                {!formData.state
                   ? "Select State First"
                   : !STATE_TO_ASSEMBLIES[formData.state]
                   ? "No Local Panchayat for Selected State"
                   : !formData.localPanchayatName
                   ? "Select Local Panchayat Name First"
-                  : "Select Local Panchayat"
-                }
+                  : "Select Local Panchayat"}
               </option>
               {getFilteredLocalPanchayats().map((panchayat, index) => (
                 <option key={index} value={panchayat}>
@@ -5705,17 +6664,18 @@ if (formData.regionalAssembly === "Vindhya Regional Assembly") {
               value={formData.subLocalPanchayat || ""}
               onChange={handleInputChange}
               className="w-full p-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 bg-white transition-all duration-200 text-sm"
-              disabled={!formData.localPanchayat || !STATE_TO_ASSEMBLIES[formData.state]}
+              disabled={
+                !formData.localPanchayat || !STATE_TO_ASSEMBLIES[formData.state]
+              }
             >
               <option value="">
-                {!formData.state 
+                {!formData.state
                   ? "Select State First"
                   : !STATE_TO_ASSEMBLIES[formData.state]
                   ? "No Sub Local Panchayat for Selected State"
                   : !formData.localPanchayat
                   ? "Select Local Panchayat First"
-                  : "Select Sub Local Panchayat"
-                }
+                  : "Select Sub Local Panchayat"}
               </option>
               {getFilteredSubLocalPanchayats().map((panchayat, index) => (
                 <option key={index} value={panchayat}>
@@ -5912,16 +6872,21 @@ if (formData.regionalAssembly === "Vindhya Regional Assembly") {
   const openWhatsAppShare = (mobileNumber) => {
     if (mobileNumber?.length === 10) {
       const message = `Join our Gahoi community:`;
-      const url = window.location.origin + '/login';
-      window.open(`https://wa.me/91${mobileNumber}?text=${encodeURIComponent(message + ' ' + url)}`, '_blank');
+      const url = window.location.origin + "/login";
+      window.open(
+        `https://wa.me/91${mobileNumber}?text=${encodeURIComponent(
+          message + " " + url
+        )}`,
+        "_blank"
+      );
     }
   };
 
   // Helper function to get existing panchayats
   const getExistingPanchayats = (district) => {
     try {
-      const existingCase = getFilteredLocalPanchayatNames().find(name => 
-        name === district
+      const existingCase = getFilteredLocalPanchayatNames().find(
+        (name) => name === district
       );
       return existingCase ? [existingCase] : [];
     } catch {
@@ -5932,10 +6897,11 @@ if (formData.regionalAssembly === "Vindhya Regional Assembly") {
   // Update useEffect for mobile number auto-fill
   useEffect(() => {
     console.log("useEffect triggered with location state:", location.state);
-    const mobileNumber = location.state?.mobileNumber || localStorage.getItem('verifiedMobile');
+    const mobileNumber =
+      location.state?.mobileNumber || localStorage.getItem("verifiedMobile");
     if (mobileNumber) {
       console.log("Setting mobile number from location/storage:", mobileNumber);
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         mobileNumber: mobileNumber,
       }));
@@ -5950,12 +6916,17 @@ if (formData.regionalAssembly === "Vindhya Regional Assembly") {
         backgroundSize: "cover",
         backgroundRepeat: "no-repeat",
         backgroundPosition: "center",
-        backgroundColor: "#1e293b", 
+        backgroundColor: "#1e293b",
       }}
     >
+   <ResumeDialog 
+  show={showResumeDialog}
+  onResume={() => handleResume(location.state?.mobileNumber)}
+  onStartNew={handleStartNew}
+/>
       {/* Back to Home Button */}
       <button
-        onClick={() => (window.location.href = "/")}
+        onClick={handleBackToHome}
         className="absolute top-4 left-4 bg-red-700 text-white px-4 py-2 rounded-lg hover:bg-red-800 transition-colors duration-200 z-20 flex items-center"
       >
         <svg
@@ -6075,3 +7046,4 @@ if (formData.regionalAssembly === "Vindhya Regional Assembly") {
 };
 
 export default RegistrationForm;
+

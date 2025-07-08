@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const API_BASE = import.meta.env.MODE === 'production' 
-  ? 'https://admin.gahoishakti.in'
+  ? 'https://api.gahoishakti.in'
   : 'http://localhost:1340';
 
 const SECTIONS = [
@@ -10,8 +10,7 @@ const SECTIONS = [
   { id: 'family', title: 'Family Details', icon: 'users' },
   { id: 'biographical', title: 'Biographical Details', icon: 'book' },
   { id: 'work', title: 'Work Information', icon: 'briefcase' },
-  { id: 'additional', title: 'Additional Details', icon: 'plus' },
-  { id: 'regional', title: 'Regional Information', icon: 'map' }
+  { id: 'additional', title: 'Additional Details', icon: 'plus' }
 ];
 
 const UserProfile = () => {
@@ -68,7 +67,7 @@ const UserProfile = () => {
           // Attempt 1: Try with mobile number filter
           async () => {
             if (mobileNumber) {
-              // console.log('Attempting to fetch by mobile number:', mobileNumber);
+             
               const response = await fetch(
                 `${API_BASE}/api/registration-pages?filters[personal_information][mobile_number][$eq]=${mobileNumber}&populate=*`,
                 {
@@ -81,7 +80,7 @@ const UserProfile = () => {
               );
               if (response.ok) {
                 const data = await response.json();
-                // console.log('Mobile number fetch response:', data);
+            
                 return data.data?.[0];
               }
               lastError = `Mobile number fetch failed with status: ${response.status}`;
@@ -92,7 +91,7 @@ const UserProfile = () => {
           // Attempt 2: Try with document ID if available
           async () => {
             if (documentId) {
-              // console.log('Attempting to fetch by document ID:', documentId);
+             
               const response = await fetch(
                 `${API_BASE}/api/registration-pages/${documentId}?populate=*`,
                 {
@@ -115,7 +114,7 @@ const UserProfile = () => {
 
           // Attempt 3: Get all registration pages and filter client-side
           async () => {
-            // console.log('Attempting to fetch all registration pages');
+            
             const response = await fetch(
               `${API_BASE}/api/registration-pages?populate=*`,
               {
@@ -165,16 +164,16 @@ const UserProfile = () => {
           biographical_details: attrs.biographical_details || {},
           work_information: attrs.work_information || {},
           additional_details: attrs.additional_details || {},
-          regional_information: {
-            state: attrs.additional_details?.state,
-            district: attrs.additional_details?.district,
-            local_body: attrs.additional_details?.local_body,
-            gram_panchayat: attrs.additional_details?.gram_panchayat,
-            regional_assembly: attrs.additional_details?.regional_assembly,
-            local_panchayat_trust: attrs.additional_details?.local_panchayat_trust,
-            local_panchayat_name: attrs.additional_details?.local_panchayat_name,
-            sub_local_panchayat: attrs.additional_details?.sub_local_panchayat
-          },
+          // regional_information: {
+          //   state: attrs.additional_details?.state,
+          //   district: attrs.additional_details?.district,
+          //   local_body: attrs.additional_details?.local_body,
+          //   gram_panchayat: attrs.additional_details?.gram_panchayat,
+          //   regional_assembly: attrs.additional_details?.regional_assembly,
+          //   local_panchayat_trust: attrs.additional_details?.local_panchayat_trust,
+          //   local_panchayat_name: attrs.additional_details?.local_panchayat_name,
+          //   sub_local_panchayat: attrs.additional_details?.sub_local_panchayat
+          // },
           child_name: attrs.child_name || [],
           your_suggestions: attrs.your_suggestions || {},
           gahoi_code: attrs.gahoi_code || '',
@@ -257,7 +256,7 @@ const UserProfile = () => {
   if (error) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 p-4">
-        <span>Failed to load profile</span>
+        <span>Log out and log in again to complete your profile</span>
       </div>
     );
   }
@@ -427,37 +426,6 @@ const UserProfile = () => {
                     No additional details available
                   </div>
                 )}
-              </dl>
-            </div>
-          </section>
-        );
-      case 'regional':
-        return (
-          <section>
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Regional Information</h2>
-            </div>
-            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-              <dl className="divide-y divide-gray-200">
-                {[
-                  { key: 'state', label: 'State' },
-                  { key: 'district', label: 'District' },
-                  { key: 'local_body', label: 'Local Body' },
-                  { key: 'gram_panchayat', label: 'Gram Panchayat' },
-                  { key: 'regional_assembly', label: 'Regional Assembly' },
-                  { key: 'local_panchayat_trust', label: 'Local Panchayat Trust' },
-                  { key: 'local_panchayat_name', label: 'Local Panchayat Name' },
-                  { key: 'sub_local_panchayat', label: 'Sub Local Panchayat' }
-                ].map((field) => (
-                  <div key={field.key} className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
-                    <dt className="text-sm font-medium text-gray-500 mb-1 sm:mb-0">
-                      {field.label}
-                    </dt>
-                    <dd className="text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                      {userData?.regional_information?.[field.key]?.toString() || 'N/A'}
-                    </dd>
-                  </div>
-                ))}
               </dl>
             </div>
           </section>

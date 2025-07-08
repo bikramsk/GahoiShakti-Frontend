@@ -82,9 +82,7 @@ const sendWhatsAppOTP = async (mobileNumber) => {
       throw new Error(data.message || 'Failed to send OTP');
     }
 
-    // Store mobile number for verification
-  
-    sessionStorage.setItem('otpMobile', mobileNumber);
+   sessionStorage.setItem('otpMobile', mobileNumber);
 
     return data;
   } catch (error) {
@@ -165,6 +163,38 @@ const verifyMPIN = async (mobileNumber, mpin) => {
   } catch (error) {
     console.error('Error verifying MPIN:', error);
     throw error;
+  }
+};
+
+const checkForDraft = async (mobileNumber) => {
+  try {
+    // Check server first
+    const response = await fetch(
+      `${import.meta.env.VITE_PUBLIC_STRAPI_API_URL}/api/draft-registrations/mobile/${mobileNumber}`
+    );
+    
+    if (response.ok) {
+      const data = await response.json();
+      if (data && data.formData) {
+        return true;
+      }
+    }
+
+    // Check session storage as fallback
+    const saved = sessionStorage.getItem('registrationProgress');
+    if (saved) {
+      const { lastSaved, formData } = JSON.parse(saved);
+      const twentyFourHours = 24 * 60 * 60 * 1000;
+      if (new Date() - new Date(lastSaved) < twentyFourHours && 
+          formData.mobile_number === mobileNumber) {
+        return true;
+      }
+    }
+
+    return false;
+  } catch (error) {
+    console.error('Error checking for draft:', error);
+    return false;
   }
 };
 
@@ -509,7 +539,29 @@ const Login = () => {
     return () => clearInterval(timer);
   }, [countdown]);
 
-  // Modified handleSubmit to include MPIN creation
+  const handleLoginSuccess = async (mobileNumber, jwt) => {
+    localStorage.setItem('token', `Bearer ${jwt}`);
+    localStorage.setItem('verifiedMobile', mobileNumber);
+    
+    // Check for incomplete registration
+    const hasDraft = await checkForDraft(mobileNumber);
+    
+    if (hasDraft) {
+      // If there's a draft, go to registration
+      navigate('/registration', { 
+        state: { 
+          mobileNumber,
+          fromLogin: true,
+          resume: true
+        } 
+      });      
+      return;
+    }
+    
+    // If no draft, go to homepage
+    navigate('/', { replace: true });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitted(true);
@@ -522,16 +574,8 @@ const Login = () => {
       setLoading(true);
       try {
         const response = await verifyMPIN(formData.mobileNumber, formData.mpin);
-      
-        
         if (response.jwt) {
-          localStorage.setItem('token', `Bearer ${response.jwt}`);
-          localStorage.setItem('verifiedMobile', formData.mobileNumber);
-          
-          // Redirect to homepage 
-        
-          navigate('/', { replace: true });
-          return;
+          await handleLoginSuccess(formData.mobileNumber, response.jwt);
         }
       } catch (error) {
         console.error('Login error:', error);
@@ -563,26 +607,18 @@ const Login = () => {
       } finally {
         setLoading(false);
       }
-    } else if (showOtpInput && !showMpinCreation) {
-      // Step 2: Verify OTP
+      return;
+    }
+
+    // OTP Verification Flow
+    if (showOtpInput && !showMpinCreation) {
       setLoading(true);
       try {
-    
         const response = await verifyOTP(formData.mobileNumber, formData.otp);
-     
-        
         if (response.jwt) {
-          localStorage.setItem('token', `Bearer ${response.jwt}`);
-          localStorage.setItem('verifiedMobile', formData.mobileNumber);
-          
-          // If user exists, redirect to home page
           if (userExists) {
-            navigate('/', { replace: true });
-            return;
-          }
-          
-          // For new users, show MPIN creation
-          if (!userExists) {
+            await handleLoginSuccess(formData.mobileNumber, response.jwt);
+          } else {
             setShowMpinCreation(true);
             setCurrentStep(3);
           }
@@ -596,7 +632,7 @@ const Login = () => {
         setLoading(false);
       }
     } else if (showMpinCreation) {
-      // MPIN creation for new users - No need to check user existence again
+      // MPIN creation for new users
       if (validateMpin()) {
         setLoading(true);
         try {
@@ -606,9 +642,11 @@ const Login = () => {
             state: { 
               mobileNumber: formData.mobileNumber,
               fromLogin: true,
-              processSteps: processSteps 
+              resume: true
             } 
           });
+          
+          
         } catch (error) {
           console.error('MPIN creation error:', error);
           setErrors({
@@ -679,7 +717,7 @@ const Login = () => {
     setErrors({});
     setAuthMode('otp');
     // Don't reset hasMpin since the user still has a MPIN
-    // setHasMpin(false);  // Remove this line
+    // setHasMpin(false);  
   };
 
   return (
