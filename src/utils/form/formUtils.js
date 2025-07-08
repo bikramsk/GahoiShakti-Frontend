@@ -14,7 +14,7 @@ import {
 } from '../validation/validationUtils';
 
 
-const generateGenderCode = (gender) => gender === 'Male' ? 'M' : gender === 'Female' ? 'F' : 'X';
+const generateGenderCode = (gender) => gender === 'Male' ? 'M' : 'F';
 const generateNationalityCode = (nationality) => nationality === 'Indian' ? '1' : nationality === 'Non-Indian' ? '0' : 'X';
 const generateGahoiCode = (isGahoi) => isGahoi === 'Yes' || isGahoi === true ? '3' : '0';
 
@@ -607,13 +607,26 @@ export const validateStep = (step, formData) => {
 };
 
 export const formatFormData = (data, displayPictureId = null) => {
+  // Format gender value to proper case
+  const formattedGender = data.gender ? data.gender.charAt(0).toUpperCase() + data.gender.slice(1) : "";
+
+  // Map employment type to proper format
+  const formatEmploymentType = (type) => {
+    const employmentTypeMap = {
+      'privateSector': 'Private Sector Employee',
+      'centralGovernment': 'Central Government Employee',
+      'stateGovernment': 'State Government Employee'
+    };
+    return employmentTypeMap[type] || type;
+  };
+
   // Generate registration code
-  const genderCode = generateGenderCode(data.gender);
+  const genderCode = generateGenderCode(formattedGender);
   const nationalityCode = generateNationalityCode(data.nationality);
   const isGahoiCode = generateGahoiCode(data.isGahoi);
   const gotraCode = FIXED_CODES.gotra[data.gotra] 
-    ? FIXED_CODES.gotra[data.gotra].padStart(2, '0')  // Ensure two digits
-    : "01"; // Default to Vasar/Vastil/Vasal instead of "00"
+    ? FIXED_CODES.gotra[data.gotra].padStart(2, '0')  
+    : "01"; // 
   const aaknaCode = FIXED_CODES.aakna[data.aakna] || "00";
   const regionalAssemblyCode = data.state && STATE_TO_ASSEMBLIES[data.state] && data.regionalAssembly 
     ? FIXED_CODES.regionalAssembly[data.regionalAssembly].padStart(2, '0')
@@ -688,7 +701,7 @@ export const formatFormData = (data, displayPictureId = null) => {
       mobile_number: data.mobileNumber ?? "",
       email_address: data.email || null,
       display_picture: displayPictureId,
-      Gender: data.Gender ?? "",
+      Gender: formattedGender,
       nationality: data.nationality ?? "",
       is_gahoi: data.isGahoi ?? "Yes",
     },
@@ -696,7 +709,7 @@ export const formatFormData = (data, displayPictureId = null) => {
       industrySector: data.industrySector ?? "",
       businessSize: data.businessSize ?? "",
       workType: data.workType ?? "",
-      employmentType: data.employmentType ?? "",
+      employmentType: formatEmploymentType(data.employmentType) ?? "",
     },
     additional_details: {
       blood_group: data.bloodGroup ?? "",

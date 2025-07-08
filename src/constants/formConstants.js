@@ -40,21 +40,13 @@ export const INDUSTRY_SECTORS = [
   "Other Services"
 ];
 
-// export const BUSINESS_SIZES = [
-//   "Micro Enterprise",
-//   "Small Enterprise",
-//   "Medium Enterprise",
-//   "Large Enterprise",
-//   "Self Employed/Freelancer",
-//   "Not Applicable"
-// ];
 export const BUSINESS_SIZES = [
-"micro",
-"small",
-"medium",
-"large",
-"selfEmployed",
-"notApplicable"
+  "Micro Enterprise",
+  "Small Enterprise",
+  "Medium Enterprise",
+  "Large Enterprise",
+  "Self Employed/Freelancer",
+  "Not Applicable"
 ];
 
 export const WORK_TYPES = [
@@ -78,10 +70,12 @@ export const WORK_TYPES = [
 // Retired
 // Other
 
+export const GENDER_OPTIONS = ["Male", "Female"];
+
 export const EMPLOYMENT_TYPES = [
-  "centralGovt",
-  "stateGovt",
-  "privateSector"
+  "Central Government Employee",
+  "State Government Employee",
+  "Private Sector Employee"
 ];
 
 
@@ -114,16 +108,18 @@ export const SIBLING_RELATION_OPTIONS = [
 
 export const FORM_STEPS = [
   {
-    name: "registration.steps.personalInfo",
-    fields: ["name", "mobileNumber", "village", "id", "email", "gender", "isGahoi"],
+    name: "Personal Information",
+    fields: ["name", "email", "mobileNumber", "display_picture", "village", "gender", "isGahoi"],
   },
   {
-    name: "registration.steps.additionalDetails",
+    name: "Additional Information",
     fields: [
       "bloodGroup",
       "birthDate",
       "marriageDate",
       "education",
+      "gotra",
+      "aakna",
       "currentAddress",
       "city",
       "district",
@@ -134,23 +130,40 @@ export const FORM_STEPS = [
       "subLocalPanchayat",
     ],
   },
-  { name: "registration.steps.familyInfo", fields: ["familyDetails"] },
   {
-    name:  "registration.steps.workInfo",
+    name: "Family Information",
     fields: [
-      "occupation",
-      "companyName",
-      "workArea",
-      "industrySector",
-      "businessSize",
-      "workType",
-      "employmentType",
-      "helpOthers",
-      "provideDiscount",
+      "familyDetails",
+      "isMarried",
+      "marriageCommunity",
+      "spouseName",
+      "spouseMobile",
+      "spouseGotra",
+      "spouseAakna",
     ],
   },
   {
-    name:  "registration.steps.finalSubmission",
+    name: "Work Information",
+    fields: [
+      "workCategory",
+      "workType",
+      "employmentType",
+      "businessType",
+      "businessSize",
+      "industrySector",
+      "designation",
+      "companyName",
+      "workAddress",
+      "workCity",
+      "workDistrict",
+      "workState",
+      "workPincode",
+      "annualIncome",
+      "handicap",
+    ],
+  },
+  {
+    name: "Final Submission",
     fields: ["suggestions", "date", "referenceBy", "confirmAccuracy"],
   },
 ];

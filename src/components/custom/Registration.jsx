@@ -18,6 +18,7 @@ import {
   FORM_STEPS,
   PROCESS_STEPS,
   INITIAL_FORM_DATA,
+  GENDER_OPTIONS,
 } from "../../constants/formConstants";
 import {
   validateStep,
@@ -132,7 +133,7 @@ import PreviousMarriageSection from "./PreviousMarriageSection";
 
 const API_BASE =
   import.meta.env.MODE === "production"
-    ? "https://admin.gahoishakti.in"
+    ? "https://api.gahoishakti.in"
     : "http://localhost:1340";
 
 const API_TOKEN = import.meta.env.VITE_API_TOKEN || "";
@@ -1511,7 +1512,7 @@ useEffect(() => {
       );
 
       const res = await fetch(
-        "https://admin.gahoishakti.in/api/whatsapp/send",
+        "https://api.gahoishakti.i/api/whatsapp/send",
         {
           method: "POST",
           headers: {
@@ -1834,7 +1835,7 @@ useEffect(() => {
       displayPictureId
     );
 
-   console.log("Form Data before formatting:", {
+    console.log("Form Data before formatting:", {
       gender: formData.gender,
       employmentType: formData.employmentType
     });
@@ -1932,7 +1933,7 @@ useEffect(() => {
           : `91${mobileNumber}`;
 
         const response = await fetch(
-          "https://admin.gahoishakti.in/api/send-sms",
+          "https://api.gahoishakti.i/api/send-sms",
           {
             method: "POST",
             headers: {
@@ -2102,9 +2103,14 @@ useEffect(() => {
                      <input
                        type="radio"
                        name="gender"
-                       value="male"
-                       checked={formData.gender === "male"}
-                       onChange={handleInputChange}
+                       value="Male"
+                       checked={formData.gender === "Male"}
+                       onChange={(e) =>
+                         setFormData({
+                           ...formData,
+                           gender: e.target.value,
+                         })
+                       }
                        className="form-radio text-red-500 focus:ring-red-500"
                      />
                      <span className="ml-2 text-sm text-gray-700">{t('registration.personalInfo.male')}</span>
@@ -2113,12 +2119,33 @@ useEffect(() => {
                      <input
                        type="radio"
                        name="gender"
-                       value="female"
-                       checked={formData.gender === "female"}
-                       onChange={handleInputChange}
+                       value="Female"
+                       checked={formData.gender === "Female"}
+                       onChange={(e) =>
+                         setFormData({
+                           ...formData,
+                           gender: e.target.value,
+                         })
+                       }
                        className="form-radio text-red-500 focus:ring-red-500"
                      />
                      <span className="ml-2 text-sm text-gray-700">{t('registration.personalInfo.female')}</span>
+                   </label>
+                   <label className="inline-flex items-center">
+                     <input
+                       type="radio"
+                       name="gender"
+                       value="Other"
+                       checked={formData.gender === "Other"}
+                       onChange={(e) =>
+                         setFormData({
+                           ...formData,
+                           gender: e.target.value,
+                         })
+                       }
+                       className="form-radio text-red-500 focus:ring-red-500"
+                     />
+                     <span className="ml-2 text-sm text-gray-700">{t('registration.personalInfo.other')}</span>
                    </label>
                  </div>
  
