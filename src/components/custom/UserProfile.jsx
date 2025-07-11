@@ -966,9 +966,8 @@ const renderSectionContent = () => {
                 </div>
               </div>
 
-
- {/* Spouse Details */}
- <div className="px-4 py-3">
+              {/* Spouse Details */}
+              <div className="px-4 py-3">
                 <h3 className="text-lg font-semibold mb-4">Spouse Information</h3>
                 <div className="space-y-4">
                   {renderField(sectionKey, "spouse_name", displayData[sectionKey]?.spouse_name, { type: "text" })}
@@ -1381,75 +1380,6 @@ const renderSectionContent = () => {
                   </button>
                 )}
               </div>
-
-             
-
-              {/* Previous Marriage Information */}
-              {(displayData?.biographical_details?.is_married === "Widow/Widower" || 
-                displayData?.biographical_details?.is_married === "Divorced" ||
-                displayData?.consider_second_marriage) && (
-                <div className="px-4 py-3">
-                  <h3 className="text-lg font-semibold mb-4">Previous Marriage Information</h3>
-                  {displayData?.previous_marriage_info ? (
-                    <div className="space-y-4">
-                      {Object.entries(displayData.previous_marriage_info).map(([key, value]) => {
-                        // Skip rendering if value is empty or N/A
-                        if (!value || value === "N/A" || key === "id") return null;
-                        
-                        // Format the field name for display
-                        const fieldName = key.split('_').map(word => 
-                          word.charAt(0).toUpperCase() + word.slice(1)
-                        ).join(' ');
-
-                        return (
-                          <div key={key} className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
-                            <dt className="text-sm font-medium text-gray-500">{fieldName}</dt>
-                            <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                              {editMode ? (
-                                key === "children_living_with" || key === "want_kundli_match" || key === "accept_partner_with_children" ? (
-                                  <select
-                                    value={formData?.previous_marriage_info?.[key] || ""}
-                                    onChange={(e) => handleInputChange("previous_marriage_info", key, e.target.value)}
-                                    className="border border-gray-300 px-2 py-1 rounded w-full"
-                                  >
-                                    <option value="">Select Option</option>
-                                    <option value="yes">Yes</option>
-                                    <option value="no">No</option>
-                                  </select>
-                                ) : key === "spouse_gotra" ? (
-                                  <select
-                                    value={formData?.previous_marriage_info?.[key] || ""}
-                                    onChange={(e) => handleInputChange("previous_marriage_info", key, e.target.value)}
-                                    className="border border-gray-300 px-2 py-1 rounded w-full"
-                                  >
-                                    <option value="">Select Gotra</option>
-                                    {GOTRA_OPTIONS.map((option) => (
-                                      <option key={option} value={option}>
-                                        {option}
-                                      </option>
-                                    ))}
-                                  </select>
-                                ) : (
-                                  <input
-                                    type="text"
-                                    value={formData?.previous_marriage_info?.[key] || ""}
-                                    onChange={(e) => handleInputChange("previous_marriage_info", key, e.target.value)}
-                                    className="border border-gray-300 px-2 py-1 rounded w-full"
-                                  />
-                                )
-                              ) : (
-                                value
-                              )}
-                            </dd>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <p className="text-gray-500">No previous marriage information available</p>
-                  )}
-                </div>
-              )}
             </>
           ) : (
             Object.entries(displayData[sectionKey] || {})
