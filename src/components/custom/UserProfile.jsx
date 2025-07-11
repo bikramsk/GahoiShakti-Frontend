@@ -449,20 +449,37 @@ const handleSaveProfile = async () => {
       throw new Error("Could not determine documentId");
     }
 
+    // Check if previous marriage info should be included
+    const shouldIncludePreviousMarriage = 
+      formData?.biographical_details?.is_married === "Widow/Widower" ||
+      formData?.biographical_details?.is_married === "Divorced" ||
+      formData?.consider_second_marriage === true;
+
+    // Prepare the save data
     const rawSaveData = {
       personal_information: formData.personal_information || {},
       family_details: formData.family_details || {},
       biographical_details: formData.biographical_details || {},
       work_information: formData.work_information || {},
       additional_details: formData.additional_details || {},
-      previous_marriage_info: formData.previous_marriage_info || {},
       child_name: formData.child_name || [],
       your_suggestions: formData.your_suggestions || {},
       gahoi_code: formData.gahoi_code || "",
       marital_status: formData.marital_status || "",
       consider_second_marriage: formData.consider_second_marriage || false
     };
-    
+
+    // Only include previous marriage info if relevant
+    if (shouldIncludePreviousMarriage) {
+      rawSaveData.previous_marriage_info = {
+        spouse_name: formData?.previous_marriage_info?.spouse_name || "",
+        spouse_gotra: formData?.previous_marriage_info?.spouse_gotra || "",
+        spouse_akna: formData?.previous_marriage_info?.spouse_akna || "",
+        children_living_with: formData?.previous_marriage_info?.children_living_with || "",
+        want_kundli_match: formData?.previous_marriage_info?.want_kundli_match || "",
+        accept_partner_with_children: formData?.previous_marriage_info?.accept_partner_with_children || ""
+      };
+    }
    
     const saveData = stripIds(rawSaveData);
 
@@ -765,6 +782,27 @@ const renderSectionContent = () => {
   
   // Add special handling for previous marriage section
   if (activeSection === 'previous_marriage') {
+    // Only show this section if user's status makes it relevant
+    const shouldShowPreviousMarriage = 
+      displayData?.biographical_details?.is_married === "Widow/Widower" ||
+      displayData?.biographical_details?.is_married === "Divorced" ||
+      displayData?.consider_second_marriage === true;
+
+    if (!shouldShowPreviousMarriage && !editMode) {
+      return (
+        <section>
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-800">
+              Previous Marriage Information
+            </h2>
+          </div>
+          <div className="bg-white rounded-lg border border-gray-200 p-6 text-center text-gray-500">
+            Not applicable based on current marital status
+          </div>
+        </section>
+      );
+    }
+
     return (
       <section>
         <div className="flex justify-between items-center mb-6">
@@ -772,130 +810,136 @@ const renderSectionContent = () => {
             Previous Marriage Information
           </h2>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          <dl className="divide-y divide-gray-200">
-            <div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
-              <dt className="text-sm font-medium text-gray-500">Previous Spouse Name</dt>
-              <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                {editMode ? (
-                  <input
-                    type="text"
-                    value={formData?.previous_marriage_info?.spouse_name || ""}
-                    onChange={(e) => handleInputChange("previous_marriage_info", "spouse_name", e.target.value)}
-                    className="border border-gray-300 px-2 py-1 rounded w-full"
-                  />
-                ) : (
-                  displayData?.previous_marriage_info?.spouse_name || "N/A"
-                )}
-              </dd>
-            </div>
+        {shouldShowPreviousMarriage ? (
+          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+            <dl className="divide-y divide-gray-200">
+              {editMode && (
+                <>
+                  <div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
+                    <dt className="text-sm font-medium text-gray-500">Previous Spouse Name</dt>
+                    <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                      <input
+                        type="text"
+                        value={formData?.previous_marriage_info?.spouse_name || ""}
+                        onChange={(e) => handleInputChange("previous_marriage_info", "spouse_name", e.target.value)}
+                        className="border border-gray-300 px-2 py-1 rounded w-full"
+                        placeholder="Enter previous spouse name"
+                      />
+                    </dd>
+                  </div>
 
-            <div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
-              <dt className="text-sm font-medium text-gray-500">Previous Spouse Gotra</dt>
-              <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                {editMode ? (
-                  <select
-                    value={formData?.previous_marriage_info?.spouse_gotra || ""}
-                    onChange={(e) => handleInputChange("previous_marriage_info", "spouse_gotra", e.target.value)}
-                    className="border border-gray-300 px-2 py-1 rounded w-full"
-                  >
-                    <option value="">Select Gotra</option>
-                    {GOTRA_OPTIONS.map((option) => (
-                      <option key={option} value={option}>
-                        {option}
-                      </option>
-                    ))}
-                  </select>
-                ) : (
-                  displayData?.previous_marriage_info?.spouse_gotra || "N/A"
-                )}
-              </dd>
-            </div>
+                  <div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
+                    <dt className="text-sm font-medium text-gray-500">Previous Spouse Gotra</dt>
+                    <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                      <select
+                        value={formData?.previous_marriage_info?.spouse_gotra || ""}
+                        onChange={(e) => handleInputChange("previous_marriage_info", "spouse_gotra", e.target.value)}
+                        className="border border-gray-300 px-2 py-1 rounded w-full"
+                      >
+                        <option value="">Select Gotra</option>
+                        {GOTRA_OPTIONS.map((option) => (
+                          <option key={option} value={option}>
+                            {option}
+                          </option>
+                        ))}
+                      </select>
+                    </dd>
+                  </div>
 
-            <div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
-              <dt className="text-sm font-medium text-gray-500">Previous Spouse Aakna</dt>
-              <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                {editMode ? (
-                  <select
-                    value={formData?.previous_marriage_info?.spouse_akna || ""}
-                    onChange={(e) => handleInputChange("previous_marriage_info", "spouse_akna", e.target.value)}
-                    className="border border-gray-300 px-2 py-1 rounded w-full"
-                    disabled={!formData?.previous_marriage_info?.spouse_gotra}
-                  >
-                    <option value="">Select Aakna</option>
-                    {(formData?.previous_marriage_info?.spouse_gotra 
-                      ? (GOTRA_AAKNA_MAP[formData.previous_marriage_info.spouse_gotra] || AAKNA_OPTIONS)
-                      : AAKNA_OPTIONS
-                    ).map((option) => (
-                      <option key={option} value={option}>
-                        {option}
-                      </option>
-                    ))}
-                  </select>
-                ) : (
-                  displayData?.previous_marriage_info?.spouse_akna || "N/A"
-                )}
-              </dd>
-            </div>
+                  <div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
+                    <dt className="text-sm font-medium text-gray-500">Previous Spouse Aakna</dt>
+                    <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                      <select
+                        value={formData?.previous_marriage_info?.spouse_akna || ""}
+                        onChange={(e) => handleInputChange("previous_marriage_info", "spouse_akna", e.target.value)}
+                        className="border border-gray-300 px-2 py-1 rounded w-full"
+                        disabled={!formData?.previous_marriage_info?.spouse_gotra}
+                      >
+                        <option value="">Select Aakna</option>
+                        {(formData?.previous_marriage_info?.spouse_gotra 
+                          ? (GOTRA_AAKNA_MAP[formData.previous_marriage_info.spouse_gotra] || AAKNA_OPTIONS)
+                          : AAKNA_OPTIONS
+                        ).map((option) => (
+                          <option key={option} value={option}>
+                            {option}
+                          </option>
+                        ))}
+                      </select>
+                    </dd>
+                  </div>
 
-            <div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
-              <dt className="text-sm font-medium text-gray-500">Will children live with you/your spouse?</dt>
-              <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                {editMode ? (
-                  <select
-                    value={formData?.previous_marriage_info?.children_living_with || ""}
-                    onChange={(e) => handleInputChange("previous_marriage_info", "children_living_with", e.target.value)}
-                    className="border border-gray-300 px-2 py-1 rounded w-full"
-                  >
-                    <option value="">Select Option</option>
-                    <option value="yes">Yes</option>
-                    <option value="no">No</option>
-                  </select>
-                ) : (
-                  displayData?.previous_marriage_info?.children_living_with || "N/A"
-                )}
-              </dd>
-            </div>
+                  <div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
+                    <dt className="text-sm font-medium text-gray-500">Will children live with you/your spouse?</dt>
+                    <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                      <select
+                        value={formData?.previous_marriage_info?.children_living_with || ""}
+                        onChange={(e) => handleInputChange("previous_marriage_info", "children_living_with", e.target.value)}
+                        className="border border-gray-300 px-2 py-1 rounded w-full"
+                      >
+                        <option value="">Select Option</option>
+                        <option value="yes">Yes</option>
+                        <option value="no">No</option>
+                      </select>
+                    </dd>
+                  </div>
 
-            <div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
-              <dt className="text-sm font-medium text-gray-500">Do you want horoscope matching?</dt>
-              <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                {editMode ? (
-                  <select
-                    value={formData?.previous_marriage_info?.want_kundli_match || ""}
-                    onChange={(e) => handleInputChange("previous_marriage_info", "want_kundli_match", e.target.value)}
-                    className="border border-gray-300 px-2 py-1 rounded w-full"
-                  >
-                    <option value="">Select Option</option>
-                    <option value="yes">Yes</option>
-                    <option value="no">No</option>
-                  </select>
-                ) : (
-                  displayData?.previous_marriage_info?.want_kundli_match || "N/A"
-                )}
-              </dd>
-            </div>
+                  <div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
+                    <dt className="text-sm font-medium text-gray-500">Do you want horoscope matching?</dt>
+                    <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                      <select
+                        value={formData?.previous_marriage_info?.want_kundli_match || ""}
+                        onChange={(e) => handleInputChange("previous_marriage_info", "want_kundli_match", e.target.value)}
+                        className="border border-gray-300 px-2 py-1 rounded w-full"
+                      >
+                        <option value="">Select Option</option>
+                        <option value="yes">Yes</option>
+                        <option value="no">No</option>
+                      </select>
+                    </dd>
+                  </div>
 
-            <div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
-              <dt className="text-sm font-medium text-gray-500">Accept Partner with Children</dt>
-              <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                {editMode ? (
-                  <select
-                    value={formData?.previous_marriage_info?.accept_partner_with_children || ""}
-                    onChange={(e) => handleInputChange("previous_marriage_info", "accept_partner_with_children", e.target.value)}
-                    className="border border-gray-300 px-2 py-1 rounded w-full"
-                  >
-                    <option value="">Select Option</option>
-                    <option value="yes">Yes</option>
-                    <option value="no">No</option>
-                  </select>
-                ) : (
-                  displayData?.previous_marriage_info?.accept_partner_with_children || "N/A"
-                )}
-              </dd>
-            </div>
-          </dl>
-        </div>
+                  <div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
+                    <dt className="text-sm font-medium text-gray-500">Accept Partner with Children</dt>
+                    <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                      <select
+                        value={formData?.previous_marriage_info?.accept_partner_with_children || ""}
+                        onChange={(e) => handleInputChange("previous_marriage_info", "accept_partner_with_children", e.target.value)}
+                        className="border border-gray-300 px-2 py-1 rounded w-full"
+                      >
+                        <option value="">Select Option</option>
+                        <option value="yes">Yes</option>
+                        <option value="no">No</option>
+                      </select>
+                    </dd>
+                  </div>
+                </>
+              )}
+              
+              {/* Show filled values in view mode */}
+              {!editMode && Object.entries(displayData?.previous_marriage_info || {}).map(([key, value]) => {
+                // Skip id field and empty values
+                if (!value || value === "N/A" || key === "id") return null;
+                
+                const label = key.split('_').map(word => 
+                  word.charAt(0).toUpperCase() + word.slice(1)
+                ).join(' ');
+
+                return (
+                  <div key={key} className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
+                    <dt className="text-sm font-medium text-gray-500">{label}</dt>
+                    <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                      {value}
+                    </dd>
+                  </div>
+                );
+              })}
+            </dl>
+          </div>
+        ) : (
+          <div className="bg-white rounded-lg border border-gray-200 p-6 text-center text-gray-500">
+            Not applicable based on current marital status
+          </div>
+        )}
       </section>
     );
   }
@@ -1421,26 +1465,63 @@ const renderSectionContent = () => {
                   <h3 className="text-lg font-semibold mb-4">Previous Marriage Information</h3>
                   {displayData?.previous_marriage_info ? (
                     <div className="space-y-4">
-                      {renderField("previous_marriage_info", "spouse_name", displayData.previous_marriage_info.spouse_name, { type: "text" })}
-                      {renderField("previous_marriage_info", "spouse_gotra", displayData.previous_marriage_info.spouse_gotra, { type: "text" })}
-                      {renderField("previous_marriage_info", "spouse_akna", displayData.previous_marriage_info.spouse_akna, { type: "text" })}
-                      {renderField("previous_marriage_info", "children_living_with", displayData.previous_marriage_info.children_living_with, {
-                        type: "dropdown",
-                        options: ["yes", "no"]
+                      {Object.entries(displayData.previous_marriage_info).map(([key, value]) => {
+                        // Skip rendering if value is empty or N/A
+                        if (!value || value === "N/A" || key === "id") return null;
+                        
+                        // Format the field name for display
+                        const fieldName = key.split('_').map(word => 
+                          word.charAt(0).toUpperCase() + word.slice(1)
+                        ).join(' ');
+
+                        return (
+                          <div key={key} className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
+                            <dt className="text-sm font-medium text-gray-500">{fieldName}</dt>
+                            <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                              {editMode ? (
+                                key === "children_living_with" || key === "want_kundli_match" || key === "accept_partner_with_children" ? (
+                                  <select
+                                    value={formData?.previous_marriage_info?.[key] || ""}
+                                    onChange={(e) => handleInputChange("previous_marriage_info", key, e.target.value)}
+                                    className="border border-gray-300 px-2 py-1 rounded w-full"
+                                  >
+                                    <option value="">Select Option</option>
+                                    <option value="yes">Yes</option>
+                                    <option value="no">No</option>
+                                  </select>
+                                ) : key === "spouse_gotra" ? (
+                                  <select
+                                    value={formData?.previous_marriage_info?.[key] || ""}
+                                    onChange={(e) => handleInputChange("previous_marriage_info", key, e.target.value)}
+                                    className="border border-gray-300 px-2 py-1 rounded w-full"
+                                  >
+                                    <option value="">Select Gotra</option>
+                                    {GOTRA_OPTIONS.map((option) => (
+                                      <option key={option} value={option}>
+                                        {option}
+                                      </option>
+                                    ))}
+                                  </select>
+                                ) : (
+                                  <input
+                                    type="text"
+                                    value={formData?.previous_marriage_info?.[key] || ""}
+                                    onChange={(e) => handleInputChange("previous_marriage_info", key, e.target.value)}
+                                    className="border border-gray-300 px-2 py-1 rounded w-full"
+                                  />
+                                )
+                              ) : (
+                                value
+                              )}
+                            </dd>
+                          </div>
+                        );
                       })}
-                      {renderField("previous_marriage_info", "want_kundli_match", displayData.previous_marriage_info.want_kundli_match, {
-                        type: "dropdown",
-                        options: ["yes", "no"]
-                      })}
-                      {renderField("previous_marriage_info", "accept_partner_with_children", displayData.previous_marriage_info.accept_partner_with_children, {
-                        type: "dropdown",
-                        options: ["yes", "no"]
-                      })}
-            </div>
+                    </div>
                   ) : (
                     <p className="text-gray-500">No previous marriage information available</p>
                   )}
-          </div>
+                </div>
               )}
             </>
           ) : (
