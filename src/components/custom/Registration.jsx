@@ -3444,130 +3444,137 @@ useEffect(() => {
                </div>
  
                {/* Business Owner Specific Fields */}
-               {formData.workCategory === "business_owner" && (
-                 <>
-                   <div className="space-y-3">
-                     <label className="block text-sm font-medium text-gray-700">
-                       {t('registration.workInfo.businessSize')}
-                     </label>
-                     <select
-                       name="businessSize"
-                       value={formData.businessSize}
-                       onChange={handleInputChange}
-                       className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 transition-all duration-200 ${
-                         hasError("businessSize")
-                           ? "border-red-500 bg-red-50"
-                           : "border-gray-300"
-                       }`}
-                     >
-                       <option value="">{t('registration.workInfo.selectBusinessSize')}</option>
-                       {BUSINESS_SIZES.map((size) => (
-                         <option key={size} value={size}>
-                           {t(`registration.workInfo.businessSizeOptions.${size}`)}
-                         </option>
-                       ))}
-                     </select>
-                     {hasError("businessSize") && (
-                       <p className="text-red-500 text-xs">
-                         {t('registration.workInfo.pleaseSelectBusinessSize')}
-                       </p>
-                     )}
-                   </div>
- 
-                   <div className="space-y-3">
-                     <label className="block text-sm font-medium text-gray-700">
-                       {t('registration.workInfo.businessType')}
-                     </label>
-                     <select
-                       name="businessType"
-                       value={formData.businessType}
-                       onChange={handleInputChange}
-                       className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 transition-all duration-200 ${
-                         hasError("businessType")
-                           ? "border-red-500 bg-red-50"
-                           : "border-gray-300"
-                       }`}
-                     >
-                       <option value="">{t('registration.workInfo.selectBusinessType')}</option>
-                       <option value="sole_proprietorship">{t('registration.workInfo.soleProprietorship')}</option>
-                       <option value="partnership">{t('registration.workInfo.partnership')}</option>
-                       <option value="private_limited">{t('registration.workInfo.privateLimitedCompany')}</option>
-                       <option value="public_limited">{t('registration.workInfo.publicLimitedCompany')}</option>
-                       <option value="llp">{t('registration.workInfo.limitedLiabilityPartnership')}</option>
-                       <option value="other">{t('registration.workInfo.other')}</option>
-                     </select>
-                     {hasError("businessType") && (
-                       <p className="text-red-500 text-xs">
-                         {t('registration.workInfo.pleaseSelectBusinessType')}
-                       </p>
-                     )}
-                   </div>
- 
-                   <div className="space-y-3">
-                     <label className="block text-sm font-medium text-gray-700">
-                       {t('registration.workInfo.yearsInBusiness')}
-                     </label>
-                     <select
-                       name="businessYears"
-                       value={formData.businessYears}
-                       onChange={handleInputChange}
-                       className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 transition-all duration-200 ${
-                         hasError("businessYears")
-                           ? "border-red-500 bg-red-50"
-                           : "border-gray-300"
-                       }`}
-                     >
-                       <option value="">{t('registration.workInfo.selectYearsInBusiness')}</option>
-                       <option value="0-2">{t('registration.workInfo.yearsInBusinessOptions.0-2')}</option>
-                       <option value="3-5">{t('registration.workInfo.yearsInBusinessOptions.3-5')}</option>
-                       <option value="6-10">{t('registration.workInfo.yearsInBusinessOptions.6-10')}</option>
-                       <option value="11-20">{t('registration.workInfo.yearsInBusinessOptions.11-20')}</option>
-                       <option value="20+">{t('registration.workInfo.yearsInBusinessOptions.20+')}</option>
-                     </select>
-                     {hasError("businessYears") && (
-                       <p className="text-red-500 text-xs">
-                         {t('registration.workInfo.pleaseSelectYearsInBusiness')}
-                       </p>
-                     )}
-                   </div>
-                 </>
-               )}
+              {formData.workCategory === "business_owner" && (
+                            <>
+                              <div className="space-y-3">
+                                <label className="block text-sm font-medium text-gray-700">
+                                  {t('registration.workInfo.businessSize')}
+                                </label>
+                                <select
+                                  name="businessSize"
+                                  value={formData.businessSize}
+                                  onChange={handleInputChange}
+                                  className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 transition-all duration-200 ${
+                                    hasError("businessSize")
+                                      ? "border-red-500 bg-red-50"
+                                      : "border-gray-300"
+                                  }`}
+                                >
+                                  <option value="">{t('registration.workInfo.selectBusinessSize')}</option>
+                                  {BUSINESS_SIZES.map((size) => (
+                                    <option key={size} value={size}>
+                                       {t(`registration.workInfo.businessSizeOptions.${size === "Micro Enterprise" ? "micro" :
+                                         size === "Small Enterprise" ? "small" :
+                                         size === "Medium Enterprise" ? "medium" :
+                                         size === "Large Enterprise" ? "large" :
+                                         size === "Self Employed/Freelancer" ? "selfEmployed" :
+                                         "notApplicable"}`)}
+                                    </option>
+                                  ))}
+                                </select>
+                                {hasError("businessSize") && (
+                                  <p className="text-red-500 text-xs">
+                                    {t('registration.workInfo.pleaseSelectBusinessSize')}
+                                  </p>
+                                )}
+                              </div>
+            
+                              <div className="space-y-3">
+                                <label className="block text-sm font-medium text-gray-700">
+                                  {t('registration.workInfo.businessType')}
+                                </label>
+                                <select
+                                  name="businessType"
+                                  value={formData.businessType}
+                                  onChange={handleInputChange}
+                                  className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 transition-all duration-200 ${
+                                    hasError("businessType")
+                                      ? "border-red-500 bg-red-50"
+                                      : "border-gray-300"
+                                  }`}
+                                >
+                                  <option value="">{t('registration.workInfo.selectBusinessType')}</option>
+                                  <option value="sole_proprietorship">{t('registration.workInfo.soleProprietorship')}</option>
+                                  <option value="partnership">{t('registration.workInfo.partnership')}</option>
+                                  <option value="private_limited">{t('registration.workInfo.privateLimitedCompany')}</option>
+                                  <option value="public_limited">{t('registration.workInfo.publicLimitedCompany')}</option>
+                                  <option value="llp">{t('registration.workInfo.limitedLiabilityPartnership')}</option>
+                                  <option value="other">{t('registration.workInfo.other')}</option>
+                                </select>
+                                {hasError("businessType") && (
+                                  <p className="text-red-500 text-xs">
+                                    {t('registration.workInfo.pleaseSelectBusinessType')}
+                                  </p>
+                                )}
+                              </div>
+            
+                              <div className="space-y-3">
+                                <label className="block text-sm font-medium text-gray-700">
+                                  {t('registration.workInfo.yearsInBusiness')}
+                                </label>
+                                <select
+                                  name="businessYears"
+                                  value={formData.businessYears}
+                                  onChange={handleInputChange}
+                                  className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 transition-all duration-200 ${
+                                    hasError("businessYears")
+                                      ? "border-red-500 bg-red-50"
+                                      : "border-gray-300"
+                                  }`}
+                                >
+                                  <option value="">{t('registration.workInfo.selectYearsInBusiness')}</option>
+                                  <option value="0-2">{t('registration.workInfo.yearsInBusinessOptions.0-2')}</option>
+                                  <option value="3-5">{t('registration.workInfo.yearsInBusinessOptions.3-5')}</option>
+                                  <option value="6-10">{t('registration.workInfo.yearsInBusinessOptions.6-10')}</option>
+                                  <option value="11-20">{t('registration.workInfo.yearsInBusinessOptions.11-20')}</option>
+                                  <option value="20+">{t('registration.workInfo.yearsInBusinessOptions.20+')}</option>
+                                </select>
+                                {hasError("businessYears") && (
+                                  <p className="text-red-500 text-xs">
+                                    {t('registration.workInfo.pleaseSelectYearsInBusiness')}
+                                  </p>
+                                )}
+                              </div>
+                            </>
+                          )}
  
                {/* Show these fields only if Professional/Employee is selected */}
-               {formData.workCategory === "professional" && (
-                 <div className="md:col-span-2 space-y-3">
-                     <label className="block text-sm font-medium text-gray-700">
-                     {t('registration.workInfo.employmentType')}
-                     </label>
-                   <div className="flex flex-col space-y-2">
-                   {EMPLOYMENT_TYPES.map((type) => (
-                       <label key={type} className="inline-flex items-center">
-                     <input
-                           type="radio"
-                           name="employmentType"
-                           value={type}
-                           checked={formData.employmentType === type}
-                           onChange={(e) =>
-                             setFormData({
-                               ...formData,
-                               employmentType: e.target.checked ? e.target.value : ""
-                             })
-                           }
-                           className="h-4 w-4 text-red-700 focus:ring-red-500"
-                         />
-                        <span className="ml-2 text-sm text-gray-700">
-   {t(`registration.workInfo.employmentTypesOptions.${type}`)}
- </span>
-                     </label>
-                     ))}
-                   </div>
-                   {hasError("employmentType") && (
-                       <p className="text-red-500 text-xs">
-                       {t('registration.workInfo.pleaseSelectEmploymentType')}
-                       </p>
-                     )}
-                   </div>
-               )}
+              {formData.workCategory === "professional" && (
+                             <div className="md:col-span-2 space-y-3">
+                                 <label className="block text-sm font-medium text-gray-700">
+                                 {t('registration.workInfo.employmentType')}
+                                 </label>
+                               <div className="flex flex-col space-y-2">
+                               {EMPLOYMENT_TYPES.map((type) => (
+                                   <label key={type} className="inline-flex items-center">
+                                 <input
+                                       type="radio"
+                                       name="employmentType"
+                                       value={type}
+                                       checked={formData.employmentType === type}
+                                       onChange={(e) =>
+                                         setFormData({
+                                           ...formData,
+                                           employmentType: e.target.checked ? e.target.value : ""
+                                         })
+                                       }
+                                       className="h-4 w-4 text-red-700 focus:ring-red-500"
+                                     />
+                                    <span className="ml-2 text-sm text-gray-700">
+                                      {t(`registration.workInfo.employmentTypesOptions.${type === "Central Government Employee" ? "centralGovt" : 
+                                        type === "State Government Employee" ? "stateGovt" : 
+                                        "privateSector"}`)}
+             </span>
+                                 </label>
+                                 ))}
+                               </div>
+                               {hasError("employmentType") && (
+                                   <p className="text-red-500 text-xs">
+                                   {t('registration.workInfo.pleaseSelectEmploymentType')}
+                                   </p>
+                                 )}
+                               </div>
+                           )}
  
               
              </div>
