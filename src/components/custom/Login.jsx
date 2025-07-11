@@ -82,7 +82,9 @@ const sendWhatsAppOTP = async (mobileNumber) => {
       throw new Error(data.message || 'Failed to send OTP');
     }
 
-   sessionStorage.setItem('otpMobile', mobileNumber);
+    // Store mobile number for verification
+  
+      sessionStorage.setItem('otpMobile', mobileNumber);
 
     return data;
   } catch (error) {
@@ -559,7 +561,7 @@ const Login = () => {
     }
     
     // If no draft, go to homepage
-    navigate('/my-account', { replace: true });
+    navigate('/', { replace: true });
   };
 
   const handleSubmit = async (e) => {
