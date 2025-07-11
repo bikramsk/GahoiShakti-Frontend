@@ -559,7 +559,7 @@ const Login = () => {
     }
     
     // If no draft, go to homepage
-    navigate('/', { replace: true });
+    navigate('/my-account', { replace: true });
   };
 
   const handleSubmit = async (e) => {

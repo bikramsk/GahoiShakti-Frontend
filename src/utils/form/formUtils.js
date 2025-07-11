@@ -647,7 +647,7 @@ export const formatFormData = (data, displayPictureId = null) => {
     LocalPanchayat: data.localPanchayat ?? "",
     SubLocalPanchayat: data.subLocalPanchayat ?? "",
     State: data.state ?? "",
-    // local_body: data.localBody ?? "",
+    District: data.district ?? "",
     local_body: data.city ?? "",
     gram_panchayat: data.gramPanchayat ?? ""
   } : {
@@ -655,9 +655,14 @@ export const formatFormData = (data, displayPictureId = null) => {
     LocalPanchayatName: "",
     LocalPanchayat: "",
     SubLocalPanchayat: "",
-    State: "",
-    local_body: "",
-    gram_panchayat: ""
+    // State: "",
+    // District: "",
+    // local_body: "",
+    // gram_panchayat: ""
+    State: data.state ?? "",
+    District: data.district ?? "",
+    local_body: data.city ?? "",
+    gram_panchayat: data.gramPanchayat ?? ""
   };
 
   const formattedData = {
@@ -677,10 +682,10 @@ export const formatFormData = (data, displayPictureId = null) => {
           gender: sibling?.gender || null,
           phone_number: sibling?.mobileNumber ?? "",
           age: sibling?.age ? parseInt(sibling.age, 10) : null,
-          education: sibling?.education || null,
-          occupation: sibling?.occupation || null,
+          // education: sibling?.education || null,
+          // occupation: sibling?.occupation || null,
           marital_status: sibling?.maritalStatus || null,
-          is_dependent: sibling?.isDependent ?? false,
+          // is_dependent: sibling?.isDependent ?? false,
           sibling_relation: sibling?.siblingRelation || null
         })) || []
     },

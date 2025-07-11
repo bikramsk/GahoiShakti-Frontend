@@ -76,11 +76,7 @@ const Header = () => {
   ];
 
   return (
-    <header className={`w-full top-0 z-50 transition-all duration-300 ${
-      scrolled 
-        ? 'bg-[#800000] shadow-xl border-b border-gray-200/20' 
-        : 'bg-[#800000] shadow-lg'
-    }`}>
+    <header className='bg-[#800000]'>
       <nav className="container mx-auto px-4 py-1">
         <div className="flex justify-between items-center">
           {/* Logo */}

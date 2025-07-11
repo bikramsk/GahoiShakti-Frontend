@@ -215,4 +215,6 @@ export const INITIAL_FORM_DATA = {
   subLocalPanchayat: "",
   isGahoi: "Yes",
   confirmAccuracy: false,
+  local_body: "",
+  gram_panchayat: ""
 }; 
