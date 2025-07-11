@@ -468,7 +468,7 @@ const handleSaveProfile = async () => {
       marital_status: formData.marital_status || "",
       consider_second_marriage: formData.consider_second_marriage || false
     };
-
+    
     // Only include previous marriage info if relevant
     if (shouldIncludePreviousMarriage) {
       rawSaveData.previous_marriage_info = {
@@ -973,6 +973,17 @@ const renderSectionContent = () => {
                 <div className="space-y-4">
                   {renderField(sectionKey, "spouse_name", displayData[sectionKey]?.spouse_name, { type: "text" })}
                   {renderField(sectionKey, "spouse_mobile", displayData[sectionKey]?.spouse_mobile, { type: "text" })}
+                  {renderField(sectionKey, "spouse_gotra", displayData[sectionKey]?.spouse_gotra, { 
+                    type: "dropdown",
+                    options: GOTRA_OPTIONS
+                  })}
+                  {renderField(sectionKey, "spouse_aakna", displayData[sectionKey]?.spouse_aakna, { 
+                    type: "dropdown",
+                    options: displayData[sectionKey]?.spouse_gotra ? 
+                      (GOTRA_AAKNA_MAP[displayData[sectionKey].spouse_gotra] || AAKNA_OPTIONS) : 
+                      AAKNA_OPTIONS,
+                    disabled: !displayData[sectionKey]?.spouse_gotra
+                  })}
                   {displayData?.biographical_details?.is_married === "Married" && (
                     <>
                       {renderField("biographical_details", "marriage_to_another_caste", 
@@ -984,90 +995,6 @@ const renderSectionContent = () => {
                   )}
                 </div>
               </div>
-              
-              {/* Gotra and Aakna */}
-              <div className="px-4 py-3">
-                <h3 className="text-lg font-semibold mb-4">Spouse's Gotra and Aakna</h3>
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <dt className="text-sm font-medium text-gray-500">Gotra</dt>
-                      <dd className="mt-1 text-sm text-gray-900">
-                        {editMode ? (
-                          <select
-                            value={formData?.family_details?.gotra || ""}
-                            onChange={(e) => {
-                              const newGotra = e.target.value;
-                              setFormData(prev => ({
-                                ...prev,
-                                family_details: {
-                                  ...prev.family_details,
-                                  gotra: newGotra,
-                                  // Reset Aakna when Gotra changes
-                                  aakna: ""
-                                }
-                              }));
-                            }}
-                            className="border border-gray-300 px-2 py-1 rounded w-full"
-                          >
-                            <option value="">Select Gotra</option>
-                            {GOTRA_OPTIONS.map((option) => (
-                              <option key={option} value={option}>
-                                {option}
-                              </option>
-                            ))}
-                          </select>
-                        ) : (
-                          displayData?.family_details?.gotra || "N/A"
-                        )}
-                      </dd>
-                    </div>
-
-                    <div>
-                      <dt className="text-sm font-medium text-gray-500">Aakna</dt>
-                      <dd className="mt-1 text-sm text-gray-900">
-                        {editMode ? (
-                          <select
-                            value={formData?.family_details?.aakna || ""}
-                            onChange={(e) => {
-                              setFormData(prev => ({
-                                ...prev,
-                                family_details: {
-                                  ...prev.family_details,
-                                  aakna: e.target.value
-                                }
-                              }));
-                            }}
-                            disabled={!formData?.family_details?.gotra}
-                            className={`border border-gray-300 px-2 py-1 rounded w-full ${
-                              !formData?.family_details?.gotra ? 'bg-gray-100' : ''
-                            }`}
-                          >
-                            <option value="">Select Aakna</option>
-                            {(formData?.family_details?.gotra 
-                              ? (GOTRA_AAKNA_MAP[formData.family_details.gotra] || AAKNA_OPTIONS)
-                              : AAKNA_OPTIONS
-                            ).map((option) => (
-                              <option key={option} value={option}>
-                                {option}
-                              </option>
-                            ))}
-                          </select>
-                        ) : (
-                          displayData?.family_details?.aakna || "N/A"
-                        )}
-                      </dd>
-                      {editMode && !formData?.family_details?.gotra && (
-                        <p className="text-gray-500 text-xs mt-1">
-                          Please select a Gotra first
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-             
 
               {/* Children Details */}
               <div className="px-4 py-3">

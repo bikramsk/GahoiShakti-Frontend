@@ -56,7 +56,7 @@ export const FORM_FIELD_CONFIG = {
     },
     aakna: {
       type: "dropdown",
-      options: [] // This will be populated dynamically based on selected Gotra
+      options: [] 
     },
     education: {
       type: "dropdown",

@@ -655,10 +655,6 @@ export const formatFormData = (data, displayPictureId = null) => {
     LocalPanchayatName: "",
     LocalPanchayat: "",
     SubLocalPanchayat: "",
-    // State: "",
-    // District: "",
-    // local_body: "",
-    // gram_panchayat: ""
     State: data.state ?? "",
     District: data.district ?? "",
     local_body: data.city ?? "",
@@ -673,8 +669,8 @@ export const formatFormData = (data, displayPictureId = null) => {
       mother_mobile: data.familyDetails?.[1]?.mobileNumber ?? "",
       spouse_name: data.spouseName || data.familyDetails?.[2]?.name || "",
       spouse_mobile: data.spouseMobile || data.familyDetails?.[2]?.mobileNumber || "",
-      gotra: data.gotra ?? "",
-      aakna: data.aakna ?? "",
+      spouse_gotra: data.spouseGotra ?? "",
+      spouse_aakna: data.spouseAakna ?? "",
       siblingDetails: (data.familyDetails || [])
         .filter(member => member?.relation === "Sibling")
         .map((sibling) => ({
@@ -682,10 +678,7 @@ export const formatFormData = (data, displayPictureId = null) => {
           gender: sibling?.gender || null,
           phone_number: sibling?.mobileNumber ?? "",
           age: sibling?.age ? parseInt(sibling.age, 10) : null,
-          // education: sibling?.education || null,
-          // occupation: sibling?.occupation || null,
           marital_status: sibling?.maritalStatus || null,
-          // is_dependent: sibling?.isDependent ?? false,
           sibling_relation: sibling?.siblingRelation || null
         })) || []
     },
@@ -699,7 +692,9 @@ export const formatFormData = (data, displayPictureId = null) => {
       is_married: data.isMarried || "Unmarried",
       marriage_to_another_caste: data.marriageCommunity ? 
         (data.marriageCommunity === "other" ? "Married to Another Caste" : "Same Caste Marriage") 
-        : ""
+        : "",
+      gotra: data.gotra ?? "",
+      aakna: data.aakna ?? ""
     },
     personal_information: {
       full_name: data.name ?? "",
