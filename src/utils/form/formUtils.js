@@ -686,7 +686,8 @@ export const formatFormData = (data, displayPictureId = null) => {
       .filter(member => member?.relation === "Child")
       .map((child) => ({ 
         child_name: child?.name ?? "",
-        gender: child?.gender || null
+        gender: child?.gender || null,
+        phone_number: child?.mobileNumber ?? "" //added for child phone number
       })) || [],
     biographical_details: {
       is_married: data.isMarried || "Unmarried",

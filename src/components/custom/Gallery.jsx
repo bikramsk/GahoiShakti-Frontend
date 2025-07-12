@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 
 const API_URL = import.meta.env.MODE === 'production' 
   ? 'https://admin.gahoishakti.in'
-  : 'http://localhost:1337';
+  : 'http://localhost:1340';
 
 const Gallery = () => {
   const { t } = useTranslation();

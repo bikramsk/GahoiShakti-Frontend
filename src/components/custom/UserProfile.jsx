@@ -1089,6 +1089,34 @@ const renderSectionContent = () => {
                             )}
                           </dd>
                         </div>
+
+                        {/* Phone Number */}
+                        <div>
+                          <dt className="text-sm font-medium text-gray-500">Phone Number</dt>
+                          <dd className="mt-1 text-sm text-gray-900">
+                            {editMode ? (
+                              <input
+                                type="tel"
+                                value={child?.phone_number || ""}
+                                onChange={(e) => {
+                                  const newChildren = [...(formData?.child_name || [])];
+                                  newChildren[index] = {
+                                    ...newChildren[index],
+                                    phone_number: e.target.value
+                                  };
+                                  setFormData(prev => ({
+                                    ...prev,
+                                    child_name: newChildren
+                                  }));
+                                }}
+                                className="border border-gray-300 px-2 py-1 rounded w-full"
+                                placeholder="Enter phone number"
+                              />
+                            ) : (
+                              child.phone_number || "N/A"
+                            )}
+                          </dd>
+                        </div>
                       </div>
 
                       {/* Delete Button */}

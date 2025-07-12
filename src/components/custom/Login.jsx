@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Helmet } from "react-helmet-async";
 import { useTranslation } from "react-i18next";
 import { getLoginPageData } from "../../data/loader";
+import { checkMobile } from '../../utils/mobileCheck';
+import FamilyProfileModal from './FamilyProfileModal';
 
 
 const API_BASE = import.meta.env.MODE === 'production' 
@@ -214,6 +216,12 @@ const Login = () => {
     otp: '',
     mpin: ''
   });
+
+const [showFamilyModal, setShowFamilyModal] = useState(false);
+const [matchedFamilyData, setMatchedFamilyData] = useState(null);
+const [matchedRole, setMatchedRole] = useState("");
+const [matchedProfileId, setMatchedProfileId] = useState(null);
+
 
   const [errors, setErrors] = useState({});
   const [submitted, setSubmitted] = useState(false);
@@ -590,27 +598,44 @@ const Login = () => {
       return;
     }
 
-    // Send OTP Flow (both new users and existing users choosing OTP)
-    if (!showOtpInput) {
-      setLoading(true);
-      try {
-        const result = await sendWhatsAppOTP(formData.mobileNumber);
-        if (result.success !== false) {
-          setShowOtpInput(true);
-          setOtpSent(true);
-          setCurrentStep(2);
-          setCountdown(30);
-          setErrors({});
-        }
-      } catch (error) {
-        setErrors({
-          mobileNumber: error.message || 'Failed to send OTP'
-        });
-      } finally {
-        setLoading(false);
-      }
-      return;
+// Send OTP Flow (both new users and existing users choosing OTP)
+if (!showOtpInput) {
+  setLoading(true);
+  try {
+   
+    const familyResult = await checkMobile(formData.mobileNumber);
+
+    if (familyResult.matchFound) {
+      setMatchedFamilyData(familyResult.familyData);
+      setMatchedRole(familyResult.role);
+      setMatchedProfileId(familyResult.mainProfileId); 
+      setShowFamilyModal(true);
+      setLoading(false);
+      return; 
     }
+
+    // If no match, proceed to send OTP
+    const result = await sendWhatsAppOTP(formData.mobileNumber);
+
+    if (result.success !== false) {
+      setShowOtpInput(true);
+      setOtpSent(true);
+      setCurrentStep(2);
+      setCountdown(30);
+      setErrors({});
+    }
+  } catch (error) {
+    console.error("Error in mobile check or OTP send:", error);
+    setErrors({
+      mobileNumber: error.message || "Failed to send OTP"
+    });
+  } finally {
+    setLoading(false);
+  }
+  return;
+}
+
+
 
     // OTP Verification Flow
     if (showOtpInput && !showMpinCreation) {
@@ -1109,6 +1134,17 @@ const Login = () => {
           </div>
         </div>
       </div>
+
+      {showFamilyModal && matchedFamilyData && (
+  <FamilyProfileModal
+    familyData={matchedFamilyData}
+    mobileNumber={formData.mobileNumber}
+    role={matchedRole}
+    profileId={matchedFamilyData?.id}
+    onClose={() => setShowFamilyModal(false)}
+  />
+)}
+
     </div>
   );
 };
