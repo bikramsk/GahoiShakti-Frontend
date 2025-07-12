@@ -163,7 +163,7 @@ const UserProfile = () => {
           return;
         }
 
-        // API call: main profile data
+        // API call for main profile data
         const mainUrl = `${API_BASE}/api/registration-pages?filters[personal_information][mobile_number][$eq]=${mobileNumber}&populate=*`;
         const mainRes = await fetch(mainUrl, {
             headers: {
@@ -183,7 +183,7 @@ const UserProfile = () => {
         }
         const mainAttrs = mainProfileData.attributes || mainProfileData;
 
-        // API call: siblings only
+        // API call for siblings only
         const siblingsUrl = `${API_BASE}/api/registration-pages?filters[personal_information][mobile_number][$eq]=${mobileNumber}&populate[family_details][populate]=siblingDetails`;
         const siblingsRes = await fetch(siblingsUrl, {
           headers: {
@@ -199,7 +199,7 @@ const UserProfile = () => {
         const siblingsData = await siblingsRes.json();
         const siblingsProfile = siblingsData.data?.[0]?.family_details?.siblingDetails || [];
 
-  // API call: Regional only
+  // API call for Regional only
   const regionalUrl = `${API_BASE}/api/registration-pages` +
   `?filters[personal_information][mobile_number][$eq]=${mobileNumber}` +
   `&populate[additional_details][populate]=regional_information`;
@@ -232,17 +232,16 @@ const UserProfile = () => {
           work_information: mainAttrs.work_information || {},
           additional_details: {
             ...(mainAttrs.additional_details || {}),
-          },
-          regional_information: {
-            ...regionalProfile,
-            RegionalAssembly: regionalProfile?.RegionalAssembly || "",
-            LocalPanchayatName: regionalProfile?.LocalPanchayatName || "",
-            LocalPanchayat: regionalProfile?.LocalPanchayat || "",
-            SubLocalPanchayat: regionalProfile?.SubLocalPanchayat || "",
-            State: regionalProfile?.State || "",
-            District: regionalProfile?.District || "",
-            local_body: regionalProfile?.local_body || "",
-            gram_panchayat: regionalProfile?.gram_panchayat || "",
+            regional_information: {
+              RegionalAssembly: regionalProfile?.RegionalAssembly || "",
+              LocalPanchayatName: regionalProfile?.LocalPanchayatName || "",
+              LocalPanchayat: regionalProfile?.LocalPanchayat || "",
+              SubLocalPanchayat: regionalProfile?.SubLocalPanchayat || "",
+              State: regionalProfile?.State || "",
+              District: regionalProfile?.District || "",
+              local_body: regionalProfile?.local_body || "",
+              gram_panchayat: regionalProfile?.gram_panchayat || ""
+            }
           },
           previous_marriage_info: mainAttrs.previous_marriage_info || {
             spouse_name: "",
@@ -455,7 +454,7 @@ const handleSaveProfile = async () => {
       formData?.biographical_details?.is_married === "Divorced" ||
       formData?.consider_second_marriage === true;
 
-    // Prepare the save data
+   
     const rawSaveData = {
       personal_information: formData.personal_information || {},
       family_details: formData.family_details || {},
@@ -483,7 +482,7 @@ const handleSaveProfile = async () => {
    
     const saveData = stripIds(rawSaveData);
 
-    // Save using the documentId in the URL
+    // Save using the documentId
     const saveResponse = await fetch(
       `${API_BASE}/api/registration-pages/${documentId}`,
       {
@@ -658,6 +657,11 @@ const renderField = (section, key, value, fieldConfig) => {
     return null;
   }
 
+  // Skip regional_information field in additional_details section
+  if (section === "additional_details" && key === "regional_information") {
+    return null;
+  }
+
   return (
     <div key={key} className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
       <dt className="text-sm font-medium text-gray-500 mb-1 sm:mb-0">
@@ -670,7 +674,7 @@ const renderField = (section, key, value, fieldConfig) => {
               value={formData?.[section]?.[key] || ""}
               onChange={(e) => {
                 handleInputChange(section, key, e.target.value);
-                // Reset Aakna when Gotra changes
+                
                 if (key === "Gotra") {
                   handleInputChange(section, "Aakna", "");
                 }
@@ -725,7 +729,7 @@ const renderSectionContent = () => {
 
   const sectionKey = SECTION_KEYS[activeSection];
   
-  // Add regional section handling
+  
   if (activeSection === 'regional') {
     const regionalFields = [
       { key: 'RegionalAssembly', label: 'Regional Assembly' },
@@ -748,8 +752,7 @@ const renderSectionContent = () => {
         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
           <dl className="divide-y divide-gray-200">
             {regionalFields.map(({ key, label }) => {
-              const value = displayData?.regional_information?.[key];
-
+              const value = displayData?.additional_details?.regional_information?.[key];
 
               // Skip rendering if value is empty or N/A
               if (!editMode && (!value || value === "N/A")) {
@@ -763,8 +766,19 @@ const renderSectionContent = () => {
                     {editMode ? (
                       <input
                         type="text"
-                        value={formData?.regional_information?.[key] || ""}
-                        onChange={(e) => handleInputChange("regional_information", key, e.target.value)}
+                        value={formData?.additional_details?.regional_information?.[key] || ""}
+                        onChange={(e) => {
+                          setFormData(prev => ({
+                            ...prev,
+                            additional_details: {
+                              ...prev.additional_details,
+                              regional_information: {
+                                ...prev.additional_details?.regional_information,
+                                [key]: e.target.value
+                              }
+                            }
+                          }));
+                        }}
                         className="border border-gray-300 px-2 py-1 rounded w-full"
                       />
                     ) : (
@@ -1411,7 +1425,7 @@ const renderSectionContent = () => {
             </>
           ) : (
             Object.entries(displayData[sectionKey] || {})
-              .filter(([key]) => key !== "id" && key !== "display_picture")
+              .filter(([key]) => key !== "id" && key !== "display_picture" && key !== "regional_information")
               .map(([key, value]) => {
                 const fieldConfig = getFieldType(sectionKey, key, formData);
                 return renderField(sectionKey, key, value, fieldConfig);
