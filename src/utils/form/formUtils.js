@@ -718,7 +718,17 @@ export const formatFormData = (data, displayPictureId = null) => {
       date_of_marriage: formatDate(data.marriageDate),
       higher_education: data.education ?? "",
       current_address: data.currentAddress ?? "",
-      regional_information: regionalInfo,
+      // regional_information: regionalInfo,
+      regional_information: {
+        RegionalAssembly: data.regionalAssembly ?? "",
+        LocalPanchayatName: data.localPanchayatName ?? "",
+        LocalPanchayat: data.localPanchayat ?? "",
+        SubLocalPanchayat: data.subLocalPanchayat ?? "",
+        State: data.state ?? "",
+        District: data.district ?? "",
+        local_body: data.city ?? "",
+        gram_panchayat: data.gramPanchayat ?? ""
+      }
     },
     your_suggestions: {
       suggestions: data.suggestions ?? "",
