@@ -338,7 +338,7 @@ const clearProgress = () => {
 };
 
 
-  const handleBackToHome = async () => {
+const handleBackToHome = async () => {
     try {
       if (Object.keys(formData).length > 0 && !submitted && formData.mobile_number) {
         const progressData = {
@@ -349,12 +349,15 @@ const clearProgress = () => {
         
         sessionStorage.setItem("registrationProgress", JSON.stringify(progressData));
          await saveDraftToServer(formData, currentStep);
+        
       }
     
       navigate('/');
+      window.location.reload();
     } catch (error) {
       console.error('Error saving progress before navigation:', error);
       navigate('/');
+      window.location.reload();
     }
   };
 
