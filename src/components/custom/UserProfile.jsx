@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { FORM_FIELD_CONFIG } from "../../utils/formFieldConfig";
+import { BLOOD_GROUPS } from "../../constants/formConstants";
 
 
 function stripIds(obj) {
@@ -95,19 +96,81 @@ const GOTRA_AAKNA_MAP = {
   ]
 };
 
+const BIOGRAPHICAL_MARRIAGE_TYPE_OPTIONS = [
+  "Same Caste Marriage",
+  "Married to Another Caste"
+];
+const BIOGRAPHICAL_IS_MARRIED_OPTIONS = [
+  "Married",
+  "Unmarried",
+  "Widow/Widower",
+  "Divorced"
+];
 
 const getFieldType = (section, field, formData) => {
   
   if (section === "biographical_details" && field === "Aakna") {
     const selectedGotra = formData?.biographical_details?.Gotra;
     const aaknaOptions = selectedGotra ? (GOTRA_AAKNA_MAP[selectedGotra] || AAKNA_OPTIONS) : AAKNA_OPTIONS;
+    console.log("Gotra:", selectedGotra, "Aakna options:", aaknaOptions);
     return {
       type: "dropdown",
-      options: aaknaOptions,
+      options: [
+        { value: "", label: "Select Aakna", disabled: true },
+        ...aaknaOptions.map(a => ({ value: a, label: a }))
+      ],
       disabled: !selectedGotra
     };
   }
-
+  if (section === "biographical_details" && field === "Gotra") {
+    return {
+      type: "dropdown",
+      options: [
+        { value: "", label: "Select Gotra", disabled: true },
+        ...GOTRA_OPTIONS.map(g => ({ value: g, label: g }))
+      ],
+      disabled: false
+    };
+  }
+  if (section === "biographical_details" && field === "marriage_to_another_caste") {
+    return {
+      type: "dropdown",
+      options: [
+        { value: "", label: "Select Marriage To Another Caste", disabled: true },
+        { value: "Same Caste Marriage", label: "Same Caste Marriage" },
+        { value: "Married to Another Caste", label: "Married to Another Caste" }
+      ],
+      disabled: false
+    };
+  }
+  if (section === "biographical_details" && field === "is_married") {
+    return {
+      type: "dropdown",
+      options: [
+        { value: "", label: "Select Marital Status", disabled: true },
+        { value: "Married", label: "Married" },
+        { value: "Unmarried", label: "Unmarried" },
+        { value: "Widow/Widower", label: "Widow/Widower" },
+        { value: "Divorced", label: "Divorced" }
+      ],
+      disabled: false
+    };
+  }
+  if (section === "additional_details" && field === "blood_group") {
+    return {
+      type: "dropdown",
+      options: [
+        { value: "", label: "Select Blood Group", disabled: true },
+        ...BLOOD_GROUPS.map(group => ({ value: group, label: group }))
+      ],
+      disabled: false
+    };
+  }
+  if (section === "additional_details" && (field === "date_of_birth" || field === "date_of_marriage")) {
+    return {
+      type: "date"
+    };
+  }
 
   const fieldConfig = FORM_FIELD_CONFIG[section]?.[field.toLowerCase()];
   if (fieldConfig) {
@@ -163,7 +226,7 @@ const UserProfile = () => {
           return;
         }
 
-        // API call for main profile data
+        // API call: main profile data
         const mainUrl = `${API_BASE}/api/registration-pages?filters[personal_information][mobile_number][$eq]=${mobileNumber}&populate=*`;
         const mainRes = await fetch(mainUrl, {
             headers: {
@@ -183,7 +246,7 @@ const UserProfile = () => {
         }
         const mainAttrs = mainProfileData.attributes || mainProfileData;
 
-        // API call for siblings only
+        // API call: siblings only
         const siblingsUrl = `${API_BASE}/api/registration-pages?filters[personal_information][mobile_number][$eq]=${mobileNumber}&populate[family_details][populate]=siblingDetails`;
         const siblingsRes = await fetch(siblingsUrl, {
           headers: {
@@ -199,7 +262,7 @@ const UserProfile = () => {
         const siblingsData = await siblingsRes.json();
         const siblingsProfile = siblingsData.data?.[0]?.family_details?.siblingDetails || [];
 
-  // API call for Regional only
+  // API call: Regional only
   const regionalUrl = `${API_BASE}/api/registration-pages` +
   `?filters[personal_information][mobile_number][$eq]=${mobileNumber}` +
   `&populate[additional_details][populate]=regional_information`;
@@ -232,14 +295,14 @@ const UserProfile = () => {
           work_information: mainAttrs.work_information || {},
           additional_details: {
             ...(mainAttrs.additional_details || {}),
-            regional_information: {
-              RegionalAssembly: regionalProfile?.RegionalAssembly || "",
-              LocalPanchayatName: regionalProfile?.LocalPanchayatName || "",
-              LocalPanchayat: regionalProfile?.LocalPanchayat || "",
-              SubLocalPanchayat: regionalProfile?.SubLocalPanchayat || "",
-              State: regionalProfile?.State || "",
-              District: regionalProfile?.District || "",
-              local_body: regionalProfile?.local_body || "",
+          regional_information: {
+            RegionalAssembly: regionalProfile?.RegionalAssembly || "",
+            LocalPanchayatName: regionalProfile?.LocalPanchayatName || "",
+            LocalPanchayat: regionalProfile?.LocalPanchayat || "",
+            SubLocalPanchayat: regionalProfile?.SubLocalPanchayat || "",
+            State: regionalProfile?.State || "",
+            District: regionalProfile?.District || "",
+            local_body: regionalProfile?.local_body || "",
               gram_panchayat: regionalProfile?.gram_panchayat || ""
             }
           },
@@ -454,7 +517,7 @@ const handleSaveProfile = async () => {
       formData?.biographical_details?.is_married === "Divorced" ||
       formData?.consider_second_marriage === true;
 
-   
+    
     const rawSaveData = {
       personal_information: formData.personal_information || {},
       family_details: formData.family_details || {},
@@ -482,7 +545,7 @@ const handleSaveProfile = async () => {
    
     const saveData = stripIds(rawSaveData);
 
-    // Save using the documentId
+   
     const saveResponse = await fetch(
       `${API_BASE}/api/registration-pages/${documentId}`,
       {
@@ -662,20 +725,28 @@ const renderField = (section, key, value, fieldConfig) => {
     return null;
   }
 
+  // Check if the section should be editable
+  const isEditable = editMode && !["work_information", "regional_information"].includes(section);
+
+  // Format date for display
+  const displayValue = fieldConfig.type === "date" ? 
+    (value ? new Date(value).toISOString().split('T')[0] : "") : 
+    value?.toString() || "N/A";
+
   return (
     <div key={key} className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
       <dt className="text-sm font-medium text-gray-500 mb-1 sm:mb-0">
         {key.split("_").map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(" ")}
       </dt>
       <dd className="text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-        {editMode ? (
+        {isEditable ? (
           fieldConfig.type === "dropdown" ? (
             <select
               value={formData?.[section]?.[key] || ""}
               onChange={(e) => {
                 handleInputChange(section, key, e.target.value);
-                
-                if (key === "Gotra") {
+                // Reset Aakna when Gotra 
+                if (section === "biographical_details" && key === "Gotra") {
                   handleInputChange(section, "Aakna", "");
                 }
               }}
@@ -684,13 +755,25 @@ const renderField = (section, key, value, fieldConfig) => {
                 fieldConfig.disabled ? 'bg-gray-100' : ''
               }`}
             >
-              <option value="">{`Select ${key.split("_").map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(" ")}`}</option>
-              {fieldConfig.options.map((option) => (
+              {fieldConfig.options.map((option) =>
+                typeof option === 'object' ? (
+                  <option key={option.value} value={option.value} disabled={option.disabled}>
+                    {option.label}
+                  </option>
+                ) : (
                 <option key={option} value={option}>
                   {option}
                 </option>
-              ))}
+                )
+              )}
             </select>
+          ) : fieldConfig.type === "date" ? (
+            <input
+              type="date"
+              value={formData?.[section]?.[key] ? new Date(formData[section][key]).toISOString().split('T')[0] : ""}
+              onChange={(e) => handleInputChange(section, key, e.target.value)}
+              className="border border-gray-300 px-2 py-1 rounded w-full"
+            />
           ) : (
             <input
               type="text"
@@ -700,7 +783,7 @@ const renderField = (section, key, value, fieldConfig) => {
             />
           )
         ) : (
-          value?.toString() || "N/A"
+          displayValue
         )}
         {key === "Aakna" && !formData?.[section]?.Gotra && editMode && (
           <p className="text-gray-500 text-xs mt-1">
@@ -729,7 +812,7 @@ const renderSectionContent = () => {
 
   const sectionKey = SECTION_KEYS[activeSection];
   
-  
+  // Add regional section handling
   if (activeSection === 'regional') {
     const regionalFields = [
       { key: 'RegionalAssembly', label: 'Regional Assembly' },
@@ -753,37 +836,12 @@ const renderSectionContent = () => {
           <dl className="divide-y divide-gray-200">
             {regionalFields.map(({ key, label }) => {
               const value = displayData?.additional_details?.regional_information?.[key];
-
-              // Skip rendering if value is empty or N/A
-              if (!editMode && (!value || value === "N/A")) {
-                return null;
-              }
-              
+              if (!value || value === "N/A") return null;
               return (
                 <div key={key} className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
                   <dt className="text-sm font-medium text-gray-500">{label}</dt>
                   <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                    {editMode ? (
-                      <input
-                        type="text"
-                        value={formData?.additional_details?.regional_information?.[key] || ""}
-                        onChange={(e) => {
-                          setFormData(prev => ({
-                            ...prev,
-                            additional_details: {
-                              ...prev.additional_details,
-                              regional_information: {
-                                ...prev.additional_details?.regional_information,
-                                [key]: e.target.value
-                              }
-                            }
-                          }));
-                        }}
-                        className="border border-gray-300 px-2 py-1 rounded w-full"
-                      />
-                    ) : (
-                      value || "N/A"
-                    )}
+                    {value || "N/A"}
                   </dd>
                 </div>
               );
@@ -958,6 +1016,181 @@ const renderSectionContent = () => {
     );
   }
   
+  // Special handling for biographical details section
+  if (activeSection === 'biographical') {
+    return (
+      <section>
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-800">
+            Biographical Details
+          </h2>
+        </div>
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          <dl className="divide-y divide-gray-200">
+            {/* Gotra Field */}
+            <div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
+              <dt className="text-sm font-medium text-gray-500">Gotra</dt>
+              <dd className="text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                {editMode ? (
+                  <select
+                    value={formData?.biographical_details?.gotra || ""}
+                    onChange={(e) => {
+                      setFormData(prev => ({
+                        ...prev,
+                        biographical_details: {
+                          ...prev.biographical_details,
+                          gotra: e.target.value,
+                          aakna: "" // Reset Aakna when Gotra changes
+                        }
+                      }));
+                    }}
+                    className="border border-gray-300 px-2 py-1 rounded w-full"
+                  >
+                    <option value="">Select Gotra</option>
+                    {GOTRA_OPTIONS.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  displayData?.biographical_details?.gotra || "N/A"
+                )}
+              </dd>
+            </div>
+
+            {/* Aakna Field */}
+            <div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
+              <dt className="text-sm font-medium text-gray-500">Aakna</dt>
+              <dd className="text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                {editMode ? (
+                  <>
+                    <select
+                      value={formData?.biographical_details?.aakna || ""}
+                      onChange={(e) => {
+                        setFormData(prev => ({
+                          ...prev,
+                          biographical_details: {
+                            ...prev.biographical_details,
+                            aakna: e.target.value
+                          }
+                        }));
+                      }}
+                      className="border border-gray-300 px-2 py-1 rounded w-full"
+                      disabled={!formData?.biographical_details?.gotra}
+                    >
+                      <option value="">Select Aakna</option>
+                      {(formData?.biographical_details?.gotra 
+                        ? (GOTRA_AAKNA_MAP[formData.biographical_details.gotra] || AAKNA_OPTIONS)
+                        : AAKNA_OPTIONS
+                      ).map((option) => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
+                      ))}
+                    </select>
+                    {!formData?.biographical_details?.gotra && (
+                      <p className="text-gray-500 text-xs mt-1">
+                        Please select a Gotra first
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  displayData?.biographical_details?.aakna || "N/A"
+                )}
+              </dd>
+            </div>
+
+            {/* Married  */}
+            <div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
+              <dt className="text-sm font-medium text-gray-500">Is Married</dt>
+              <dd className="text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                {editMode ? (
+                  <select
+                    value={formData?.biographical_details?.is_married || ""}
+                    onChange={(e) => {
+                      setFormData(prev => ({
+                        ...prev,
+                        biographical_details: {
+                          ...prev.biographical_details,
+                          is_married: e.target.value
+                        }
+                      }));
+                    }}
+                    className="border border-gray-300 px-2 py-1 rounded w-full"
+                  >
+                    <option value="" disabled>Select Marital Status</option>
+                    {BIOGRAPHICAL_IS_MARRIED_OPTIONS.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  displayData?.biographical_details?.is_married || "N/A"
+                )}
+              </dd>
+            </div>
+
+            {/* Marriage To Another Caste Field */}
+            <div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
+              <dt className="text-sm font-medium text-gray-500">Marriage To Another Caste</dt>
+              <dd className="text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                {editMode ? (
+                  <select
+                    value={formData?.biographical_details?.marriage_to_another_caste || ""}
+                    onChange={(e) => {
+                      setFormData(prev => ({
+                        ...prev,
+                        biographical_details: {
+                          ...prev.biographical_details,
+                          marriage_to_another_caste: e.target.value
+                        }
+                      }));
+                    }}
+                    className="border border-gray-300 px-2 py-1 rounded w-full"
+                  >
+                    <option value="" disabled>Select Marriage Type</option>
+                    {BIOGRAPHICAL_MARRIAGE_TYPE_OPTIONS.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  displayData?.biographical_details?.marriage_to_another_caste || "N/A"
+                )}
+              </dd>
+            </div>
+
+            {/* Render other biographical fields */}
+            {Object.entries(displayData?.biographical_details || {})
+              .filter(([key]) => 
+                key !== "id" && 
+                key !== "Gotra" && 
+                key !== "Aakna" && 
+                key !== "gotra" && 
+                key !== "aakna" &&
+                key !== "is_married" && 
+                key !== "marriage_to_another_caste"
+              )
+              .map(([key, value]) => {
+                
+                if (key.toLowerCase() === "gotra" || 
+                    key.toLowerCase() === "aakna" || 
+                    key.toLowerCase() === "is_married" || 
+                    key.toLowerCase() === "marriage_to_another_caste") {
+                  return null;
+                }
+                const fieldConfig = getFieldType(sectionKey, key, formData);
+                return renderField(sectionKey, key, value, fieldConfig);
+              })}
+          </dl>
+        </div>
+      </section>
+    );
+  }
+  
   return (
     <section>
       <div className="flex justify-between items-center mb-6">
@@ -973,10 +1206,113 @@ const renderSectionContent = () => {
               <div className="px-4 py-3">
                 <h3 className="text-lg font-semibold mb-4">Parent Information</h3>
                 <div className="space-y-4">
-                  {renderField(sectionKey, "father_name", displayData[sectionKey]?.father_name, { type: "text" })}
-                  {renderField(sectionKey, "father_mobile", displayData[sectionKey]?.father_mobile, { type: "text" })}
-                  {renderField(sectionKey, "mother_name", displayData[sectionKey]?.mother_name, { type: "text" })}
-                  {renderField(sectionKey, "mother_mobile", displayData[sectionKey]?.mother_mobile, { type: "text" })}
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Father's Name */}
+                      <div>
+                        <dt className="text-sm font-medium text-gray-500">Father's Name</dt>
+                        <dd className="mt-1 text-sm text-gray-900">
+                          {editMode ? (
+                            <input
+                              type="text"
+                              value={formData?.family_details?.father_name || ""}
+                              onChange={(e) => {
+                                setFormData(prev => ({
+                                  ...prev,
+                                  family_details: {
+                                    ...prev.family_details,
+                                    father_name: e.target.value
+                                  }
+                                }));
+                              }}
+                              className="border border-gray-300 px-2 py-1 rounded w-full"
+                              placeholder="Enter father's name"
+                            />
+                          ) : (
+                            displayData?.family_details?.father_name || "Not Added"
+                          )}
+                        </dd>
+                      </div>
+
+                      {/* Father's Mobile */}
+                      <div>
+                        <dt className="text-sm font-medium text-gray-500">Father's Mobile</dt>
+                        <dd className="mt-1 text-sm text-gray-900">
+                          {editMode ? (
+                            <input
+                              type="tel"
+                              value={formData?.family_details?.father_mobile || ""}
+                              onChange={(e) => {
+                                setFormData(prev => ({
+                                  ...prev,
+                                  family_details: {
+                                    ...prev.family_details,
+                                    father_mobile: e.target.value
+                                  }
+                                }));
+                              }}
+                              className="border border-gray-300 px-2 py-1 rounded w-full"
+                              placeholder="Enter father's mobile"
+                            />
+                          ) : (
+                            displayData?.family_details?.father_mobile || "Not Added"
+                          )}
+                        </dd>
+                      </div>
+
+                      {/* Mother's Name */}
+                      <div>
+                        <dt className="text-sm font-medium text-gray-500">Mother's Name</dt>
+                        <dd className="mt-1 text-sm text-gray-900">
+                          {editMode ? (
+                            <input
+                              type="text"
+                              value={formData?.family_details?.mother_name || ""}
+                              onChange={(e) => {
+                                setFormData(prev => ({
+                                  ...prev,
+                                  family_details: {
+                                    ...prev.family_details,
+                                    mother_name: e.target.value
+                                  }
+                                }));
+                              }}
+                              className="border border-gray-300 px-2 py-1 rounded w-full"
+                              placeholder="Enter mother's name"
+                            />
+                          ) : (
+                            displayData?.family_details?.mother_name || "Not Added"
+                          )}
+                        </dd>
+                      </div>
+
+                      {/* Mother's Mobile */}
+                      <div>
+                        <dt className="text-sm font-medium text-gray-500">Mother's Mobile</dt>
+                        <dd className="mt-1 text-sm text-gray-900">
+                          {editMode ? (
+                            <input
+                              type="tel"
+                              value={formData?.family_details?.mother_mobile || ""}
+                              onChange={(e) => {
+                                setFormData(prev => ({
+                                  ...prev,
+                                  family_details: {
+                                    ...prev.family_details,
+                                    mother_mobile: e.target.value
+                                  }
+                                }));
+                              }}
+                              className="border border-gray-300 px-2 py-1 rounded w-full"
+                              placeholder="Enter mother's mobile"
+                            />
+                          ) : (
+                            displayData?.family_details?.mother_mobile || "Not Added"
+                          )}
+                        </dd>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -984,27 +1320,174 @@ const renderSectionContent = () => {
               <div className="px-4 py-3">
                 <h3 className="text-lg font-semibold mb-4">Spouse Information</h3>
                 <div className="space-y-4">
-                  {renderField(sectionKey, "spouse_name", displayData[sectionKey]?.spouse_name, { type: "text" })}
-                  {renderField(sectionKey, "spouse_mobile", displayData[sectionKey]?.spouse_mobile, { type: "text" })}
-                  {renderField(sectionKey, "spouse_gotra", displayData[sectionKey]?.spouse_gotra, { 
-                    type: "dropdown",
-                    options: GOTRA_OPTIONS
-                  })}
-                  {renderField(sectionKey, "spouse_aakna", displayData[sectionKey]?.spouse_aakna, { 
-                    type: "dropdown",
-                    options: displayData[sectionKey]?.spouse_gotra ? 
-                      (GOTRA_AAKNA_MAP[displayData[sectionKey].spouse_gotra] || AAKNA_OPTIONS) : 
-                      AAKNA_OPTIONS,
-                    disabled: !displayData[sectionKey]?.spouse_gotra
-                  })}
-                  {displayData?.biographical_details?.is_married === "Married" && (
+                  {(displayData?.biographical_details?.is_married === "Married" || editMode) && (
                     <>
-                      {renderField("biographical_details", "marriage_to_another_caste", 
-                        displayData?.biographical_details?.marriage_to_another_caste, {
-                        type: "dropdown",
-                        options: ["Same Caste Marriage", "Married to Another Caste"]
-                      })}
+                      <div className="bg-gray-50 p-4 rounded-lg">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {/* Spouse Name */}
+                          <div>
+                            <dt className="text-sm font-medium text-gray-500">Spouse Name</dt>
+                            <dd className="mt-1 text-sm text-gray-900">
+                              {editMode ? (
+                                <input
+                                  type="text"
+                                  value={formData?.family_details?.spouse_name || ""}
+                                  onChange={(e) => {
+                                    setFormData(prev => ({
+                                      ...prev,
+                                      family_details: {
+                                        ...prev.family_details,
+                                        spouse_name: e.target.value
+                                      }
+                                    }));
+                                  }}
+                                  className="border border-gray-300 px-2 py-1 rounded w-full"
+                                  placeholder="Enter spouse name"
+                                />
+                              ) : (
+                                displayData?.family_details?.spouse_name || "Not Added"
+                              )}
+                            </dd>
+                          </div>
+
+                          {/* Spouse Mobile */}
+                          <div>
+                            <dt className="text-sm font-medium text-gray-500">Spouse Mobile</dt>
+                            <dd className="mt-1 text-sm text-gray-900">
+                              {editMode ? (
+                                <input
+                                  type="tel"
+                                  value={formData?.family_details?.spouse_mobile || ""}
+                                  onChange={(e) => {
+                                    setFormData(prev => ({
+                                      ...prev,
+                                      family_details: {
+                                        ...prev.family_details,
+                                        spouse_mobile: e.target.value
+                                      }
+                                    }));
+                                  }}
+                                  className="border border-gray-300 px-2 py-1 rounded w-full"
+                                  placeholder="Enter spouse mobile"
+                                />
+                              ) : (
+                                displayData?.family_details?.spouse_mobile || "Not Added"
+                              )}
+                            </dd>
+                          </div>
+
+                          {/* Spouse Gotra */}
+                          <div>
+                            <dt className="text-sm font-medium text-gray-500">Spouse Gotra</dt>
+                            <dd className="mt-1 text-sm text-gray-900">
+                              {editMode ? (
+                                <select
+                                  value={formData?.family_details?.spouse_gotra || ""}
+                                  onChange={(e) => {
+                                    const newGotra = e.target.value;
+                                    setFormData(prev => ({
+                                      ...prev,
+                                      family_details: {
+                                        ...prev.family_details,
+                                        spouse_gotra: newGotra,
+                                        // Reset Aakna when Gotra changes
+                                        spouse_aakna: ""
+                                      }
+                                    }));
+                                  }}
+                                  className="border border-gray-300 px-2 py-1 rounded w-full"
+                                >
+                                  <option value="">Select Gotra</option>
+                                  {GOTRA_OPTIONS.map((option) => (
+                                    <option key={option} value={option}>
+                                      {option}
+                                    </option>
+                                  ))}
+                                </select>
+                              ) : (
+                                displayData?.family_details?.spouse_gotra || "Not Added"
+                              )}
+                            </dd>
+                          </div>
+
+                          {/* Spouse Aakna */}
+                          <div>
+                            <dt className="text-sm font-medium text-gray-500">Spouse Aakna</dt>
+                            <dd className="mt-1 text-sm text-gray-900">
+                              {editMode ? (
+                                <select
+                                  value={formData?.family_details?.spouse_aakna || ""}
+                                  onChange={(e) => {
+                                    setFormData(prev => ({
+                                      ...prev,
+                                      family_details: {
+                                        ...prev.family_details,
+                                        spouse_aakna: e.target.value
+                                      }
+                                    }));
+                                  }}
+                                  className="border border-gray-300 px-2 py-1 rounded w-full"
+                                  disabled={!formData?.family_details?.spouse_gotra}
+                                >
+                                  <option value="">Select Aakna</option>
+                                  {(formData?.family_details?.spouse_gotra 
+                                    ? (GOTRA_AAKNA_MAP[formData.family_details.spouse_gotra] || AAKNA_OPTIONS)
+                                    : AAKNA_OPTIONS
+                                  ).map((option) => (
+                                    <option key={option} value={option}>
+                                      {option}
+                                    </option>
+                                  ))}
+                                </select>
+                              ) : (
+                                displayData?.family_details?.spouse_aakna || "Not Added"
+                              )}
+                            </dd>
+                            {editMode && !formData?.family_details?.spouse_gotra && (
+                              <p className="text-gray-500 text-xs mt-1">
+                                Please select spouse's Gotra first
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* {displayData?.biographical_details?.is_married === "Married" && (
+                        <div className="bg-gray-50 p-4 rounded-lg">
+                          <div>
+                            <dt className="text-sm font-medium text-gray-500">Marriage Type</dt>
+                            <dd className="mt-1 text-sm text-gray-900">
+                              {editMode ? (
+                                <select
+                                  value={formData?.biographical_details?.marriage_to_another_caste || ""}
+                                  onChange={(e) => {
+                                    setFormData(prev => ({
+                                      ...prev,
+                                      biographical_details: {
+                                        ...prev.biographical_details,
+                                        marriage_to_another_caste: e.target.value
+                                      }
+                                    }));
+                                  }}
+                                  className="border border-gray-300 px-2 py-1 rounded w-full"
+                                >
+                                  <option value="">Select Marriage Type</option>
+                                  <option value="Same Caste Marriage">Same Caste Marriage</option>
+                                  <option value="Married to Another Caste">Married to Another Caste</option>
+                                </select>
+                              ) : (
+                                displayData?.biographical_details?.marriage_to_another_caste || "Not Specified"
+                              )}
+                            </dd>
+                          </div>
+                        </div>
+                      )} */}
                     </>
+                  )}
+                  {!displayData?.biographical_details?.is_married && !editMode && (
+                    <div className="text-sm text-gray-500">
+                      Spouse information will be available after marriage status is updated
+                    </div>
                   )}
                 </div>
               </div>
@@ -1074,37 +1557,7 @@ const renderSectionContent = () => {
                           </dd>
                         </div>
 
-                        {/* Age */}
-                        <div>
-                          <dt className="text-sm font-medium text-gray-500">Age</dt>
-                          <dd className="mt-1 text-sm text-gray-900">
-                            {editMode ? (
-                              <input
-                                type="number"
-                                value={child?.age || ""}
-                                onChange={(e) => {
-                                  const newChildren = [...(formData?.child_name || [])];
-                                  newChildren[index] = {
-                                    ...newChildren[index],
-                                    age: e.target.value
-                                  };
-                                  setFormData(prev => ({
-                                    ...prev,
-                                    child_name: newChildren
-                                  }));
-                                }}
-                                className="border border-gray-300 px-2 py-1 rounded w-full"
-                                min="0"
-                                max="100"
-                                placeholder="Enter age"
-                              />
-                            ) : (
-                              child.age || "N/A"
-                            )}
-                          </dd>
-                        </div>
-
-                        {/* Phone Number */}
+ {/* Phone Number */}
                         <div>
                           <dt className="text-sm font-medium text-gray-500">Phone Number</dt>
                           <dd className="mt-1 text-sm text-gray-900">
@@ -1161,7 +1614,7 @@ const renderSectionContent = () => {
                 {editMode && (
                   <button
                     onClick={() => {
-                      const newChild = { child_name: "", gender: "", age: "" };
+                      const newChild = { child_name: "", gender: "", phone_number: "" };
                       setFormData(prev => ({
                         ...prev,
                         child_name: [...(prev.child_name || []), newChild]
