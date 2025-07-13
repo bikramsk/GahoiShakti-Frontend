@@ -84,7 +84,8 @@
       "mpinRequired": "MPIN is required",
       "mpinLength": "MPIN must be 4 digits",
       "mpinMismatch": "MPIN does not match",
-      "confirmMpinRequired": "Please confirm your MPIN"
+      "confirmMpinRequired": "Please confirm your MPIN",
+      "nameRequired": "Please enter your name"
     },
     "success": {
       "otpSent": "OTP sent successfully",

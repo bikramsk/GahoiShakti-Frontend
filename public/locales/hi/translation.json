@@ -553,7 +553,8 @@
       "mpinRequired": "एमपिन आवश्यक है",
       "mpinLength": "एमपिन 4 अंकों का होना चाहिए",
       "mpinMismatch": "एमपिन मेल नहीं खाता",
-      "confirmMpinRequired": "कृपया एमपिन की पुष्टि करें"
+      "confirmMpinRequired": "कृपया एमपिन की पुष्टि करें",
+      "nameRequired": "कृपया अपना नाम दर्ज करें"
     },
     "success": {
       "otpSent": "OTP सफलतापूर्वक भेजा गया",
