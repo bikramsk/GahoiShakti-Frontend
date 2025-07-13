@@ -188,6 +188,86 @@ const UserProfile = () => {
   const [activeSection, setActiveSection] = useState("personal");
   const [editMode, setEditMode] = useState(false);
   const [formData, setFormData] = useState(null);
+  // Store original data for cancel operation
+  const [originalData, setOriginalData] = useState(null);
+
+  // Add validation states
+  const [spouseErrors, setSpouseErrors] = useState({});
+  const [childrenErrors, setChildrenErrors] = useState([]);
+  const [siblingErrors, setSiblingErrors] = useState([]);
+
+  // Add validation functions
+  const validateSpouseFields = () => {
+    const errors = {};
+    const spouseData = formData?.family_details || {};
+    
+   
+    if (spouseData.spouse_gotra || spouseData.spouse_aakna) {
+      if (!spouseData.spouse_name) {
+        errors.spouse_name = "Name is required";
+      }
+    }
+    
+    setSpouseErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const validateChildFields = (children) => {
+    
+    const nonEmptyChildren = children.filter(child => 
+      child.child_name || child.gender || child.phone_number
+    );
+
+    const errors = nonEmptyChildren.map(child => {
+      const error = {};
+      if (child.gender && !child.child_name) {
+        error.name = "Name is required";
+      }
+      if (child.child_name && !child.gender) {
+        error.gender = "Gender is required";
+      }
+      return error;
+    });
+    setChildrenErrors(errors);
+    return errors.every(error => Object.keys(error).length === 0);
+  };
+
+  const validateSiblingFields = (siblings) => {
+  
+    const nonEmptySiblings = siblings.filter(sibling => 
+      sibling.sibling_name || sibling.gender || sibling.age || 
+      sibling.marital_status || sibling.sibling_relation || sibling.phone_number
+    );
+
+    const errors = nonEmptySiblings.map(sibling => {
+      const error = {};
+      
+
+      if (sibling.sibling_name || sibling.gender || sibling.age || 
+          sibling.marital_status || sibling.sibling_relation) {
+        
+        if (!sibling.sibling_name) {
+          error.name = "Name is required";
+        }
+        if (!sibling.gender) {
+          error.gender = "Gender is required";
+        }
+        if (!sibling.age) {
+          error.age = "Age is required";
+        }
+        if (!sibling.marital_status) {
+          error.marital_status = "Marital Status is required";
+        }
+        if (!sibling.sibling_relation) {
+          error.sibling_relation = "Sibling Relation is required";
+        }
+      }
+      
+      return error;
+    });
+    setSiblingErrors(errors);
+    return errors.every(error => Object.keys(error).length === 0);
+  };
 
   useEffect(() => {
     const handleError = (error) => {
@@ -465,6 +545,67 @@ const UserProfile = () => {
   };
 
 const handleSaveProfile = async () => {
+  // Validate fields before saving
+  const isSpouseValid = validateSpouseFields();
+  
+  // Filter out empty children and siblings before saving
+  const nonEmptyChildren = (formData?.child_name || []).filter(child => 
+    child.child_name || child.gender || child.phone_number
+  );
+  
+  const nonEmptySiblings = (formData?.family_details?.siblingDetails || []).filter(sibling => 
+    sibling.sibling_name || sibling.gender || sibling.age || 
+    sibling.marital_status || sibling.sibling_relation || sibling.phone_number
+  );
+
+  const isChildrenValid = validateChildFields(nonEmptyChildren);
+  const isSiblingsValid = validateSiblingFields(nonEmptySiblings);
+
+  if (!isSpouseValid || !isChildrenValid || !isSiblingsValid) {
+    // Show error message to user
+    const errorMessage = document.createElement('div');
+    errorMessage.style.cssText = `
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 20px 30px;
+      border-radius: 8px;
+      z-index: 1000;
+      text-align: center;
+      min-width: 300px;
+    `;
+    
+    const messageContent = document.createElement('div');
+    messageContent.style.cssText = `
+      margin-bottom: 15px;
+      font-size: 16px;
+      color: #ff6b6b;
+    `;
+    messageContent.textContent = "Please fill in all required fields correctly";
+    
+    const okButton = document.createElement('button');
+    okButton.style.cssText = `
+      background: #ff4444;
+      color: white;
+      border: none;
+      padding: 8px 24px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background 0.3s;
+    `;
+    okButton.textContent = 'OK';
+    okButton.onclick = () => document.body.removeChild(errorMessage);
+    
+    errorMessage.appendChild(messageContent);
+    errorMessage.appendChild(okButton);
+    document.body.appendChild(errorMessage);
+    return;
+  }
+
   try {
     const token = localStorage.getItem("token");
     const mobileNumber = localStorage.getItem("verifiedMobile");
@@ -520,11 +661,14 @@ const handleSaveProfile = async () => {
     
     const rawSaveData = {
       personal_information: formData.personal_information || {},
-      family_details: formData.family_details || {},
+      family_details: {
+        ...(formData.family_details || {}),
+        siblingDetails: nonEmptySiblings
+      },
       biographical_details: formData.biographical_details || {},
       work_information: formData.work_information || {},
       additional_details: formData.additional_details || {},
-      child_name: formData.child_name || [],
+      child_name: nonEmptyChildren,
       your_suggestions: formData.your_suggestions || {},
       gahoi_code: formData.gahoi_code || "",
       marital_status: formData.marital_status || "",
@@ -1329,21 +1473,28 @@ const renderSectionContent = () => {
                             <dt className="text-sm font-medium text-gray-500">Spouse Name</dt>
                             <dd className="mt-1 text-sm text-gray-900">
                               {editMode ? (
-                                <input
-                                  type="text"
-                                  value={formData?.family_details?.spouse_name || ""}
-                                  onChange={(e) => {
-                                    setFormData(prev => ({
-                                      ...prev,
-                                      family_details: {
-                                        ...prev.family_details,
-                                        spouse_name: e.target.value
-                                      }
-                                    }));
-                                  }}
-                                  className="border border-gray-300 px-2 py-1 rounded w-full"
-                                  placeholder="Enter spouse name"
-                                />
+                                <div>
+                                  <input
+                                    type="text"
+                                    value={formData?.family_details?.spouse_name || ""}
+                                    onChange={(e) => {
+                                      setFormData(prev => ({
+                                        ...prev,
+                                        family_details: {
+                                          ...prev.family_details,
+                                          spouse_name: e.target.value
+                                        }
+                                      }));
+                                      // Clear error when user starts typing
+                                      setSpouseErrors(prev => ({...prev, spouse_name: null}));
+                                    }}
+                                    className={`border ${spouseErrors.spouse_name ? 'border-red-500' : 'border-gray-300'} px-2 py-1 rounded w-full`}
+                                    placeholder="Enter spouse name"
+                                  />
+                                  {spouseErrors.spouse_name && (
+                                    <p className="text-red-500 text-xs mt-1">{spouseErrors.spouse_name}</p>
+                                  )}
+                                </div>
                               ) : (
                                 displayData?.family_details?.spouse_name || "Not Added"
                               )}
@@ -1501,26 +1652,35 @@ const renderSectionContent = () => {
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         {/* Child Name */}
                         <div>
-                          <dt className="text-sm font-medium text-gray-500">Name</dt>
+                          <dt className="text-sm font-medium text-gray-500">Name <span className="text-red-500">*</span></dt>
                           <dd className="mt-1 text-sm text-gray-900">
                             {editMode ? (
-                              <input
-                                type="text"
-                                value={child?.child_name || ""}
-                                onChange={(e) => {
-                                  const newChildren = [...(formData?.child_name || [])];
-                                  newChildren[index] = {
-                                    ...newChildren[index],
-                                    child_name: e.target.value
-                                  };
-                                  setFormData(prev => ({
-                                    ...prev,
-                                    child_name: newChildren
-                                  }));
-                                }}
-                                className="border border-gray-300 px-2 py-1 rounded w-full"
-                                placeholder="Enter child name"
-                              />
+                              <div>
+                                <input
+                                  type="text"
+                                  value={child?.child_name || ""}
+                                  onChange={(e) => {
+                                    const newChildren = [...(formData?.child_name || [])];
+                                    newChildren[index] = {
+                                      ...newChildren[index],
+                                      child_name: e.target.value
+                                    };
+                                    setFormData(prev => ({
+                                      ...prev,
+                                      child_name: newChildren
+                                    }));
+                                    // Clear error when user starts typing
+                                    const newErrors = [...childrenErrors];
+                                    newErrors[index] = {...newErrors[index], name: null};
+                                    setChildrenErrors(newErrors);
+                                  }}
+                                  className={`border ${childrenErrors[index]?.name ? 'border-red-500' : 'border-gray-300'} px-2 py-1 rounded w-full`}
+                                  placeholder="Enter child name"
+                                />
+                                {childrenErrors[index]?.name && (
+                                  <p className="text-red-500 text-xs mt-1">{childrenErrors[index].name}</p>
+                                )}
+                              </div>
                             ) : (
                               child.child_name || "N/A"
                             )}
@@ -1529,37 +1689,46 @@ const renderSectionContent = () => {
 
                         {/* Gender */}
                         <div>
-                          <dt className="text-sm font-medium text-gray-500">Gender</dt>
+                          <dt className="text-sm font-medium text-gray-500">Gender <span className="text-red-500">*</span></dt>
                           <dd className="mt-1 text-sm text-gray-900">
                             {editMode ? (
-                              <select
-                                value={child?.gender || ""}
-                                onChange={(e) => {
-                                  const newChildren = [...(formData?.child_name || [])];
-                                  newChildren[index] = {
-                                    ...newChildren[index],
-                                    gender: e.target.value
-                                  };
-                                  setFormData(prev => ({
-                                    ...prev,
-                                    child_name: newChildren
-                                  }));
-                                }}
-                                className="border border-gray-300 px-2 py-1 rounded w-full"
-                              >
-                                <option value="">Select Gender</option>
-                                <option value="Male">Male</option>
-                                <option value="Female">Female</option>
-                              </select>
+                              <div>
+                                <select
+                                  value={child?.gender || ""}
+                                  onChange={(e) => {
+                                    const newChildren = [...(formData?.child_name || [])];
+                                    newChildren[index] = {
+                                      ...newChildren[index],
+                                      gender: e.target.value
+                                    };
+                                    setFormData(prev => ({
+                                      ...prev,
+                                      child_name: newChildren
+                                    }));
+                                    // Clear error when user selects
+                                    const newErrors = [...childrenErrors];
+                                    newErrors[index] = {...newErrors[index], gender: null};
+                                    setChildrenErrors(newErrors);
+                                  }}
+                                  className={`border ${childrenErrors[index]?.gender ? 'border-red-500' : 'border-gray-300'} px-2 py-1 rounded w-full`}
+                                >
+                                  <option value="">Select Gender</option>
+                                  <option value="Male">Male</option>
+                                  <option value="Female">Female</option>
+                                </select>
+                                {childrenErrors[index]?.gender && (
+                                  <p className="text-red-500 text-xs mt-1">{childrenErrors[index].gender}</p>
+                                )}
+                              </div>
                             ) : (
                               child.gender || "N/A"
                             )}
                           </dd>
                         </div>
 
- {/* Phone Number */}
+                        {/* Phone Number (Optional) */}
                         <div>
-                          <dt className="text-sm font-medium text-gray-500">Phone Number</dt>
+                          <dt className="text-sm font-medium text-gray-500">Phone Number (Optional)</dt>
                           <dd className="mt-1 text-sm text-gray-900">
                             {editMode ? (
                               <input
@@ -1638,91 +1807,118 @@ const renderSectionContent = () => {
                     <div key={index} className="bg-gray-50 p-4 rounded-lg">
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         <div>
-                          <dt className="text-sm font-medium text-gray-500">Name</dt>
+                          <dt className="text-sm font-medium text-gray-500">Name <span className="text-red-500">*</span></dt>
                           <dd className="mt-1 text-sm text-gray-900">
                             {editMode ? (
-                              <input
-                                type="text"
-                                value={sibling?.sibling_name || ""}
-                                onChange={(e) => {
-                                  const newSiblings = [...(formData?.family_details?.siblingDetails || [])];
-                                  newSiblings[index] = {
-                                    ...newSiblings[index],
-                                    sibling_name: e.target.value
-                                  };
-                                  setFormData(prev => ({
-                                    ...prev,
-                                    family_details: {
-                                      ...prev.family_details,
-                                      siblingDetails: newSiblings
-                                    }
-                                  }));
-                                }}
-                                className="border border-gray-300 px-2 py-1 rounded w-full"
-                                placeholder="Enter sibling name"
-                              />
+                              <div>
+                                <input
+                                  type="text"
+                                  value={sibling?.sibling_name || ""}
+                                  onChange={(e) => {
+                                    const newSiblings = [...(formData?.family_details?.siblingDetails || [])];
+                                    newSiblings[index] = {
+                                      ...newSiblings[index],
+                                      sibling_name: e.target.value
+                                    };
+                                    setFormData(prev => ({
+                                      ...prev,
+                                      family_details: {
+                                        ...prev.family_details,
+                                        siblingDetails: newSiblings
+                                      }
+                                    }));
+                                    // Clear error when user starts typing
+                                    const newErrors = [...siblingErrors];
+                                    newErrors[index] = {...newErrors[index], name: null};
+                                    setSiblingErrors(newErrors);
+                                  }}
+                                  className={`border ${siblingErrors[index]?.name ? 'border-red-500' : 'border-gray-300'} px-2 py-1 rounded w-full`}
+                                  placeholder="Enter sibling name"
+                                />
+                                {siblingErrors[index]?.name && (
+                                  <p className="text-red-500 text-xs mt-1">{siblingErrors[index].name}</p>
+                                )}
+                              </div>
                             ) : (
                               sibling.sibling_name || "N/A"
                             )}
                           </dd>
                         </div>
                         <div>
-                          <dt className="text-sm font-medium text-gray-500">Gender</dt>
+                          <dt className="text-sm font-medium text-gray-500">Gender <span className="text-red-500">*</span></dt>
                           <dd className="mt-1 text-sm text-gray-900">
                             {editMode ? (
-                              <select
-                                value={sibling?.gender || ""}
-                                onChange={(e) => {
-                                  const newSiblings = [...(formData?.family_details?.siblingDetails || [])];
-                                  newSiblings[index] = {
-                                    ...newSiblings[index],
-                                    gender: e.target.value
-                                  };
-                                  setFormData(prev => ({
-                                    ...prev,
-                                    family_details: {
-                                      ...prev.family_details,
-                                      siblingDetails: newSiblings
-                                    }
-                                  }));
-                                }}
-                                className="border border-gray-300 px-2 py-1 rounded w-full"
-                              >
-                                <option value="">Select Gender</option>
-                                <option value="Male">Male</option>
-                                <option value="Female">Female</option>
-                              </select>
+                              <div>
+                                <select
+                                  value={sibling?.gender || ""}
+                                  onChange={(e) => {
+                                    const newSiblings = [...(formData?.family_details?.siblingDetails || [])];
+                                    newSiblings[index] = {
+                                      ...newSiblings[index],
+                                      gender: e.target.value
+                                    };
+                                    setFormData(prev => ({
+                                      ...prev,
+                                      family_details: {
+                                        ...prev.family_details,
+                                        siblingDetails: newSiblings
+                                      }
+                                    }));
+                                    // Clear error when user selects
+                                    const newErrors = [...siblingErrors];
+                                    newErrors[index] = {...newErrors[index], gender: null};
+                                    setSiblingErrors(newErrors);
+                                  }}
+                                  className={`border ${siblingErrors[index]?.gender ? 'border-red-500' : 'border-gray-300'} px-2 py-1 rounded w-full`}
+                                >
+                                  <option value="">Select Gender</option>
+                                  <option value="Male">Male</option>
+                                  <option value="Female">Female</option>
+                                </select>
+                                {siblingErrors[index]?.gender && (
+                                  <p className="text-red-500 text-xs mt-1">{siblingErrors[index].gender}</p>
+                                )}
+                              </div>
                             ) : (
                               sibling.gender || "N/A"
                             )}
                           </dd>
                         </div>
                         <div>
-                          <dt className="text-sm font-medium text-gray-500">Age</dt>
+                          <dt className="text-sm font-medium text-gray-500">Age <span className="text-red-500">*</span></dt>
                           <dd className="mt-1 text-sm text-gray-900">
                             {editMode ? (
-                              <input
-                                type="number"
-                                value={sibling?.age || ""}
-                                onChange={(e) => {
-                                  const newSiblings = [...(formData?.family_details?.siblingDetails || [])];
-                                  newSiblings[index] = {
-                                    ...newSiblings[index],
-                                    age: e.target.value
-                                  };
-                                  setFormData(prev => ({
-                                    ...prev,
-                                    family_details: {
-                                      ...prev.family_details,
-                                      siblingDetails: newSiblings
-                                    }
-                                  }));
-                                }}
-                                className="border border-gray-300 px-2 py-1 rounded w-full"
-                                placeholder="Enter age"
-                                min="0"
-                                max="100"
-                              />
+                              <div>
+                                <input
+                                  type="number"
+                                  value={sibling?.age || ""}
+                                  onChange={(e) => {
+                                    const newSiblings = [...(formData?.family_details?.siblingDetails || [])];
+                                    newSiblings[index] = {
+                                      ...newSiblings[index],
+                                      age: e.target.value
+                                    };
+                                    setFormData(prev => ({
+                                      ...prev,
+                                      family_details: {
+                                        ...prev.family_details,
+                                        siblingDetails: newSiblings
+                                      }
+                                    }));
+                                    // Clear error when user types
+                                    const newErrors = [...siblingErrors];
+                                    newErrors[index] = {...newErrors[index], age: null};
+                                    setSiblingErrors(newErrors);
+                                  }}
+                                  className={`border ${siblingErrors[index]?.age ? 'border-red-500' : 'border-gray-300'} px-2 py-1 rounded w-full`}
+                                  placeholder="Enter age"
+                                  min="0"
+                                  max="100"
+                                />
+                                {siblingErrors[index]?.age && (
+                                  <p className="text-red-500 text-xs mt-1">{siblingErrors[index].age}</p>
+                                )}
+                              </div>
                             ) : (
                               sibling.age || "N/A"
                             )}
@@ -1761,28 +1957,37 @@ const renderSectionContent = () => {
                           <dt className="text-sm font-medium text-gray-500">Marital Status</dt>
                           <dd className="mt-1 text-sm text-gray-900">
                             {editMode ? (
-                              <select
-                                value={sibling?.marital_status || ""}
-                                onChange={(e) => {
-                                  const newSiblings = [...(formData?.family_details?.siblingDetails || [])];
-                                  newSiblings[index] = {
-                                    ...newSiblings[index],
-                                    marital_status: e.target.value
-                                  };
-                                  setFormData(prev => ({
-                                    ...prev,
-                                    family_details: {
-                                      ...prev.family_details,
-                                      siblingDetails: newSiblings
-                                    }
-                                  }));
-                                }}
-                                className="border border-gray-300 px-2 py-1 rounded w-full"
-                              >
-                                <option value="">Select Marital Status</option>
-                                <option value="Married">Married</option>
-                                <option value="Unmarried">Unmarried</option>
-                              </select>
+                              <div>
+                                <select
+                                  value={sibling?.marital_status || ""}
+                                  onChange={(e) => {
+                                    const newSiblings = [...(formData?.family_details?.siblingDetails || [])];
+                                    newSiblings[index] = {
+                                      ...newSiblings[index],
+                                      marital_status: e.target.value
+                                    };
+                                    setFormData(prev => ({
+                                      ...prev,
+                                      family_details: {
+                                        ...prev.family_details,
+                                        siblingDetails: newSiblings
+                                      }
+                                    }));
+                                    // Clear error when user selects
+                                    const newErrors = [...siblingErrors];
+                                    newErrors[index] = {...newErrors[index], marital_status: null};
+                                    setSiblingErrors(newErrors);
+                                  }}
+                                  className={`border ${siblingErrors[index]?.marital_status ? 'border-red-500' : 'border-gray-300'} px-2 py-1 rounded w-full`}
+                                >
+                                  <option value="">Select Marital Status</option>
+                                  <option value="Married">Married</option>
+                                  <option value="Unmarried">Unmarried</option>
+                                </select>
+                                {siblingErrors[index]?.marital_status && (
+                                  <p className="text-red-500 text-xs mt-1">{siblingErrors[index].marital_status}</p>
+                                )}
+                              </div>
                             ) : (
                               sibling.marital_status || "N/A"
                             )}
@@ -1792,28 +1997,37 @@ const renderSectionContent = () => {
                           <dt className="text-sm font-medium text-gray-500">Sibling Relation</dt>
                           <dd className="mt-1 text-sm text-gray-900">
                             {editMode ? (
-                              <select
-                                value={sibling?.sibling_relation || ""}
-                                onChange={(e) => {
-                                  const newSiblings = [...(formData?.family_details?.siblingDetails || [])];
-                                  newSiblings[index] = {
-                                    ...newSiblings[index],
-                                    sibling_relation: e.target.value
-                                  };
-                                  setFormData(prev => ({
-                                    ...prev,
-                                    family_details: {
-                                      ...prev.family_details,
-                                      siblingDetails: newSiblings
-                                    }
-                                  }));
-                                }}
-                                className="border border-gray-300 px-2 py-1 rounded w-full"
-                              >
-                                <option value="">Select Relation</option>
-                                <option value="Brother भाई">Brother भाई</option>
-                                <option value="Sister बहन">Sister बहन</option>
-                              </select>
+                              <div>
+                                <select
+                                  value={sibling?.sibling_relation || ""}
+                                  onChange={(e) => {
+                                    const newSiblings = [...(formData?.family_details?.siblingDetails || [])];
+                                    newSiblings[index] = {
+                                      ...newSiblings[index],
+                                      sibling_relation: e.target.value
+                                    };
+                                    setFormData(prev => ({
+                                      ...prev,
+                                      family_details: {
+                                        ...prev.family_details,
+                                        siblingDetails: newSiblings
+                                      }
+                                    }));
+                                    // Clear error when user selects
+                                    const newErrors = [...siblingErrors];
+                                    newErrors[index] = {...newErrors[index], sibling_relation: null};
+                                    setSiblingErrors(newErrors);
+                                  }}
+                                  className={`border ${siblingErrors[index]?.sibling_relation ? 'border-red-500' : 'border-gray-300'} px-2 py-1 rounded w-full`}
+                                >
+                                  <option value="">Select Relation</option>
+                                  <option value="Brother भाई">Brother भाई</option>
+                                  <option value="Sister बहन">Sister बहन</option>
+                                </select>
+                                {siblingErrors[index]?.sibling_relation && (
+                                  <p className="text-red-500 text-xs mt-1">{siblingErrors[index].sibling_relation}</p>
+                                )}
+                              </div>
                             ) : (
                               sibling.sibling_relation || "N/A"
                             )}
@@ -1894,8 +2108,43 @@ const renderSectionContent = () => {
   useEffect(() => {
     if (userData) {
       setFormData(userData);
+      setOriginalData(userData);  
     }
   }, [userData]);
+
+
+  const handleCancel = () => {
+   
+    const resetData = {
+      ...originalData,
+      child_name: [...(originalData?.child_name || [])],
+      family_details: {
+        ...(originalData?.family_details || {}),
+        siblingDetails: [...(originalData?.family_details?.siblingDetails || [])]
+      }
+    };
+    
+    setFormData(resetData);
+    setEditMode(false);
+    setSpouseErrors({});
+    setChildrenErrors([]);
+    setSiblingErrors([]);
+  };
+
+  
+  const handleEditClick = () => {
+   
+    const backupData = {
+      ...formData,
+      child_name: [...(formData?.child_name || [])],
+      family_details: {
+        ...(formData?.family_details || {}),
+        siblingDetails: [...(formData?.family_details?.siblingDetails || [])]
+      }
+    };
+    setOriginalData(backupData);
+    setEditMode(true);
+  };
 
   if (loading) {
     return (
@@ -1983,7 +2232,7 @@ const renderSectionContent = () => {
             {editMode ? (
               <>
                 <button
-                  onClick={() => setEditMode(false)}
+                  onClick={handleCancel}  // Use handleCancel instead of just setEditMode(false)
                   className="text-sm bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded"
                 >
                   Cancel
@@ -1996,14 +2245,13 @@ const renderSectionContent = () => {
                 </button>
               </>
             ) : (
-              //disable edit on regional section
               activeSection !== 'regional' && activeSection !== 'work' && (
-              <button
-                onClick={() => setEditMode(true)}
-                className="text-sm bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded"
-              >
-                Edit Profile
-              </button>
+                <button
+                  onClick={handleEditClick}
+                  className="text-sm bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded"
+                >
+                  Edit Profile
+                </button>
               )
             )}
           </div>
