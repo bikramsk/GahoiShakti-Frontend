@@ -79,7 +79,7 @@ export default function FamilyProfilePage() {
                 <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                 </svg>
-                {p.mobile_number || "Not Available"}
+                {p.mobile_number || "Not Added"}
               </span>
             </div>
           </div>
@@ -95,11 +95,11 @@ export default function FamilyProfilePage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="text-xs font-medium text-gray-500 uppercase">Full Name</label>
-                  <p className="mt-1 text-sm text-gray-900">{p.full_name || "Not Available"}</p>
+                  <p className="mt-1 text-sm text-gray-900">{p.full_name || "Not Added"}</p>
                 </div>
                 <div>
                   <label className="text-xs font-medium text-gray-500 uppercase">Mobile Number</label>
-                  <p className="mt-1 text-sm text-gray-900">{p.mobile_number || "Not Available"}</p>
+                  <p className="mt-1 text-sm text-gray-900">{p.mobile_number || "Not Added"}</p>
                 </div>
               </div>
             </div>
@@ -112,33 +112,33 @@ export default function FamilyProfilePage() {
               <div className="grid grid-cols-2 gap-6">
                 <div>
                   <label className="text-xs font-medium text-gray-500 uppercase">Father</label>
-                  <p className="mt-1 text-sm text-gray-900">{f.father_name || "Not Available"}</p>
+                  <p className="mt-1 text-sm text-gray-900">{f.father_name || "Not Added"}</p>
                 </div>
                 <div>
                   <label className="text-xs font-medium text-gray-500 uppercase">Mobile Number</label>
-                  <p className="mt-1 text-sm text-gray-900">{f.father_mobile || "Not Available"}</p>
+                  <p className="mt-1 text-sm text-gray-900">{f.father_mobile || "Not Added"}</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-6 mt-4">
                 <div>
                   <label className="text-xs font-medium text-gray-500 uppercase">Mother</label>
-                  <p className="mt-1 text-sm text-gray-900">{f.mother_name || "Not Available"}</p>
+                  <p className="mt-1 text-sm text-gray-900">{f.mother_name || "Not Added"}</p>
                 </div>
                 <div>
                   <label className="text-xs font-medium text-gray-500 uppercase">Mobile Number</label>
-                  <p className="mt-1 text-sm text-gray-900">{f.mother_mobile || "Not Available"}</p>
+                  <p className="mt-1 text-sm text-gray-900">{f.mother_mobile || "Not Added"}</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-6 mt-4">
                 <div>
                   <label className="text-xs font-medium text-gray-500 uppercase">Spouse</label>
-                  <p className="mt-1 text-sm text-gray-900">{f.spouse_name || "Not Available"}</p>
+                  <p className="mt-1 text-sm text-gray-900">{f.spouse_name || "Not Added"}</p>
                 </div>
                 <div>
                   <label className="text-xs font-medium text-gray-500 uppercase">Mobile Number</label>
-                  <p className="mt-1 text-sm text-gray-900">{f.spouse_mobile || "Not Available"}</p>
+                  <p className="mt-1 text-sm text-gray-900">{f.spouse_mobile || "Not Added"}</p>
                 </div>
               </div>
             </div>
@@ -150,9 +150,6 @@ export default function FamilyProfilePage() {
               <div className="px-6 py-4">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-lg font-semibold text-gray-900">Children</h2>
-                  <span className="px-2.5 py-0.5 text-xs font-medium bg-red-50 text-red-700 rounded-full">
-                    {c.length} {c.length === 1 ? 'Child' : 'Children'}
-                  </span>
                 </div>
                 <div className="grid grid-cols-3 gap-4 mb-2">
                   <div className="text-xs font-medium text-gray-500 uppercase">Name</div>
@@ -167,9 +164,9 @@ export default function FamilyProfilePage() {
                           {(child.child_name || "C").charAt(0).toUpperCase()}
                         </span>
                       </div>
-                      <span className="text-sm text-gray-900">{child.child_name || "Not Available"}</span>
+                      <span className="text-sm text-gray-900">{child.child_name || "Not Added"}</span>
                     </div>
-                    <div className="text-sm text-gray-900">{child.phone_number || "Not Available"}</div>
+                    <div className="text-sm text-gray-900">{child.phone_number || "Not Added"}</div>
                     <div className="text-sm text-gray-900">
                       {child.gender === "Male" ? "Male" : child.gender === "Female" ? "Female" : "N/A"}
                     </div>
@@ -185,9 +182,6 @@ export default function FamilyProfilePage() {
               <div className="px-6 py-4">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-lg font-semibold text-gray-900">Siblings</h2>
-                  <span className="px-2.5 py-0.5 text-xs font-medium bg-red-50 text-red-700 rounded-full">
-                    {f.siblingDetails.length} {f.siblingDetails.length === 1 ? 'Sibling' : 'Siblings'}
-                  </span>
                 </div>
                 <div className="grid grid-cols-4 gap-4 mb-2">
                   <div className="text-xs font-medium text-gray-500 uppercase">Name</div>
@@ -203,9 +197,9 @@ export default function FamilyProfilePage() {
                           {(sibling.sibling_name || "S").charAt(0).toUpperCase()}
                         </span>
                       </div>
-                      <span className="text-sm text-gray-900">{sibling.sibling_name || "Not Available"}</span>
+                      <span className="text-sm text-gray-900">{sibling.sibling_name || "Not Added"}</span>
                     </div>
-                    <div className="text-sm text-gray-900">{sibling.phone_number || "Not Available"}</div>
+                    <div className="text-sm text-gray-900">{sibling.phone_number || "Not Added"}</div>
                     <div className="text-sm text-gray-900">
                       {sibling.gender === "Male" ? "Male" : sibling.gender === "Female" ? "Female" : "N/A"}
                     </div>
