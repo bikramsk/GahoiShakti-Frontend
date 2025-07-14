@@ -112,7 +112,6 @@ const getFieldType = (section, field, formData) => {
   if (section === "biographical_details" && field === "Aakna") {
     const selectedGotra = formData?.biographical_details?.Gotra;
     const aaknaOptions = selectedGotra ? (GOTRA_AAKNA_MAP[selectedGotra] || AAKNA_OPTIONS) : AAKNA_OPTIONS;
-    console.log("Gotra:", selectedGotra, "Aakna options:", aaknaOptions);
     return {
       type: "dropdown",
       options: [
@@ -182,92 +181,18 @@ const getFieldType = (section, field, formData) => {
 
 const UserProfile = () => {
   const navigate = useNavigate();
+  const [, forceUpdate] = useState({});
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeSection, setActiveSection] = useState("personal");
   const [editMode, setEditMode] = useState(false);
   const [formData, setFormData] = useState(null);
-  // Store original data for cancel operation
   const [originalData, setOriginalData] = useState(null);
-
-  // Add validation states
   const [spouseErrors, setSpouseErrors] = useState({});
   const [childrenErrors, setChildrenErrors] = useState([]);
   const [siblingErrors, setSiblingErrors] = useState([]);
-
-  // Add validation functions
-  const validateSpouseFields = () => {
-    const errors = {};
-    const spouseData = formData?.family_details || {};
-    
-   
-    if (spouseData.spouse_gotra || spouseData.spouse_aakna) {
-      if (!spouseData.spouse_name) {
-        errors.spouse_name = "Name is required";
-      }
-    }
-    
-    setSpouseErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-
-  const validateChildFields = (children) => {
-    
-    const nonEmptyChildren = children.filter(child => 
-      child.child_name || child.gender || child.phone_number
-    );
-
-    const errors = nonEmptyChildren.map(child => {
-      const error = {};
-      if (child.gender && !child.child_name) {
-        error.name = "Name is required";
-      }
-      if (child.child_name && !child.gender) {
-        error.gender = "Gender is required";
-      }
-      return error;
-    });
-    setChildrenErrors(errors);
-    return errors.every(error => Object.keys(error).length === 0);
-  };
-
-  const validateSiblingFields = (siblings) => {
-  
-    const nonEmptySiblings = siblings.filter(sibling => 
-      sibling.sibling_name || sibling.gender || sibling.age || 
-      sibling.marital_status || sibling.sibling_relation || sibling.phone_number
-    );
-
-    const errors = nonEmptySiblings.map(sibling => {
-      const error = {};
-      
-
-      if (sibling.sibling_name || sibling.gender || sibling.age || 
-          sibling.marital_status || sibling.sibling_relation) {
-        
-        if (!sibling.sibling_name) {
-          error.name = "Name is required";
-        }
-        if (!sibling.gender) {
-          error.gender = "Gender is required";
-        }
-        if (!sibling.age) {
-          error.age = "Age is required";
-        }
-        if (!sibling.marital_status) {
-          error.marital_status = "Marital Status is required";
-        }
-        if (!sibling.sibling_relation) {
-          error.sibling_relation = "Sibling Relation is required";
-        }
-      }
-      
-      return error;
-    });
-    setSiblingErrors(errors);
-    return errors.every(error => Object.keys(error).length === 0);
-  };
+  const [prevMarriageErrors, setPrevMarriageErrors] = useState({});
 
   useEffect(() => {
     const handleError = (error) => {
@@ -290,16 +215,9 @@ const UserProfile = () => {
       try {
         const mobileNumber = localStorage.getItem("verifiedMobile");
         const token = localStorage.getItem("token");
-        const storedDocumentId = localStorage.getItem("documentId");
-
-        console.log("Starting fetch with:", {
-          mobileNumber,
-          hasToken: !!token,
-          storedDocumentId
-        });
 
         if (!token || !mobileNumber) {
-          console.log("Missing auth token or mobile number");
+        
           setError("Please login again to continue");
           localStorage.clear();
           setTimeout(() => navigate("/login", { replace: true }), 2000);
@@ -342,6 +260,22 @@ const UserProfile = () => {
         const siblingsData = await siblingsRes.json();
         const siblingsProfile = siblingsData.data?.[0]?.family_details?.siblingDetails || [];
 
+        // API call: Previous Marriage Info with children
+        const prevMarriageUrl = `${API_BASE}/api/registration-pages?filters[personal_information][mobile_number][$eq]=${mobileNumber}&populate[previous_marriage_info][populate]=children`;
+        const prevMarriageRes = await fetch(prevMarriageUrl, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+        });
+        if (!prevMarriageRes.ok) {
+          const errorText = await prevMarriageRes.text();
+          throw new Error(`Failed to fetch previous marriage info: ${prevMarriageRes.status} - ${errorText}`);
+        }
+        const prevMarriageData = await prevMarriageRes.json();
+        const prevMarriageProfile = prevMarriageData.data?.[0]?.previous_marriage_info || {};
+
   // API call: Regional only
   const regionalUrl = `${API_BASE}/api/registration-pages` +
   `?filters[personal_information][mobile_number][$eq]=${mobileNumber}` +
@@ -362,8 +296,6 @@ const UserProfile = () => {
         
         const regionalData = await regionalRes.json();
         const regionalProfile = regionalData.data?.[0]?.additional_details?.regional_information || {};
-        
-
     
         const mergedData = {
           personal_information: mainAttrs.personal_information || {},
@@ -386,14 +318,17 @@ const UserProfile = () => {
               gram_panchayat: regionalProfile?.gram_panchayat || ""
             }
           },
-          previous_marriage_info: mainAttrs.previous_marriage_info || {
-            spouse_name: "",
-            spouse_gotra: "",
-            spouse_akna: "",
-            children_living_with: "",
-            want_kundli_match: "",
-            accept_partner_with_children: ""
-          },
+          previous_marriage_info: prevMarriageProfile ? {
+            ...prevMarriageProfile,
+            spouse_name: prevMarriageProfile.spouse_name || "",
+            spouse_gotra: prevMarriageProfile.spouse_gotra || "",
+            spouse_akna: prevMarriageProfile.spouse_akna || "",
+            spouse_dob: prevMarriageProfile.spouse_dob || "",
+            children_living_with: prevMarriageProfile.children_living_with || "",
+            want_kundli_match: prevMarriageProfile.want_kundli_match || "",
+            accept_partner_with_children: prevMarriageProfile.accept_partner_with_children || "",
+            children: prevMarriageProfile.children || []
+          } : null,
           child_name: mainAttrs.child_name || [],
           your_suggestions: mainAttrs.your_suggestions || {},
           gahoi_code: mainAttrs.gahoi_code || "",
@@ -418,6 +353,13 @@ const UserProfile = () => {
 
     fetchUserData();
   }, [navigate]);
+
+  useEffect(() => {
+    if (userData) {
+      setFormData(userData);
+      setOriginalData(userData);
+    }
+  }, [userData]);
 
   const renderIcon = (iconName) => {
     switch (iconName) {
@@ -544,25 +486,77 @@ const UserProfile = () => {
     }
   };
 
+  const getCurrentData = () => formData || userData || emptyData;
+
 const handleSaveProfile = async () => {
-  // Validate fields before saving
-  const isSpouseValid = validateSpouseFields();
-  
-  // Filter out empty children and siblings before saving
-  const nonEmptyChildren = (formData?.child_name || []).filter(child => 
-    child.child_name || child.gender || child.phone_number
-  );
-  
-  const nonEmptySiblings = (formData?.family_details?.siblingDetails || []).filter(sibling => 
-    sibling.sibling_name || sibling.gender || sibling.age || 
-    sibling.marital_status || sibling.sibling_relation || sibling.phone_number
-  );
+    // First check if any changes were made
+    const hasChanges = JSON.stringify(formData) !== JSON.stringify(originalData);
+    
+    if (!hasChanges) {
+      setEditMode(false);
+      return;
+    }
 
-  const isChildrenValid = validateChildFields(nonEmptyChildren);
-  const isSiblingsValid = validateSiblingFields(nonEmptySiblings);
+    // Validate Previous Marriage Information if applicable
+    const isWidowOrDivorced = 
+      formData?.biographical_details?.is_married === "Widow/Widower" ||
+      formData?.biographical_details?.is_married === "Divorced";
 
-  if (!isSpouseValid || !isChildrenValid || !isSiblingsValid) {
-    // Show error message to user
+    if (isWidowOrDivorced) {
+      const errors = {};
+      const prevMarriageInfo = formData?.previous_marriage_info || {};
+
+      // Required field validation
+      if (!prevMarriageInfo.spouse_name?.trim()) {
+        errors.spouse_name = "Spouse name is required";
+      }
+      if (!prevMarriageInfo.spouse_gotra) {
+        errors.spouse_gotra = "Spouse gotra is required";
+      }
+      if (!prevMarriageInfo.spouse_akna) {
+        errors.spouse_akna = "Spouse akna is required";
+      }
+      if (!prevMarriageInfo.spouse_dob) {
+        errors.spouse_dob = "Spouse date of birth is required";
+      }
+      if (!prevMarriageInfo.children_living_with) {
+        errors.children_living_with = "Please specify if children are living with you";
+      }
+      if (!prevMarriageInfo.want_kundli_match) {
+        errors.want_kundli_match = "Please specify if you want kundli match";
+      }
+      if (!prevMarriageInfo.accept_partner_with_children) {
+        errors.accept_partner_with_children = "Please specify if you accept partner with children";
+      }
+
+      // Children validation
+      const childrenErrors = [];
+      if (Array.isArray(prevMarriageInfo.children)) {
+        prevMarriageInfo.children.forEach((child, index) => {
+          const childError = {};
+          if (!child.child_name?.trim()) {
+            childError.name = "Child name is required";
+          }
+          if (!child.gender) {
+            childError.gender = "Gender is required";
+          }
+          if (!child.age) {
+            childError.age = "Age is required";
+          }
+          if (Object.keys(childError).length > 0) {
+            childrenErrors[index] = childError;
+          }
+        });
+      }
+
+      // If there are validation errors
+      if (Object.keys(errors).length > 0 || childrenErrors.some(error => error)) {
+        setPrevMarriageErrors(errors);
+        if (childrenErrors.some(error => error)) {
+          setChildrenErrors(childrenErrors);
+        }
+        
+        // Show validation error message
     const errorMessage = document.createElement('div');
     errorMessage.style.cssText = `
       position: fixed;
@@ -576,19 +570,35 @@ const handleSaveProfile = async () => {
       z-index: 1000;
       text-align: center;
       min-width: 300px;
-    `;
-    
-    const messageContent = document.createElement('div');
-    messageContent.style.cssText = `
-      margin-bottom: 15px;
-      font-size: 16px;
-      color: #ff6b6b;
-    `;
-    messageContent.textContent = "Please fill in all required fields correctly";
-    
-    const okButton = document.createElement('button');
-    okButton.style.cssText = `
-      background: #ff4444;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+        `;
+        
+        let errorHTML = `
+          <div style="margin-bottom: 15px; font-size: 16px;">
+            Please fill in all required fields:
+            <br/><br/>
+            <ul style="text-align: left; list-style-type: none;">
+        `;
+
+        // Add main form errors
+        Object.values(errors).forEach(error => {
+          errorHTML += `<li>• ${error}</li>`;
+        });
+
+        // Add children errors
+        childrenErrors.forEach((childError, index) => {
+          if (childError) {
+            Object.values(childError).forEach(error => {
+              errorHTML += `<li>• Child ${index + 1}: ${error}</li>`;
+            });
+          }
+        });
+
+        errorHTML += `
+            </ul>
+          </div>
+          <button style="
+            background:rgb(181, 18, 7);
       color: white;
       border: none;
       padding: 8px 24px;
@@ -596,14 +606,21 @@ const handleSaveProfile = async () => {
       cursor: pointer;
       font-size: 14px;
       transition: background 0.3s;
-    `;
-    okButton.textContent = 'OK';
-    okButton.onclick = () => document.body.removeChild(errorMessage);
-    
-    errorMessage.appendChild(messageContent);
-    errorMessage.appendChild(okButton);
+          ">OK</button>
+        `;
+
+        errorMessage.innerHTML = errorHTML;
+        
+        const okButton = errorMessage.querySelector('button');
+        okButton.onclick = () => {
+          document.body.removeChild(errorMessage);
+          // Navigate to previous marriage section
+          setActiveSection('previous_marriage');
+        };
+        
     document.body.appendChild(errorMessage);
     return;
+      }
   }
 
   try {
@@ -648,46 +665,32 @@ const handleSaveProfile = async () => {
       }
     }
 
-    if (!documentId) {
-      throw new Error("Could not determine documentId");
-    }
-
-    // Check if previous marriage info should be included
-    const shouldIncludePreviousMarriage = 
-      formData?.biographical_details?.is_married === "Widow/Widower" ||
-      formData?.biographical_details?.is_married === "Divorced" ||
-      formData?.consider_second_marriage === true;
-
-    
+      // Prepare save data
     const rawSaveData = {
       personal_information: formData.personal_information || {},
-      family_details: {
-        ...(formData.family_details || {}),
-        siblingDetails: nonEmptySiblings
-      },
+        family_details: formData.family_details || {},
       biographical_details: formData.biographical_details || {},
       work_information: formData.work_information || {},
       additional_details: formData.additional_details || {},
-      child_name: nonEmptyChildren,
+        child_name: formData.child_name || [],
       your_suggestions: formData.your_suggestions || {},
       gahoi_code: formData.gahoi_code || "",
       marital_status: formData.marital_status || "",
       consider_second_marriage: formData.consider_second_marriage || false
     };
     
-    // Only include previous marriage info if relevant
-    if (shouldIncludePreviousMarriage) {
-      rawSaveData.previous_marriage_info = {
-        spouse_name: formData?.previous_marriage_info?.spouse_name || "",
-        spouse_gotra: formData?.previous_marriage_info?.spouse_gotra || "",
-        spouse_akna: formData?.previous_marriage_info?.spouse_akna || "",
-        children_living_with: formData?.previous_marriage_info?.children_living_with || "",
-        want_kundli_match: formData?.previous_marriage_info?.want_kundli_match || "",
-        accept_partner_with_children: formData?.previous_marriage_info?.accept_partner_with_children || ""
+      // Handle previous marriage info based on marital status
+      const isWidowOrDivorced = 
+        formData?.biographical_details?.is_married === "Widow/Widower" ||
+        formData?.biographical_details?.is_married === "Divorced";
+
+      rawSaveData.previous_marriage_info = isWidowOrDivorced
+        ? formData.previous_marriage_info || {}
+        : null;
+
+      const saveData = {
+        data: stripIds(rawSaveData)
       };
-    }
-   
-    const saveData = stripIds(rawSaveData);
 
    
     const saveResponse = await fetch(
@@ -698,7 +701,7 @@ const handleSaveProfile = async () => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ data: saveData }),
+          body: JSON.stringify(saveData),
       }
     );
 
@@ -708,51 +711,24 @@ const handleSaveProfile = async () => {
 
     const result = await saveResponse.json();
 
-   
-   const attrs = result.data?.attributes || {};
-    
+     
    const updatedData = {
-      personal_information: {
-        ...(formData.personal_information || {}),
-        ...(attrs.personal_information || {})
-      },
-      family_details: {
-        ...(formData.family_details || {}),
-        ...(attrs.family_details || {})
-      },
-      biographical_details: {
-        ...(formData.biographical_details || {}),
-        ...(attrs.biographical_details || {})
-      },
-      work_information: {
-        ...(formData.work_information || {}),
-        ...(attrs.work_information || {})
-      },
-      additional_details: {
-        ...(formData.additional_details || {}),
-        ...(attrs.additional_details || {})
-      },
-      previous_marriage_info: {
-        ...(formData.previous_marriage_info || {}),
-        ...(attrs.previous_marriage_info || {})
-      },
-      child_name: attrs.child_name || formData.child_name || [],
-      your_suggestions: attrs.your_suggestions || formData.your_suggestions || {},
-      gahoi_code: attrs.gahoi_code || formData.gahoi_code || "",
-      marital_status: attrs.marital_status || formData.marital_status || "",
-      consider_second_marriage: attrs.consider_second_marriage ?? formData.consider_second_marriage ?? false,
-      documentId: attrs.documentId || result.data?.documentId || formData.documentId,
-      createdAt: attrs.createdAt || formData.createdAt,
-      updatedAt: attrs.updatedAt || formData.updatedAt,
-      publishedAt: attrs.publishedAt || formData.publishedAt,
-    };
+        ...formData,
+        ...result.data?.attributes,
+        previous_marriage_info: isWidowOrDivorced 
+          ? result.data?.attributes?.previous_marriage_info 
+          : null
+      };
 
-   
-    setUserData(updatedData);
+     
     setFormData(updatedData);
+      setOriginalData(updatedData);
+      setUserData(updatedData);
     setEditMode(false);
 
+      forceUpdate({});
     
+      // Show success message 
     const successMessage = document.createElement('div');
     successMessage.style.cssText = `
       position: fixed;
@@ -777,7 +753,7 @@ const handleSaveProfile = async () => {
     
     const okButton = document.createElement('button');
     okButton.style.cssText = `
-      background: #4CAF50;
+        background: #15803d;
       color: white;
       border: none;
       padding: 8px 24px;
@@ -787,11 +763,10 @@ const handleSaveProfile = async () => {
       transition: background 0.3s;
     `;
     okButton.textContent = 'OK';
-    okButton.onmouseover = () => okButton.style.background = '#45a049';
-    okButton.onmouseout = () => okButton.style.background = '#4CAF50';
-    
     okButton.onclick = () => {
       document.body.removeChild(successMessage);
+        // Force another re-render
+        forceUpdate({});
     };
     
     successMessage.appendChild(messageContent);
@@ -799,7 +774,9 @@ const handleSaveProfile = async () => {
     document.body.appendChild(successMessage);
 
   } catch (error) {
-    // error message 
+      console.error("Error saving profile:", error);
+      
+      //error message
     const errorMessage = document.createElement('div');
     errorMessage.style.cssText = `
       position: fixed;
@@ -813,19 +790,28 @@ const handleSaveProfile = async () => {
       z-index: 1000;
       text-align: center;
       min-width: 300px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
     `;
     
     const messageContent = document.createElement('div');
     messageContent.style.cssText = `
       margin-bottom: 15px;
       font-size: 16px;
-      color: #ff6b6b;
-    `;
+        color: white;
+      `;
+
+   
+      if (error.response?.data?.error?.details?.errors) {
+        const validationErrors = error.response.data.error.details.errors;
+        messageContent.innerHTML = `Validation Errors:<br/><br/>` +
+          validationErrors.map(err => `- ${err.message}`).join('<br/>');
+      } else {
     messageContent.textContent = `Failed to save profile: ${error.message}`;
+      }
     
     const okButton = document.createElement('button');
     okButton.style.cssText = `
-      background: #ff4444;
+        background: #3f3f46;
       color: white;
       border: none;
       padding: 8px 24px;
@@ -835,8 +821,8 @@ const handleSaveProfile = async () => {
       transition: background 0.3s;
     `;
     okButton.textContent = 'OK';
-    okButton.onmouseover = () => okButton.style.background = '#ff3333';
-    okButton.onmouseout = () => okButton.style.background = '#ff4444';
+      okButton.onmouseover = () => okButton.style.background = '#52525b';
+      okButton.onmouseout = () => okButton.style.background = '#3f3f46';
     
     okButton.onclick = () => {
       document.body.removeChild(errorMessage);
@@ -849,22 +835,190 @@ const handleSaveProfile = async () => {
 };
 
 const handleInputChange = (section, field, value) => {
-  setFormData(prev => ({
+    setFormData(prev => {
+      const newData = {
     ...prev,
     [section]: {
       ...prev[section],
       [field]: value
     }
-  }));
+      };
+
+  
+      if (section === "biographical_details" && field === "is_married") {
+        if (value === "Widow/Widower" || value === "Divorced") {
+   
+          newData.previous_marriage_info = {
+            spouse_name: "",
+            spouse_gotra: "",
+            spouse_akna: "",
+            spouse_dob: "",
+            children_living_with: "",
+            want_kundli_match: "",
+            accept_partner_with_children: "",
+            children: []
+          };
+     
+          newData.biographical_details.marriage_to_another_caste = "";
+
+ 
+          const guidanceMessage = document.createElement('div');
+          guidanceMessage.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 20px 30px;
+            border-radius: 8px;
+            z-index: 1000;
+            text-align: center;
+            min-width: 300px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+          `;
+          
+          guidanceMessage.innerHTML = `
+            <div style="margin-bottom: 15px; font-size: 16px;">
+              Please fill in the Previous Marriage Information section with the following required details:
+              <br/><br/>
+              <ul style="text-align: left; list-style-type: none;">
+                <li>• Spouse Name</li>
+                <li>• Spouse Gotra</li>
+                <li>• Spouse Akna</li>
+                <li>• Spouse Date of Birth</li>
+                <li>• Children Living With</li>
+                <li>• Want Kundli Match</li>
+                <li>• Accept Partner With Children</li>
+              </ul>
+              <br/>
+              Please navigate to the Previous Marriage Information section to provide these details.
+            </div>
+            <button style="
+              background: #15803d;
+              color: white;
+              border: none;
+              padding: 8px 24px;
+              border-radius: 4px;
+              cursor: pointer;
+              font-size: 14px;
+              transition: background 0.3s;
+            ">OK</button>
+          `;
+          
+          const okButton = guidanceMessage.querySelector('button');
+          okButton.onclick = () => {
+            document.body.removeChild(guidanceMessage);
+            // Navigate to previous marriage section
+            setActiveSection('previous_marriage');
+          };
+          
+          document.body.appendChild(guidanceMessage);
+
+        } else if (value === "Married" || value === "Unmarried") {
+     
+          newData.previous_marriage_info = null;
+      
+          setSpouseErrors({});
+          setChildrenErrors([]);
+          setPrevMarriageErrors({});
+
+       
+          (async () => {
+            try {
+              const token = localStorage.getItem("token");
+              const documentId = localStorage.getItem("documentId");
+
+              if (!token || !documentId) {
+                throw new Error("Missing authentication data");
+              }
+
+              const saveData = {
+                data: stripIds(newData)
+              };
+
+              const saveResponse = await fetch(
+                `${API_BASE}/api/registration-pages/${documentId}`,
+                {
+                  method: "PUT",
+                  headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                  },
+                  body: JSON.stringify(saveData),
+                }
+              );
+
+              if (!saveResponse.ok) {
+                throw new Error(`Failed to save profile (${saveResponse.status})`);
+              }
+
+              const result = await saveResponse.json();
+              
+          
+              const updatedData = {
+                ...newData,
+                ...result.data?.attributes
+              };
+
+              setFormData(updatedData);
+              setOriginalData(updatedData);
+              setUserData(updatedData);
+
+              // success message
+              const successMessage = document.createElement('div');
+              successMessage.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: rgba(0, 0, 0, 0.8);
+                color: white;
+                padding: 20px 30px;
+                border-radius: 8px;
+                z-index: 1000;
+                text-align: center;
+                min-width: 300px;
+              `;
+              successMessage.textContent = 'Marital status updated successfully';
+              document.body.appendChild(successMessage);
+              setTimeout(() => document.body.removeChild(successMessage), 2000);
+
+            } catch (error) {
+              // error message
+              const errorMessage = document.createElement('div');
+              errorMessage.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: rgba(0, 0, 0, 0.8);
+                color: white;
+                padding: 20px 30px;
+                border-radius: 8px;
+                z-index: 1000;
+                text-align: center;
+                min-width: 300px;
+              `;
+              errorMessage.textContent = `Failed to save changes: ${error.message}`;
+              document.body.appendChild(errorMessage);
+              setTimeout(() => document.body.removeChild(errorMessage), 3000);
+            }
+          })();
+        }
+      }
+
+      return newData;
+    });
 };
 
 const renderField = (section, key, value, fieldConfig) => {
-  // Skip rendering if value is N/A or empty for all
+ 
   if (!value || value === "N/A") {
     return null;
   }
 
-  // Skip regional_information field in additional_details section
+  
   if (section === "additional_details" && key === "regional_information") {
     return null;
   }
@@ -950,13 +1104,16 @@ const SECTION_KEYS = {
 };
 
 const renderSectionContent = () => {
+    
+    const currentData = getCurrentData();
+
   if (!["personal", "family", "biographical", "work", "additional", "regional", "previous_marriage"].includes(activeSection)) {
     return null;
   }
 
   const sectionKey = SECTION_KEYS[activeSection];
   
-  // Add regional section handling
+  // Added regional section handling
   if (activeSection === 'regional') {
     const regionalFields = [
       { key: 'RegionalAssembly', label: 'Regional Assembly' },
@@ -979,7 +1136,7 @@ const renderSectionContent = () => {
         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
           <dl className="divide-y divide-gray-200">
             {regionalFields.map(({ key, label }) => {
-              const value = displayData?.additional_details?.regional_information?.[key];
+                const value = currentData?.additional_details?.regional_information?.[key];
               if (!value || value === "N/A") return null;
               return (
                 <div key={key} className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
@@ -996,15 +1153,14 @@ const renderSectionContent = () => {
     );
   }
   
-  // Add special handling for previous marriage section
+  // for previous marriage section
   if (activeSection === 'previous_marriage') {
-    // Only show this section if user's status makes it relevant
+    
     const shouldShowPreviousMarriage = 
-      displayData?.biographical_details?.is_married === "Widow/Widower" ||
-      displayData?.biographical_details?.is_married === "Divorced" ||
-      displayData?.consider_second_marriage === true;
+        currentData?.biographical_details?.is_married === "Widow/Widower" ||
+        currentData?.biographical_details?.is_married === "Divorced";
 
-    if (!shouldShowPreviousMarriage && !editMode) {
+    if (!shouldShowPreviousMarriage) {
       return (
         <section>
           <div className="flex justify-between items-center mb-6">
@@ -1019,6 +1175,73 @@ const renderSectionContent = () => {
       );
     }
 
+     
+      const prevMarriageInfo = currentData?.previous_marriage_info || {};
+      const prevMarriageChildren = Array.isArray(prevMarriageInfo?.children) ? prevMarriageInfo.children : [];
+
+      const handlePrevMarriageChange = (field, value) => {
+        setFormData(prev => ({
+          ...prev,
+          previous_marriage_info: {
+            ...(prev.previous_marriage_info || {}),
+            [field]: value
+          }
+        }));
+      };
+
+      const handleChildChange = (index, field, value) => {
+        const newChildren = [...prevMarriageChildren];
+        newChildren[index] = {
+          ...newChildren[index],
+          [field]: value
+        };
+        
+        // Clear error when user starts typing/select
+        const newErrors = [...childrenErrors];
+        if (newErrors[index]) {
+          newErrors[index] = {
+            ...newErrors[index],
+            [field === 'child_name' ? 'name' : field]: null
+          };
+          setChildrenErrors(newErrors);
+        }
+        
+        setFormData(prev => ({
+          ...prev,
+          previous_marriage_info: {
+            ...(prev.previous_marriage_info || {}),
+            children: newChildren
+          }
+        }));
+      };
+
+      const addChild = () => {
+        const newChild = {
+          child_name: "",
+          gender: "",
+          age: "",
+          phone_number: "" 
+        };
+        
+        setFormData(prev => ({
+          ...prev,
+          previous_marriage_info: {
+            ...(prev.previous_marriage_info || {}),
+            children: [...(prev.previous_marriage_info?.children || []), newChild]
+          }
+        }));
+      };
+
+      const removeChild = (index) => {
+        setFormData(prev => ({
+          ...prev,
+          previous_marriage_info: {
+            ...(prev.previous_marriage_info || {}),
+            children: prev.previous_marriage_info.children.filter((_, i) => i !== index)
+          }
+        }));
+      };
+
     return (
       <section>
         <div className="flex justify-between items-center mb-6">
@@ -1026,141 +1249,321 @@ const renderSectionContent = () => {
             Previous Marriage Information
           </h2>
         </div>
-        {shouldShowPreviousMarriage ? (
           <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
             <dl className="divide-y divide-gray-200">
-              {editMode && (
-                <>
+              {/* Spouse Name */}
                   <div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
-                    <dt className="text-sm font-medium text-gray-500">Previous Spouse Name</dt>
+              <dt className="text-sm font-medium text-gray-500">Spouse Name <span className="text-red-500">*</span></dt>
                     <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                {editMode ? (
+                  <div>
                       <input
                         type="text"
-                        value={formData?.previous_marriage_info?.spouse_name || ""}
-                        onChange={(e) => handleInputChange("previous_marriage_info", "spouse_name", e.target.value)}
-                        className="border border-gray-300 px-2 py-1 rounded w-full"
-                        placeholder="Enter previous spouse name"
-                      />
+                      value={prevMarriageInfo?.spouse_name || ""}
+                      onChange={(e) => handlePrevMarriageChange("spouse_name", e.target.value)}
+                      className={`border ${prevMarriageErrors.spouse_name ? 'border-red-500' : 'border-gray-300'} px-2 py-1 rounded w-full`}
+                      required
+                    />
+                    {prevMarriageErrors.spouse_name && (
+                      <p className="text-red-500 text-xs mt-1">{prevMarriageErrors.spouse_name}</p>
+                    )}
+                  </div>
+                ) : (
+                  prevMarriageInfo?.spouse_name || "N/A"
+                )}
                     </dd>
                   </div>
 
+            {/* Spouse Gotra */}
                   <div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
-                    <dt className="text-sm font-medium text-gray-500">Previous Spouse Gotra</dt>
+              <dt className="text-sm font-medium text-gray-500">Spouse Gotra <span className="text-red-500">*</span></dt>
                     <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                {editMode ? (
+                  <div>
                       <select
-                        value={formData?.previous_marriage_info?.spouse_gotra || ""}
-                        onChange={(e) => handleInputChange("previous_marriage_info", "spouse_gotra", e.target.value)}
-                        className="border border-gray-300 px-2 py-1 rounded w-full"
+                      value={prevMarriageInfo?.spouse_gotra || ""}
+                      onChange={(e) => handlePrevMarriageChange("spouse_gotra", e.target.value)}
+                      className={`border ${prevMarriageErrors.spouse_gotra ? 'border-red-500' : 'border-gray-300'} px-2 py-1 rounded w-full`}
+                      required
                       >
                         <option value="">Select Gotra</option>
                         {GOTRA_OPTIONS.map((option) => (
-                          <option key={option} value={option}>
-                            {option}
-                          </option>
+                        <option key={option} value={option}>{option}</option>
                         ))}
                       </select>
+                    {prevMarriageErrors.spouse_gotra && (
+                      <p className="text-red-500 text-xs mt-1">{prevMarriageErrors.spouse_gotra}</p>
+                    )}
+                  </div>
+                ) : (
+                  prevMarriageInfo?.spouse_gotra || "N/A"
+                )}
                     </dd>
                   </div>
 
+            {/* Spouse Akna */}
                   <div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
-                    <dt className="text-sm font-medium text-gray-500">Previous Spouse Aakna</dt>
+              <dt className="text-sm font-medium text-gray-500">Spouse Akna <span className="text-red-500">*</span></dt>
                     <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                {editMode ? (
+                  <div>
                       <select
-                        value={formData?.previous_marriage_info?.spouse_akna || ""}
-                        onChange={(e) => handleInputChange("previous_marriage_info", "spouse_akna", e.target.value)}
-                        className="border border-gray-300 px-2 py-1 rounded w-full"
-                        disabled={!formData?.previous_marriage_info?.spouse_gotra}
+                      value={prevMarriageInfo?.spouse_akna || ""}
+                      onChange={(e) => handlePrevMarriageChange("spouse_akna", e.target.value)}
+                      className={`border ${prevMarriageErrors.spouse_akna ? 'border-red-500' : 'border-gray-300'} px-2 py-1 rounded w-full`}
+                      required
+                      disabled={!prevMarriageInfo?.spouse_gotra}
                       >
                         <option value="">Select Aakna</option>
-                        {(formData?.previous_marriage_info?.spouse_gotra 
-                          ? (GOTRA_AAKNA_MAP[formData.previous_marriage_info.spouse_gotra] || AAKNA_OPTIONS)
+                      {(prevMarriageInfo?.spouse_gotra 
+                        ? (GOTRA_AAKNA_MAP[prevMarriageInfo.spouse_gotra] || AAKNA_OPTIONS)
                           : AAKNA_OPTIONS
                         ).map((option) => (
-                          <option key={option} value={option}>
-                            {option}
-                          </option>
+                        <option key={option} value={option}>{option}</option>
                         ))}
                       </select>
+                    {prevMarriageErrors.spouse_akna && (
+                      <p className="text-red-500 text-xs mt-1">{prevMarriageErrors.spouse_akna}</p>
+                    )}
+                  </div>
+                ) : (
+                  prevMarriageInfo?.spouse_akna || "N/A"
+                )}
                     </dd>
                   </div>
 
+            {/* Spouse DOB */}
                   <div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
-                    <dt className="text-sm font-medium text-gray-500">Will children live with you/your spouse?</dt>
+              <dt className="text-sm font-medium text-gray-500">Spouse Date of Birth <span className="text-red-500">*</span></dt>
                     <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                {editMode ? (
+                  <div>
+                    <input
+                      type="date"
+                      value={prevMarriageInfo?.spouse_dob || ""}
+                      onChange={(e) => handlePrevMarriageChange("spouse_dob", e.target.value)}
+                      className={`border ${prevMarriageErrors.spouse_dob ? 'border-red-500' : 'border-gray-300'} px-2 py-1 rounded w-full`}
+                      required
+                    />
+                    {prevMarriageErrors.spouse_dob && (
+                      <p className="text-red-500 text-xs mt-1">{prevMarriageErrors.spouse_dob}</p>
+                    )}
+                  </div>
+                ) : (
+                  prevMarriageInfo?.spouse_dob || "N/A"
+                )}
+              </dd>
+            </div>
+
+            {/* Children Living With */}
+            <div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
+              <dt className="text-sm font-medium text-gray-500">Children Living With <span className="text-red-500">*</span></dt>
+              <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                {editMode ? (
+                  <div>
                       <select
-                        value={formData?.previous_marriage_info?.children_living_with || ""}
-                        onChange={(e) => handleInputChange("previous_marriage_info", "children_living_with", e.target.value)}
-                        className="border border-gray-300 px-2 py-1 rounded w-full"
+                      value={prevMarriageInfo?.children_living_with || ""}
+                      onChange={(e) => handlePrevMarriageChange("children_living_with", e.target.value)}
+                      className={`border ${prevMarriageErrors.children_living_with ? 'border-red-500' : 'border-gray-300'} px-2 py-1 rounded w-full`}
+                      required
                       >
                         <option value="">Select Option</option>
                         <option value="yes">Yes</option>
                         <option value="no">No</option>
                       </select>
+                    {prevMarriageErrors.children_living_with && (
+                      <p className="text-red-500 text-xs mt-1">{prevMarriageErrors.children_living_with}</p>
+                    )}
+                  </div>
+                ) : (
+                  prevMarriageInfo?.children_living_with || "N/A"
+                )}
                     </dd>
                   </div>
 
+            {/* Want Kundli Match */}
                   <div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
-                    <dt className="text-sm font-medium text-gray-500">Do you want horoscope matching?</dt>
+              <dt className="text-sm font-medium text-gray-500">Want Kundli Match <span className="text-red-500">*</span></dt>
                     <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                {editMode ? (
+                  <div>
                       <select
-                        value={formData?.previous_marriage_info?.want_kundli_match || ""}
-                        onChange={(e) => handleInputChange("previous_marriage_info", "want_kundli_match", e.target.value)}
-                        className="border border-gray-300 px-2 py-1 rounded w-full"
+                      value={prevMarriageInfo?.want_kundli_match || ""}
+                      onChange={(e) => handlePrevMarriageChange("want_kundli_match", e.target.value)}
+                      className={`border ${prevMarriageErrors.want_kundli_match ? 'border-red-500' : 'border-gray-300'} px-2 py-1 rounded w-full`}
+                      required
                       >
                         <option value="">Select Option</option>
                         <option value="yes">Yes</option>
                         <option value="no">No</option>
                       </select>
+                    {prevMarriageErrors.want_kundli_match && (
+                      <p className="text-red-500 text-xs mt-1">{prevMarriageErrors.want_kundli_match}</p>
+                    )}
+                  </div>
+                ) : (
+                  prevMarriageInfo?.want_kundli_match || "N/A"
+                )}
                     </dd>
                   </div>
 
+            {/* Accept Partner With Children */}
                   <div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
-                    <dt className="text-sm font-medium text-gray-500">Accept Partner with Children</dt>
+              <dt className="text-sm font-medium text-gray-500">Accept Partner With Children <span className="text-red-500">*</span></dt>
                     <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                {editMode ? (
+                  <div>
                       <select
-                        value={formData?.previous_marriage_info?.accept_partner_with_children || ""}
-                        onChange={(e) => handleInputChange("previous_marriage_info", "accept_partner_with_children", e.target.value)}
-                        className="border border-gray-300 px-2 py-1 rounded w-full"
+                      value={prevMarriageInfo?.accept_partner_with_children || ""}
+                      onChange={(e) => handlePrevMarriageChange("accept_partner_with_children", e.target.value)}
+                      className={`border ${prevMarriageErrors.accept_partner_with_children ? 'border-red-500' : 'border-gray-300'} px-2 py-1 rounded w-full`}
+                      required
                       >
                         <option value="">Select Option</option>
                         <option value="yes">Yes</option>
                         <option value="no">No</option>
                       </select>
-                    </dd>
+                    {prevMarriageErrors.accept_partner_with_children && (
+                      <p className="text-red-500 text-xs mt-1">{prevMarriageErrors.accept_partner_with_children}</p>
+                    )}
                   </div>
-                </>
-              )}
-              
-              {/* Show filled values in view mode */}
-              {!editMode && Object.entries(displayData?.previous_marriage_info || {}).map(([key, value]) => {
-                // Skip id field and empty values
-                if (!value || value === "N/A" || key === "id") return null;
-                
-                const label = key.split('_').map(word => 
-                  word.charAt(0).toUpperCase() + word.slice(1)
-                ).join(' ');
+                ) : (
+                  prevMarriageInfo?.accept_partner_with_children || "N/A"
+                )}
+              </dd>
+            </div>
 
-                return (
-                  <div key={key} className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
-                    <dt className="text-sm font-medium text-gray-500">{label}</dt>
-                    <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                      {value}
+            {/* Children Section */}
+            <div className="px-4 py-3">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold">Children</h3>
+                {editMode && (
+                  <button
+                    onClick={addChild}
+                    className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none"
+                  >
+                    <svg className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                    Add Child
+                  </button>
+                )}
+              </div>
+              <div className="space-y-4">
+                {prevMarriageChildren.length > 0 ? (
+                  prevMarriageChildren.map((child, index) => (
+                    <div key={index} className="bg-gray-50 p-4 rounded-lg">
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div>
+                          <dt className="text-sm font-medium text-gray-500">Name <span className="text-red-500">*</span></dt>
+                          <dd className="mt-1 text-sm text-gray-900">
+                            {editMode ? (
+                              <div>
+                                <input
+                                  type="text"
+                                  value={child?.child_name || ""}
+                                  onChange={(e) => handleChildChange(index, "child_name", e.target.value)}
+                                  className={`border ${childrenErrors[index]?.name ? 'border-red-500' : 'border-gray-300'} px-2 py-1 rounded w-full`}
+                                  required
+                                />
+                                {childrenErrors[index]?.name && (
+                                  <p className="text-red-500 text-xs mt-1">{childrenErrors[index].name}</p>
+                                )}
+                              </div>
+                            ) : (
+                              child?.child_name || "N/A"
+                            )}
                     </dd>
                   </div>
-                );
-              })}
-            </dl>
+                        <div>
+                          <dt className="text-sm font-medium text-gray-500">Gender <span className="text-red-500">*</span></dt>
+                          <dd className="mt-1 text-sm text-gray-900">
+                            {editMode ? (
+                              <div>
+                                <select
+                                  value={child?.gender || ""}
+                                  onChange={(e) => handleChildChange(index, "gender", e.target.value)}
+                                  className={`border ${childrenErrors[index]?.gender ? 'border-red-500' : 'border-gray-300'} px-2 py-1 rounded w-full`}
+                                  required
+                                >
+                                  <option value="">Select Gender</option>
+                                  <option value="Male">Male</option>
+                                  <option value="Female">Female</option>
+                                </select>
+                                {childrenErrors[index]?.gender && (
+                                  <p className="text-red-500 text-xs mt-1">{childrenErrors[index].gender}</p>
+                                )}
           </div>
         ) : (
-          <div className="bg-white rounded-lg border border-gray-200 p-6 text-center text-gray-500">
-            Not applicable based on current marital status
+                              child.gender || "N/A"
+                            )}
+                          </dd>
           </div>
-        )}
+                        <div>
+                          <dt className="text-sm font-medium text-gray-500">Age <span className="text-red-500">*</span></dt>
+                          <dd className="mt-1 text-sm text-gray-900">
+                            {editMode ? (
+                              <div>
+                                <input
+                                  type="number"
+                                  value={child?.age || ""}
+                                  onChange={(e) => handleChildChange(index, "age", e.target.value)}
+                                  className={`border ${childrenErrors[index]?.age ? 'border-red-500' : 'border-gray-300'} px-2 py-1 rounded w-full`}
+                                  min="0"
+                                  max="100"
+                                  required
+                                />
+                                {childrenErrors[index]?.age && (
+                                  <p className="text-red-500 text-xs mt-1">{childrenErrors[index].age}</p>
+                                )}
+                              </div>
+                            ) : (
+                              child.age || "N/A"
+                            )}
+                          </dd>
+                        </div>
+                        <div>
+                          <dt className="text-sm font-medium text-gray-500">Phone Number</dt>
+                          <dd className="mt-1 text-sm text-gray-900">
+                            {editMode ? (
+                              <input
+                                type="tel"
+                                value={child?.phone_number || ""}
+                                onChange={(e) => handleChildChange(index, "phone_number", e.target.value)}
+                                className="border border-gray-300 px-2 py-1 rounded w-full"
+                              />
+                            ) : (
+                              child?.phone_number || "N/A"
+                            )}
+                          </dd>
+                        </div>
+                      </div>
+                      {editMode && (
+                        <div className="mt-4 flex justify-end">
+                          <button
+                            onClick={() => removeChild(index)}
+                            className="text-red-600 hover:text-red-800"
+                          >
+                            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-gray-500 text-center py-4">No children added</div>
+                )}
+              </div>
+            </div>
+          </dl>
+        </div>
       </section>
     );
   }
   
-  // Special handling for biographical details section
+  // for biographical details section
   if (activeSection === 'biographical') {
     return (
       <section>
@@ -1198,7 +1601,7 @@ const renderSectionContent = () => {
                     ))}
                   </select>
                 ) : (
-                  displayData?.biographical_details?.gotra || "N/A"
+                  currentData?.biographical_details?.gotra || "N/A"
                 )}
               </dd>
             </div>
@@ -1240,7 +1643,7 @@ const renderSectionContent = () => {
                     )}
                   </>
                 ) : (
-                  displayData?.biographical_details?.aakna || "N/A"
+                  currentData?.biographical_details?.aakna || "N/A"
                 )}
               </dd>
             </div>
@@ -1271,12 +1674,14 @@ const renderSectionContent = () => {
                     ))}
                   </select>
                 ) : (
-                  displayData?.biographical_details?.is_married || "N/A"
+                  currentData?.biographical_details?.is_married || "N/A"
                 )}
               </dd>
             </div>
 
             {/* Marriage To Another Caste Field */}
+            {formData?.biographical_details?.is_married !== "Widow/Widower" && 
+             formData?.biographical_details?.is_married !== "Divorced" && (
             <div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
               <dt className="text-sm font-medium text-gray-500">Marriage To Another Caste</dt>
               <dd className="text-sm text-gray-900 sm:mt-0 sm:col-span-2">
@@ -1302,13 +1707,14 @@ const renderSectionContent = () => {
                     ))}
                   </select>
                 ) : (
-                  displayData?.biographical_details?.marriage_to_another_caste || "N/A"
+                  currentData?.biographical_details?.marriage_to_another_caste || "N/A"
                 )}
               </dd>
             </div>
+            )}
 
             {/* Render other biographical fields */}
-            {Object.entries(displayData?.biographical_details || {})
+            {Object.entries(currentData?.biographical_details || {})
               .filter(([key]) => 
                 key !== "id" && 
                 key !== "Gotra" && 
@@ -1316,8 +1722,7 @@ const renderSectionContent = () => {
                 key !== "gotra" && 
                 key !== "aakna" &&
                 key !== "is_married" && 
-                key !== "marriage_to_another_caste"
-              )
+                key !== "marriage_to_another_caste")
               .map(([key, value]) => {
                 
                 if (key.toLowerCase() === "gotra" || 
@@ -1373,7 +1778,7 @@ const renderSectionContent = () => {
                               placeholder="Enter father's name"
                             />
                           ) : (
-                            displayData?.family_details?.father_name || "Not Added"
+                            currentData?.family_details?.father_name || "Not Added"
                           )}
                         </dd>
                       </div>
@@ -1399,7 +1804,7 @@ const renderSectionContent = () => {
                               placeholder="Enter father's mobile"
                             />
                           ) : (
-                            displayData?.family_details?.father_mobile || "Not Added"
+                            currentData?.family_details?.father_mobile || "Not Added"
                           )}
                         </dd>
                       </div>
@@ -1425,7 +1830,7 @@ const renderSectionContent = () => {
                               placeholder="Enter mother's name"
                             />
                           ) : (
-                            displayData?.family_details?.mother_name || "Not Added"
+                            currentData?.family_details?.mother_name || "Not Added"
                           )}
                         </dd>
                       </div>
@@ -1451,7 +1856,7 @@ const renderSectionContent = () => {
                               placeholder="Enter mother's mobile"
                             />
                           ) : (
-                            displayData?.family_details?.mother_mobile || "Not Added"
+                            currentData?.family_details?.mother_mobile || "Not Added"
                           )}
                         </dd>
                       </div>
@@ -1464,7 +1869,7 @@ const renderSectionContent = () => {
               <div className="px-4 py-3">
                 <h3 className="text-lg font-semibold mb-4">Spouse Information</h3>
                 <div className="space-y-4">
-                  {(displayData?.biographical_details?.is_married === "Married" || editMode) && (
+                  {(currentData?.biographical_details?.is_married === "Married" || editMode) && (
                     <>
                       <div className="bg-gray-50 p-4 rounded-lg">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1485,7 +1890,7 @@ const renderSectionContent = () => {
                                           spouse_name: e.target.value
                                         }
                                       }));
-                                      // Clear error when user starts typing
+                                    
                                       setSpouseErrors(prev => ({...prev, spouse_name: null}));
                                     }}
                                     className={`border ${spouseErrors.spouse_name ? 'border-red-500' : 'border-gray-300'} px-2 py-1 rounded w-full`}
@@ -1496,7 +1901,7 @@ const renderSectionContent = () => {
                                   )}
                                 </div>
                               ) : (
-                                displayData?.family_details?.spouse_name || "Not Added"
+                                currentData?.family_details?.spouse_name || "Not Added"
                               )}
                             </dd>
                           </div>
@@ -1522,7 +1927,7 @@ const renderSectionContent = () => {
                                   placeholder="Enter spouse mobile"
                                 />
                               ) : (
-                                displayData?.family_details?.spouse_mobile || "Not Added"
+                                currentData?.family_details?.spouse_mobile || "Not Added"
                               )}
                             </dd>
                           </div>
@@ -1556,7 +1961,7 @@ const renderSectionContent = () => {
                                   ))}
                                 </select>
                               ) : (
-                                displayData?.family_details?.spouse_gotra || "Not Added"
+                                currentData?.family_details?.spouse_gotra || "Not Added"
                               )}
                             </dd>
                           </div>
@@ -1591,7 +1996,7 @@ const renderSectionContent = () => {
                                   ))}
                                 </select>
                               ) : (
-                                displayData?.family_details?.spouse_aakna || "Not Added"
+                                currentData?.family_details?.spouse_aakna || "Not Added"
                               )}
                             </dd>
                             {editMode && !formData?.family_details?.spouse_gotra && (
@@ -1603,7 +2008,7 @@ const renderSectionContent = () => {
                         </div>
                       </div>
 
-                      {/* {displayData?.biographical_details?.is_married === "Married" && (
+                      {/* {currentData?.biographical_details?.is_married === "Married" && (
                         <div className="bg-gray-50 p-4 rounded-lg">
                           <div>
                             <dt className="text-sm font-medium text-gray-500">Marriage Type</dt>
@@ -1627,7 +2032,7 @@ const renderSectionContent = () => {
                                   <option value="Married to Another Caste">Married to Another Caste</option>
                                 </select>
                               ) : (
-                                displayData?.biographical_details?.marriage_to_another_caste || "Not Specified"
+                                currentData?.biographical_details?.marriage_to_another_caste || "Not Specified"
                               )}
                             </dd>
                           </div>
@@ -1635,7 +2040,7 @@ const renderSectionContent = () => {
                       )} */}
                     </>
                   )}
-                  {!displayData?.biographical_details?.is_married && !editMode && (
+                  {!currentData?.biographical_details?.is_married && !editMode && (
                     <div className="text-sm text-gray-500">
                       Spouse information will be available after marriage status is updated
                     </div>
@@ -1705,7 +2110,7 @@ const renderSectionContent = () => {
                                       ...prev,
                                       child_name: newChildren
                                     }));
-                                    // Clear error when user selects
+                                   
                                     const newErrors = [...childrenErrors];
                                     newErrors[index] = {...newErrors[index], gender: null};
                                     setChildrenErrors(newErrors);
@@ -1726,7 +2131,7 @@ const renderSectionContent = () => {
                           </dd>
                         </div>
 
-                        {/* Phone Number (Optional) */}
+                        {/* Phone Number */}
                         <div>
                           <dt className="text-sm font-medium text-gray-500">Phone Number (Optional)</dt>
                           <dd className="mt-1 text-sm text-gray-900">
@@ -1755,7 +2160,7 @@ const renderSectionContent = () => {
                         </div>
                       </div>
 
-                      {/* Delete Button */}
+                      {/* Delete */}
                       {editMode && (
                         <div className="mt-4 flex justify-end">
                           <button
@@ -1779,7 +2184,7 @@ const renderSectionContent = () => {
                   ))}
                 </div>
 
-                {/* Add Child Button */}
+                {/* Add Child */}
                 {editMode && (
                   <button
                     onClick={() => {
@@ -1827,7 +2232,7 @@ const renderSectionContent = () => {
                                         siblingDetails: newSiblings
                                       }
                                     }));
-                                    // Clear error when user starts typing
+                                   
                                     const newErrors = [...siblingErrors];
                                     newErrors[index] = {...newErrors[index], name: null};
                                     setSiblingErrors(newErrors);
@@ -2091,7 +2496,7 @@ const renderSectionContent = () => {
               </div>
             </>
           ) : (
-            Object.entries(displayData[sectionKey] || {})
+            Object.entries(currentData[sectionKey] || {})
               .filter(([key]) => key !== "id" && key !== "display_picture" && key !== "regional_information")
               .map(([key, value]) => {
                 const fieldConfig = getFieldType(sectionKey, key, formData);
@@ -2103,15 +2508,6 @@ const renderSectionContent = () => {
     </section>
   );
 };
-
-
-  useEffect(() => {
-    if (userData) {
-      setFormData(userData);
-      setOriginalData(userData);  
-    }
-  }, [userData]);
-
 
   const handleCancel = () => {
    
@@ -2133,14 +2529,18 @@ const renderSectionContent = () => {
 
   
   const handleEditClick = () => {
-   
+    // Make a deep copy of the current data
     const backupData = {
       ...formData,
       child_name: [...(formData?.child_name || [])],
       family_details: {
         ...(formData?.family_details || {}),
         siblingDetails: [...(formData?.family_details?.siblingDetails || [])]
-      }
+      },
+      previous_marriage_info: formData?.previous_marriage_info ? {
+        ...formData.previous_marriage_info,
+        children: [...(formData.previous_marriage_info.children || [])]
+      } : null
     };
     setOriginalData(backupData);
     setEditMode(true);
@@ -2179,14 +2579,6 @@ const renderSectionContent = () => {
       local_body: "",
       gram_panchayat: "",
     },
-    previous_marriage_info: {
-      spouse_name: "",
-      spouse_gotra: "",
-      spouse_akna: "",
-      children_living_with: "",
-      want_kundli_match: "",
-      accept_partner_with_children: ""
-    },
     child_name: [],
     your_suggestions: {},
     gahoi_code: "",
@@ -2195,9 +2587,6 @@ const renderSectionContent = () => {
     updatedAt: "",
     publishedAt: "",
   };
-
-  // Use empty data if userData is not available
-  const displayData = userData || emptyData;
 
   return (
 <div className="min-h-screen bg-gray-100">
@@ -2232,7 +2621,7 @@ const renderSectionContent = () => {
             {editMode ? (
               <>
                 <button
-                  onClick={handleCancel}  // Use handleCancel instead of just setEditMode(false)
+                  onClick={handleCancel}
                   className="text-sm bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded"
                 >
                   Cancel
@@ -2245,7 +2634,11 @@ const renderSectionContent = () => {
                 </button>
               </>
             ) : (
-              activeSection !== 'regional' && activeSection !== 'work' && (
+              activeSection !== 'regional' && activeSection !== 'work' && 
+             
+              !(activeSection === 'previous_marriage' && 
+                (formData?.biographical_details?.is_married === "Married" || 
+                 formData?.biographical_details?.is_married === "Unmarried")) && (
                 <button
                   onClick={handleEditClick}
                   className="text-sm bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded"
