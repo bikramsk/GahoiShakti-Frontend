@@ -156,11 +156,15 @@ const HeroSection = () => {
     <section className="relative h-[40vh] sm:h-[50vh] md:h-[60vh] lg:h-[70vh] w-full overflow-hidden">
       {/* Background Image */}
 
-      {currentImageIndex === 0 ? (
-  <Link to="/gahoi-sammelan">
-    <div 
+{currentImageIndex === 0 ? (
+  <a
+    href="https://docs.google.com/forms/d/e/1FAIpQLSfm9qnGFfnsv8lPHN8cJM3t52T4qXOXE7THz_F9CycXaewGdA/viewform?usp=header"
+    target="_blank"
+    rel="noopener noreferrer"
+  >
+    <div
       className="absolute inset-0 bg-center bg-no-repeat cursor-pointer"
-      style={{ 
+      style={{
         backgroundImage: `url("${imagePath}")`,
         backgroundSize: 'cover',
         backgroundPosition: 'center'
@@ -168,11 +172,11 @@ const HeroSection = () => {
       role="img"
       aria-label={currentBanner.altText}
     />
-  </Link>
+  </a>
 ) : (
-  <div 
+  <div
     className="absolute inset-0 bg-center bg-no-repeat"
-    style={{ 
+    style={{
       backgroundImage: `url("${imagePath}")`,
       backgroundSize: 'cover',
       backgroundPosition: 'center'
@@ -181,6 +185,7 @@ const HeroSection = () => {
     aria-label={currentBanner.altText}
   />
 )}
+
       {/* <div 
         className="absolute inset-0 bg-center bg-no-repeat mt-24 lg:mt-32"
         style={{ 
