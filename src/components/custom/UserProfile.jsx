@@ -2,15 +2,123 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { FORM_FIELD_CONFIG } from "../../utils/formFieldConfig";
+import { getFilteredRegionalAssemblies } from "../../constants/regionalAssemblies";
+import { getFilteredLocalPanchayatNames } from "../../constants/localPanchayatNames";
+import { getFilteredLocalPanchayat } from "../../constants/localPanchayat";
+import { getFilteredSubLocalPanchayat } from "../../constants/subLocalPanchayat";
 import { BLOOD_GROUPS } from "../../constants/formConstants";
+import { 
+  STATES, 
+  STATE_TO_DISTRICTS, 
+  DISTRICT_TO_CITIES,
+  ASHOKNAGAR_GRAM_PANCHAYATS,
+  ASHOKNAGAR_LOCAL_BODIES,
+  ALIRAJPUR_LOCAL_BODIES,
+  ALIRAJPUR_GRAM_PANCHAYATS,
+  ANUPPUR_LOCAL_BODIES,
+  ANUPPUR_GRAM_PANCHAYATS,
+  BALAGHAT_LOCAL_BODIES,
+  BALAGHAT_GRAM_PANCHAYATS,
+  BARWANI_LOCAL_BODIES,
+  BARWANI_GRAM_PANCHAYATS,
+  BETUL_LOCAL_BODIES,
+  BETUL_GRAM_PANCHAYATS,
+  BHIND_LOCAL_BODIES,
+  BHIND_GRAM_PANCHAYATS,
+  BHOPAL_LOCAL_BODIES,
+  BHOPAL_GRAM_PANCHAYATS,
+  BURHANPUR_LOCAL_BODIES,
+   BURHANPUR_GRAM_PANCHAYATS,
+   CHHATARPUR_LOCAL_BODIES,
+   CHHATARPUR_GRAM_PANCHAYATS,
+   CHHINDWARA_LOCAL_BODIES,
+   CHHINDWARA_GRAM_PANCHAYATS,
+   DAMOH_LOCAL_BODIES,
+   DAMOH_GRAM_PANCHAYATS,
+   DATIA_LOCAL_BODIES,
+   DATIA_GRAM_PANCHAYATS,
+   DEWAS_LOCAL_BODIES,
+   DEWAS_GRAM_PANCHAYATS,
+   DHAR_LOCAL_BODIES,
+   DHAR_GRAM_PANCHAYATS,
+   DINDORI_LOCAL_BODIES,
+   DINDORI_GRAM_PANCHAYATS,
+   GUNA_LOCAL_BODIES,
+   GUNA_GRAM_PANCHAYATS,
+   GWALIOR_LOCAL_BODIES,
+   GWALIOR_GRAM_PANCHAYATS,
+   HARDA_LOCAL_BODIES,
+   HARDA_GRAM_PANCHAYATS,
+   INDORE_LOCAL_BODIES,
+   INDORE_GRAM_PANCHAYATS,
+   JABALPUR_LOCAL_BODIES,
+   JABALPUR_GRAM_PANCHAYATS,
+   JHABUA_LOCAL_BODIES,
+   JHABUA_GRAM_PANCHAYATS,
+   KATNI_LOCAL_BODIES,
+   KATNI_GRAM_PANCHAYATS,
+   KHANDWA_LOCAL_BODIES,
+   KHANDWA_GRAM_PANCHAYATS,
+   KHARGONE_LOCAL_BODIES,
+   KHARGONE_GRAM_PANCHAYATS,
+   MANDLA_LOCAL_BODIES,
+   MANDLA_GRAM_PANCHAYATS,
+   MANDSAUR_LOCAL_BODIES,
+   MANDSAUR_GRAM_PANCHAYATS,
+   MORENA_LOCAL_BODIES,
+   MORENA_GRAM_PANCHAYATS,
+   NARSINGHPUR_LOCAL_BODIES,
+   NARSINGHPUR_GRAM_PANCHAYATS,
+   NEEMUCH_LOCAL_BODIES,
+   NEEMUCH_GRAM_PANCHAYATS,
+   PANNA_LOCAL_BODIES,
+   PANNA_GRAM_PANCHAYATS,
+   RAISEN_LOCAL_BODIES,
+   RAISEN_GRAM_PANCHAYATS,
+   RAJGARH_LOCAL_BODIES,
+   RAJGARH_GRAM_PANCHAYATS,
+   RATLAM_LOCAL_BODIES,
+   RATLAM_GRAM_PANCHAYATS,
+   REWA_LOCAL_BODIES,
+   REWA_GRAM_PANCHAYATS,
+   SAGAR_LOCAL_BODIES,
+   SAGAR_GRAM_PANCHAYATS,
+   SATNA_LOCAL_BODIES,
+   SATNA_GRAM_PANCHAYATS,
+   SEHORE_LOCAL_BODIES,
+   SEHORE_GRAM_PANCHAYATS,
+   SEONI_LOCAL_BODIES,
+   SEONI_GRAM_PANCHAYATS,
+   SHAHDOL_LOCAL_BODIES,
+   SHAHDOL_GRAM_PANCHAYATS,
+   SHAJAPUR_LOCAL_BODIES,
+   SHAJAPUR_GRAM_PANCHAYATS,
+   SHEOPUR_LOCAL_BODIES,
+   SHEOPUR_GRAM_PANCHAYATS,
+   SHIVPURI_LOCAL_BODIES,
+   SHIVPURI_GRAM_PANCHAYATS,
+   SIDHI_LOCAL_BODIES,
+   SIDHI_GRAM_PANCHAYATS,
+   SINGRAULI_LOCAL_BODIES,
+   SINGRAULI_GRAM_PANCHAYATS,
+   TIKAMGARH_LOCAL_BODIES,
+   TIKAMGARH_GRAM_PANCHAYATS,
+   UJJAIN_LOCAL_BODIES,
+   UJJAIN_GRAM_PANCHAYATS,
+   UMARIYA_LOCAL_BODIES,
+   UMARIYA_GRAM_PANCHAYATS,
+   VIDISHA_LOCAL_BODIES,
+   VIDISHA_GRAM_PANCHAYATS,
+} from "../../constants/locationData";
+
+import RegionalDropdowns from "./RegionalDropdowns";
 
 
 function stripIds(obj) {
   if (Array.isArray(obj)) {
     return obj.map(stripIds);
   } else if (obj && typeof obj === "object") {
-    // Destructure and ignore id field
-    const { id: _, ...rest } = obj;
+    const { id: _id, documentId: _doc, createdAt: _c, updatedAt: _u, publishedAt: _p, ...rest } = obj;
     const cleaned = {};
     for (const [k, v] of Object.entries(rest)) {
       cleaned[k] = stripIds(v);
@@ -194,6 +302,75 @@ const UserProfile = () => {
   const [siblingErrors, setSiblingErrors] = useState([]);
   const [prevMarriageErrors, setPrevMarriageErrors] = useState({});
 
+  // Update districts when state changes
+  useEffect(() => {
+    const state = formData?.additional_details?.regional_information?.state;
+    if (state) {
+      FORM_FIELD_CONFIG.regional_information.district.options = STATE_TO_DISTRICTS[state] || [];
+      // Reset dependent fields
+      if (formData.additional_details.regional_information.district) {
+        setFormData(prev => ({
+          ...prev,
+          additional_details: {
+            ...prev.additional_details,
+            regional_information: {
+              ...prev.additional_details.regional_information,
+              district: '',
+              city: '',
+              local_body: '',
+              gram_panchayat: ''
+            }
+          }
+        }));
+      }
+      forceUpdate({}); // Force re-render to update options
+    }
+  }, [formData?.additional_details?.regional_information?.state]);
+
+  // Update cities and local bodies when district changes
+  useEffect(() => {
+    const district = formData?.additional_details?.regional_information?.district;
+    if (district) {
+      // Update city options
+      FORM_FIELD_CONFIG.regional_information.city.options = DISTRICT_TO_CITIES[district] || [];
+      
+      // Update local body options based on district
+      let localBodies = [];
+      switch(district) {
+        case 'Ashoknagar':
+          localBodies = ASHOKNAGAR_LOCAL_BODIES;
+          FORM_FIELD_CONFIG.regional_information.gram_panchayat.options = ASHOKNAGAR_GRAM_PANCHAYATS;
+          break;
+        case 'Alirajpur':
+          localBodies = ALIRAJPUR_LOCAL_BODIES;
+          FORM_FIELD_CONFIG.regional_information.gram_panchayat.options = ALIRAJPUR_GRAM_PANCHAYATS;
+          break;
+        // Add more cases for other districts
+        default:
+          localBodies = [];
+          FORM_FIELD_CONFIG.regional_information.gram_panchayat.options = [];
+      }
+      FORM_FIELD_CONFIG.regional_information.local_body.options = localBodies;
+
+      // Reset dependent fields
+      if (formData.additional_details.regional_information.city || formData.additional_details.regional_information.local_body) {
+        setFormData(prev => ({
+          ...prev,
+          additional_details: {
+            ...prev.additional_details,
+            regional_information: {
+              ...prev.additional_details.regional_information,
+              city: '',
+              local_body: '',
+              gram_panchayat: ''
+            }
+          }
+        }));
+      }
+      forceUpdate({}); // Force re-render to update options
+    }
+  }, [formData?.additional_details?.regional_information?.district]);
+
   useEffect(() => {
     const handleError = (error) => {
       console.error("Error in UserProfile:", error);
@@ -226,6 +403,9 @@ const UserProfile = () => {
 
         // API call: main profile data
         const mainUrl = `${API_BASE}/api/registration-pages?filters[personal_information][mobile_number][$eq]=${mobileNumber}&populate=*`;
+    
+
+
         const mainRes = await fetch(mainUrl, {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -260,8 +440,8 @@ const UserProfile = () => {
         const siblingsData = await siblingsRes.json();
         const siblingsProfile = siblingsData.data?.[0]?.family_details?.siblingDetails || [];
 
-        // API call: Previous Marriage Info with children
-        const prevMarriageUrl = `${API_BASE}/api/registration-pages?filters[personal_information][mobile_number][$eq]=${mobileNumber}&populate[previous_marriage_info][populate]=children`;
+        // API call: Previous Marriage Info with children and documents
+        const prevMarriageUrl = `${API_BASE}/api/registration-pages?filters[personal_information][mobile_number][$eq]=${mobileNumber}&populate[previous_marriage_info][populate][0]=children&populate[previous_marriage_info][populate][1]=aadhar_front&populate[previous_marriage_info][populate][2]=aadhar_back&populate[previous_marriage_info][populate][3]=kundali_photo`;
         const prevMarriageRes = await fetch(prevMarriageUrl, {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -497,6 +677,12 @@ const handleSaveProfile = async () => {
       return;
     }
 
+
+    if (formData.previous_marriage_info?.has_children !== "Yes") {
+      delete formData.previous_marriage_info.number_of_children;
+    }
+    
+
     // Validate Previous Marriage Information if applicable
     const isWidowOrDivorced = 
       formData?.biographical_details?.is_married === "Widow/Widower" ||
@@ -510,24 +696,31 @@ const handleSaveProfile = async () => {
       if (!prevMarriageInfo.spouse_name?.trim()) {
         errors.spouse_name = "Spouse name is required";
       }
-      if (!prevMarriageInfo.spouse_gotra) {
-        errors.spouse_gotra = "Spouse gotra is required";
-      }
-      if (!prevMarriageInfo.spouse_akna) {
-        errors.spouse_akna = "Spouse akna is required";
-      }
+      // if (!prevMarriageInfo.spouse_gotra) {
+      //   errors.spouse_gotra = "Spouse gotra is required";
+      // }
+      // if (!prevMarriageInfo.spouse_akna) {
+      //   errors.spouse_akna = "Spouse akna is required";
+      // }
       if (!prevMarriageInfo.spouse_dob) {
         errors.spouse_dob = "Spouse date of birth is required";
       }
-      if (!prevMarriageInfo.children_living_with) {
-        errors.children_living_with = "Please specify if children are living with you";
+      // if (!prevMarriageInfo.children_living_with) {
+      //   errors.children_living_with = "Please specify if children are living with you";
+      // }
+      // if (!prevMarriageInfo.want_kundli_match) {
+      //   errors.want_kundli_match = "Please specify if you want kundli match";
+      // }
+      // if (!prevMarriageInfo.accept_partner_with_children) {
+      //   errors.accept_partner_with_children = "Please specify if you accept partner with children";
+      // }
+      if (!prevMarriageInfo.has_children) {
+        errors.has_children = "Please specify if you have children";
       }
-      if (!prevMarriageInfo.want_kundli_match) {
-        errors.want_kundli_match = "Please specify if you want kundli match";
-      }
-      if (!prevMarriageInfo.accept_partner_with_children) {
-        errors.accept_partner_with_children = "Please specify if you accept partner with children";
-      }
+      // if (!prevMarriageInfo.number_of_children) {
+      //   errors.number_of_children = "Please specify the number of children";
+      // }
+
 
       // Children validation
       const childrenErrors = [];
@@ -665,28 +858,80 @@ const handleSaveProfile = async () => {
       }
     }
 
-      // Prepare save data
+    if (isWidowOrDivorced && !formData.previous_marriage_info) {
+      formData.previous_marriage_info = {};
+    }
+    
+   // Preserve previous_marriage_info document
+   if (isWidowOrDivorced) {
+    if (!formData.previous_marriage_info) formData.previous_marriage_info = {};
+    const docFields = ["aadhar_front", "aadhar_back", "kundali_photo"];
+    docFields.forEach(field => {
+      if (formData.previous_marriage_info[field]) {
+       
+        if (typeof formData.previous_marriage_info[field] === "object" && formData.previous_marriage_info[field].id) {
+          formData.previous_marriage_info[field] = formData.previous_marriage_info[field].id;
+        }
+      } else if (originalData?.previous_marriage_info?.[field]) {
+      
+        if (typeof originalData.previous_marriage_info[field] === "object" && originalData.previous_marriage_info[field].id) {
+          formData.previous_marriage_info[field] = originalData.previous_marriage_info[field].id;
+        }
+      }
+    });
+  }
+
+    
+      // Prepare the save data
     const rawSaveData = {
       personal_information: formData.personal_information || {},
-        family_details: formData.family_details || {},
+      family_details: formData.family_details || {},
       biographical_details: formData.biographical_details || {},
       work_information: formData.work_information || {},
       additional_details: formData.additional_details || {},
-        child_name: formData.child_name || [],
+      child_name: formData.child_name || [],
       your_suggestions: formData.your_suggestions || {},
       gahoi_code: formData.gahoi_code || "",
       marital_status: formData.marital_status || "",
-      consider_second_marriage: formData.consider_second_marriage || false
+      consider_second_marriage: formData.consider_second_marriage || false,
     };
-    
-      // Handle previous marriage info based on marital status
-      const isWidowOrDivorced = 
-        formData?.biographical_details?.is_married === "Widow/Widower" ||
-        formData?.biographical_details?.is_married === "Divorced";
+
+    // Remove unwanted keys if present
+    delete rawSaveData.documentId;
+    delete rawSaveData.createdAt;
+    delete rawSaveData.updatedAt;
+    delete rawSaveData.publishedAt;
+
+    // Married to Another Caste - spouse_gotra and spouse_aakna to 'N/A'
+if (
+  rawSaveData.biographical_details?.marriage_to_another_caste === "Married to Another Caste"
+) {
+  if (rawSaveData.family_details) {
+    rawSaveData.family_details.spouse_gotra = "N/A";
+    rawSaveData.family_details.spouse_aakna = "N/A";
+  }
+}
+
+
+
+   
+    if (
+      rawSaveData.personal_information?.is_gahoi &&
+      typeof rawSaveData.personal_information.is_gahoi === 'string' &&
+      rawSaveData.personal_information.is_gahoi.trim().toLowerCase() === 'no'
+    ) {
+      if (rawSaveData.biographical_details) {
+        rawSaveData.biographical_details.gotra = null;
+        rawSaveData.biographical_details.aakna = null;
+      }
+    }
+
+ 
 
       rawSaveData.previous_marriage_info = isWidowOrDivorced
         ? formData.previous_marriage_info || {}
         : null;
+
 
       const saveData = {
         data: stripIds(rawSaveData)
@@ -710,8 +955,8 @@ const handleSaveProfile = async () => {
     }
 
     const result = await saveResponse.json();
-
-     
+    
+    
    const updatedData = {
         ...formData,
         ...result.data?.attributes,
@@ -720,13 +965,15 @@ const handleSaveProfile = async () => {
           : null
       };
 
-     
+      
     setFormData(updatedData);
       setOriginalData(updatedData);
       setUserData(updatedData);
     setEditMode(false);
+    
 
       forceUpdate({});
+
     
       // Show success message 
     const successMessage = document.createElement('div');
@@ -958,7 +1205,8 @@ const handleInputChange = (section, field, value) => {
           
               const updatedData = {
                 ...newData,
-                ...result.data?.attributes
+                ...result.data?.attributes,
+                previous_marriage_info: result.data?.attributes?.previous_marriage_info
               };
 
               setFormData(updatedData);
@@ -1107,46 +1355,319 @@ const renderSectionContent = () => {
     
     const currentData = getCurrentData();
 
+    // Clean up previous marriage data when loading
+    if (currentData?.previous_marriage_info) {
+      const cleanedMarriageInfo = { ...currentData.previous_marriage_info };
+      ['children_living_with', 'want_kundli_match', 'accept_partner_with_children'].forEach(field => {
+        if (cleanedMarriageInfo[field] === '') {
+          delete cleanedMarriageInfo[field];
+        }
+      });
+      currentData.previous_marriage_info = cleanedMarriageInfo;
+    }
+
   if (!["personal", "family", "biographical", "work", "additional", "regional", "previous_marriage"].includes(activeSection)) {
     return null;
   }
 
   const sectionKey = SECTION_KEYS[activeSection];
   
-  // Added regional section handling
+  // regional section handling
   if (activeSection === 'regional') {
-    const regionalFields = [
-      { key: 'RegionalAssembly', label: 'Regional Assembly' },
-      { key: 'LocalPanchayatName', label: 'Local Panchayat Name' },
-      { key: 'LocalPanchayat', label: 'Local Panchayat' },
-      { key: 'SubLocalPanchayat', label: 'Sub Local Panchayat' },
-      { key: 'State', label: 'State' },
-      { key: 'District', label: 'District' },
-      { key: 'local_body', label: 'Local Body' },
-      { key: 'gram_panchayat', label: 'Gram Panchayat' }
-    ];
+ 
+   
+   
+    const regional = formData?.additional_details?.regional_information || {};
+
+   
+const DISTRICT_LOCAL_BODIES_MAP = {
+  Ashoknagar: ASHOKNAGAR_LOCAL_BODIES,
+  Alirajpur: ALIRAJPUR_LOCAL_BODIES,
+  Anuppur: ANUPPUR_LOCAL_BODIES,
+  Balaghat: BALAGHAT_LOCAL_BODIES,
+  Barwani: BARWANI_LOCAL_BODIES,
+  Betul: BETUL_LOCAL_BODIES,
+  Bhind: BHIND_LOCAL_BODIES,
+  Bhopal: BHOPAL_LOCAL_BODIES,
+  Burhanpur: BURHANPUR_LOCAL_BODIES,
+  Chhatarpur: CHHATARPUR_LOCAL_BODIES,
+  Chhindwara: CHHINDWARA_LOCAL_BODIES,
+  Damoh: DAMOH_LOCAL_BODIES,
+  Datia: DATIA_LOCAL_BODIES,
+  Dewas: DEWAS_LOCAL_BODIES,
+  Dhar: DHAR_LOCAL_BODIES,
+  Dindori: DINDORI_LOCAL_BODIES,
+  Guna: GUNA_LOCAL_BODIES,
+  Gwalior: GWALIOR_LOCAL_BODIES,
+  Harda: HARDA_LOCAL_BODIES,
+  Indore: INDORE_LOCAL_BODIES,
+  Jabalpur: JABALPUR_LOCAL_BODIES,
+  Katni: KATNI_LOCAL_BODIES,
+  Khandwa: KHANDWA_LOCAL_BODIES,
+  Jhabua: JHABUA_LOCAL_BODIES,  
+  Khargone: KHARGONE_LOCAL_BODIES,
+Mandla : MANDLA_LOCAL_BODIES,
+Mandsaur : MANDSAUR_LOCAL_BODIES,
+Morena : MORENA_LOCAL_BODIES,
+Narsinghpur: NARSINGHPUR_LOCAL_BODIES,
+Neemuch : NEEMUCH_LOCAL_BODIES,
+Panna : PANNA_LOCAL_BODIES,
+Raisen : RAISEN_LOCAL_BODIES,
+Rajgarh: RAJGARH_LOCAL_BODIES,
+Ratlam : RATLAM_LOCAL_BODIES,
+Rewa : REWA_LOCAL_BODIES,
+Sagar: SAGAR_LOCAL_BODIES,
+Satna : SATNA_LOCAL_BODIES,
+Sehore: SEHORE_LOCAL_BODIES,
+Seoni : SEONI_LOCAL_BODIES,
+Shahdol : SHAHDOL_LOCAL_BODIES,
+Shajapur : SHAJAPUR_LOCAL_BODIES,
+Shivpuri : SHIVPURI_LOCAL_BODIES,
+Sidhi : SIDHI_LOCAL_BODIES,
+Singrauli : SINGRAULI_LOCAL_BODIES,
+Tikamgarh : TIKAMGARH_LOCAL_BODIES,
+Ujjain: UJJAIN_LOCAL_BODIES,
+Umariya : UMARIYA_LOCAL_BODIES,
+Vidisha : VIDISHA_LOCAL_BODIES, 
+};
+
+const DISTRICT_GRAM_PANCHAYATS_MAP = {
+  Ashoknagar: ASHOKNAGAR_GRAM_PANCHAYATS,
+  Alirajpur: ALIRAJPUR_GRAM_PANCHAYATS,
+  Anuppur: ANUPPUR_GRAM_PANCHAYATS,
+  Balaghat: BALAGHAT_GRAM_PANCHAYATS,
+  Barwani: BARWANI_GRAM_PANCHAYATS,
+  Betul: BETUL_GRAM_PANCHAYATS,
+  Bhind: BHIND_GRAM_PANCHAYATS,
+  Bhopal: BHOPAL_GRAM_PANCHAYATS,
+  Burhanpur: BURHANPUR_GRAM_PANCHAYATS,
+  Chhatarpur: CHHATARPUR_GRAM_PANCHAYATS,
+  Chhindwara: CHHINDWARA_GRAM_PANCHAYATS,
+  Damoh: DAMOH_GRAM_PANCHAYATS,
+  Datia: DATIA_GRAM_PANCHAYATS,
+  Dewas: DEWAS_GRAM_PANCHAYATS,
+  Dhar: DHAR_GRAM_PANCHAYATS,
+  Dindori: DINDORI_GRAM_PANCHAYATS,
+  Guna: GUNA_GRAM_PANCHAYATS,
+  Gwalior: GWALIOR_GRAM_PANCHAYATS,
+  Harda: HARDA_GRAM_PANCHAYATS,
+  Indore: INDORE_GRAM_PANCHAYATS,
+  Jabalpur: JABALPUR_GRAM_PANCHAYATS,
+  Katni: KATNI_GRAM_PANCHAYATS,
+  Khandwa: KHANDWA_GRAM_PANCHAYATS,
+  Jhabua: JHABUA_GRAM_PANCHAYATS,
+  Khargone: KHARGONE_GRAM_PANCHAYATS,
+ Mandla : MANDLA_GRAM_PANCHAYATS,
+Mandsaur : MANDSAUR_GRAM_PANCHAYATS,
+Morena : MORENA_GRAM_PANCHAYATS,
+Narsinghpur: NARSINGHPUR_GRAM_PANCHAYATS,
+Neemuch : NEEMUCH_GRAM_PANCHAYATS,
+Panna : PANNA_GRAM_PANCHAYATS,
+Raisen : RAISEN_GRAM_PANCHAYATS,
+Rajgarh: RAJGARH_GRAM_PANCHAYATS,
+Ratlam : RATLAM_GRAM_PANCHAYATS,
+Rewa : REWA_GRAM_PANCHAYATS,
+Sagar: SAGAR_GRAM_PANCHAYATS,
+Satna : SATNA_GRAM_PANCHAYATS,
+Sehore: SEHORE_GRAM_PANCHAYATS,
+Seoni : SEONI_GRAM_PANCHAYATS,
+Shahdol : SHAHDOL_GRAM_PANCHAYATS,
+Shajapur : SHAJAPUR_GRAM_PANCHAYATS,
+Shivpuri : SHIVPURI_GRAM_PANCHAYATS,
+Sidhi : SIDHI_GRAM_PANCHAYATS,
+Singrauli : SINGRAULI_GRAM_PANCHAYATS,
+Tikamgarh : TIKAMGARH_GRAM_PANCHAYATS,
+Ujjain: UJJAIN_GRAM_PANCHAYATS,
+Umariya : UMARIYA_GRAM_PANCHAYATS,
+Vidisha : VIDISHA_GRAM_PANCHAYATS,
+};
+
+   
+
+    const handleRegionalChange = (updated) => {
+      setFormData(prev => ({
+        ...prev,
+        additional_details: {
+          ...prev.additional_details,
+          regional_information: {
+            ...prev.additional_details.regional_information,
+            ...updated
+          }
+        }
+      }));
+    };
 
     return (
       <section>
-        <div className="flex justify-between items-center mb-6">
+        <div className="mb-6">
           <h2 className="text-xl sm:text-2xl font-bold text-gray-800">
             Regional Information
           </h2>
         </div>
         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
           <dl className="divide-y divide-gray-200">
-            {regionalFields.map(({ key, label }) => {
-                const value = currentData?.additional_details?.regional_information?.[key];
-              if (!value || value === "N/A") return null;
-              return (
-                <div key={key} className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
-                  <dt className="text-sm font-medium text-gray-500">{label}</dt>
-                  <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                    {value || "N/A"}
-                  </dd>
+            {editMode ? (
+              <RegionalDropdowns
+                value={regional}
+                onChange={handleRegionalChange}
+                data={{
+                  STATES,
+                  STATE_TO_DISTRICTS,
+                  DISTRICT_TO_CITIES,
+                  DISTRICT_LOCAL_BODIES_MAP,
+                  DISTRICT_GRAM_PANCHAYATS_MAP
+                }}
+                disabled={false}
+              />
+            ) : (
+              <>
+                <div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
+                  <dt className="text-sm font-medium text-gray-500">State</dt>
+                  <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{regional.State || 'N/A'}</dd>
                 </div>
-              );
-            })}
+                <div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
+                  <dt className="text-sm font-medium text-gray-500">District</dt>
+                  <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{regional.District || 'N/A'}</dd>
+                </div>
+                <div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
+                  <dt className="text-sm font-medium text-gray-500">Local Body</dt>
+                  <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{regional.local_body || 'N/A'}</dd>
+                </div>
+                <div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
+                  <dt className="text-sm font-medium text-gray-500">Gram Panchayat</dt>
+                  <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{regional.gram_panchayat || 'N/A'}</dd>
+                </div>
+              </>
+            )}
+            {/* Other text fields */}
+            <div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
+              <dt className="text-sm font-medium text-gray-500">Regional Assembly</dt>
+              <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                {editMode ? (
+                  <select
+                    value={regional.RegionalAssembly || ''}
+                    onChange={e => setFormData(prev => ({
+                      ...prev,
+                      additional_details: {
+                        ...prev.additional_details,
+                        regional_information: {
+                          ...prev.additional_details.regional_information,
+                          RegionalAssembly: e.target.value
+                        }
+                      }
+                    }))}
+                    className="border border-gray-300 px-2 py-1 rounded w-full"
+                  >
+                    <option value="">Select Regional Assembly</option>
+                    {getFilteredRegionalAssemblies(
+                      regional.State,
+                      regional.District
+                    ).map((assembly) => (
+                      <option key={assembly} value={assembly}>{assembly}</option>
+                    ))}
+                  </select>
+                ) : (
+                  regional.RegionalAssembly || 'N/A'
+                )}
+              </dd>
+            </div>
+            <div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
+              <dt className="text-sm font-medium text-gray-500">Local Panchayat Name</dt>
+              <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                {editMode ? (
+                  <select
+                    value={regional.LocalPanchayatName || ''}
+                    onChange={e => setFormData(prev => ({
+                      ...prev,
+                      additional_details: {
+                        ...prev.additional_details,
+                        regional_information: {
+                          ...prev.additional_details.regional_information,
+                          LocalPanchayatName: e.target.value
+                        }
+                      }
+                    }))}
+                    className="border border-gray-300 px-2 py-1 rounded w-full"
+                  >
+                    <option value="">Select Local Panchayat Name</option>
+                    {getFilteredLocalPanchayatNames({
+                      state: regional.State,
+                      district: regional.District,
+                      city: regional.City,
+                      regionalAssembly: regional.RegionalAssembly
+                    }).map((name) => (
+                      <option key={name} value={name}>{name}</option>
+                    ))}
+                  </select>
+                ) : (
+                  regional.LocalPanchayatName || 'N/A'
+                )}
+              </dd>
+            </div>
+            <div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
+              <dt className="text-sm font-medium text-gray-500">Local Panchayat</dt>
+              <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                {editMode ? (
+                  <select
+                    value={regional.LocalPanchayat || ''}
+                    onChange={e => setFormData(prev => ({
+                      ...prev,
+                      additional_details: {
+                        ...prev.additional_details,
+                        regional_information: {
+                          ...prev.additional_details.regional_information,
+                          LocalPanchayat: e.target.value
+                        }
+                      }
+                    }))}
+                    className="border border-gray-300 px-2 py-1 rounded w-full"
+                  >
+                    <option value="">Select Local Panchayat</option>
+                    {getFilteredLocalPanchayat({
+                      state: regional.State,
+                      district: regional.District,
+                      city: regional.City,
+                      regionalAssembly: regional.RegionalAssembly,
+                      localPanchayatName: regional.LocalPanchayatName
+                    }).map((name) => (
+                      <option key={name} value={name}>{name}</option>
+                    ))}
+                  </select>
+                ) : (
+                  regional.LocalPanchayat || 'N/A'
+                )}
+              </dd>
+            </div>
+            <div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
+              <dt className="text-sm font-medium text-gray-500">Sub Local Panchayat</dt>
+              <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                {editMode ? (
+                  <select
+                    value={regional.SubLocalPanchayat || ''}
+                    onChange={e => setFormData(prev => ({
+                      ...prev,
+                      additional_details: {
+                        ...prev.additional_details,
+                        regional_information: {
+                          ...prev.additional_details.regional_information,
+                          SubLocalPanchayat: e.target.value
+                        }
+                      }
+                    }))}
+                    className="border border-gray-300 px-2 py-1 rounded w-full"
+                  >
+                    <option value="">Select Sub Local Panchayat</option>
+                    {getFilteredSubLocalPanchayat({
+                      localPanchayat: regional.LocalPanchayat
+                    }).map((name) => (
+                      <option key={name} value={name}>{name}</option>
+                    ))}
+                  </select>
+                ) : (
+                  regional.SubLocalPanchayat || 'N/A'
+                )}
+              </dd>
+            </div>
           </dl>
         </div>
       </section>
@@ -1180,13 +1701,23 @@ const renderSectionContent = () => {
       const prevMarriageChildren = Array.isArray(prevMarriageInfo?.children) ? prevMarriageInfo.children : [];
 
       const handlePrevMarriageChange = (field, value) => {
-        setFormData(prev => ({
-          ...prev,
-          previous_marriage_info: {
-            ...(prev.previous_marriage_info || {}),
-            [field]: value
+        const optionalFields = ['children_living_with', 'want_kundli_match', 'accept_partner_with_children'];
+        
+        setFormData(prev => {
+          const updatedMarriageInfo = { ...(prev.previous_marriage_info || {}) };
+          
+          // If it's an optional field and empty, remove it entirely
+          if (optionalFields.includes(field) && value === '') {
+            delete updatedMarriageInfo[field];
+          } else {
+            updatedMarriageInfo[field] = value;
           }
-        }));
+          
+          return {
+            ...prev,
+            previous_marriage_info: updatedMarriageInfo
+          };
+        });
       };
 
       const handleChildChange = (index, field, value) => {
@@ -1274,65 +1805,106 @@ const renderSectionContent = () => {
                     </dd>
                   </div>
 
-            {/* Spouse Gotra */}
-                  <div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
-              <dt className="text-sm font-medium text-gray-500">Spouse Gotra <span className="text-red-500">*</span></dt>
-                    <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                {editMode ? (
-                  <div>
-                      <select
-                      value={prevMarriageInfo?.spouse_gotra || ""}
-                      onChange={(e) => handlePrevMarriageChange("spouse_gotra", e.target.value)}
-                      className={`border ${prevMarriageErrors.spouse_gotra ? 'border-red-500' : 'border-gray-300'} px-2 py-1 rounded w-full`}
-                      required
-                      >
-                        <option value="">Select Gotra</option>
-                        {GOTRA_OPTIONS.map((option) => (
-                        <option key={option} value={option}>{option}</option>
-                        ))}
-                      </select>
-                    {prevMarriageErrors.spouse_gotra && (
-                      <p className="text-red-500 text-xs mt-1">{prevMarriageErrors.spouse_gotra}</p>
-                    )}
-                  </div>
-                ) : (
-                  prevMarriageInfo?.spouse_gotra || "N/A"
-                )}
-                    </dd>
-                  </div>
+{/* Marriage to another caste */}
+<div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
+  <dt className="text-sm font-medium text-gray-500">Marriage To Another Caste</dt>
+  <dd className="text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+    {editMode ? (
+      <select
+        value={formData?.previous_marriage_info?.marriage_to_another_caste || ""}
+        onChange={(e) => {
+          setFormData(prev => ({
+            ...prev,
+            previous_marriage_info: {
+              ...prev.previous_marriage_info,
+              marriage_to_another_caste: e.target.value,
+              // Reset spouse_gotra and spouse_akna when this changes
+              spouse_gotra: "",
+              spouse_akna: ""
+            }
+          }));
+        }}
+        className="border border-gray-300 px-2 py-1 rounded w-full"
+      >
+        <option value="" disabled>Select Marriage Type</option>
+        <option value="Same Caste Marriage">Same Caste Marriage</option>
+        <option value="Married to Another Caste">Married to Another Caste</option>
+      </select>
+    ) : (
+      currentData?.previous_marriage_info?.marriage_to_another_caste || "N/A"
+    )}
+  </dd>
+</div>
 
-            {/* Spouse Akna */}
-                  <div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
-              <dt className="text-sm font-medium text-gray-500">Spouse Akna <span className="text-red-500">*</span></dt>
-                    <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                {editMode ? (
-                  <div>
-                      <select
-                      value={prevMarriageInfo?.spouse_akna || ""}
-                      onChange={(e) => handlePrevMarriageChange("spouse_akna", e.target.value)}
-                      className={`border ${prevMarriageErrors.spouse_akna ? 'border-red-500' : 'border-gray-300'} px-2 py-1 rounded w-full`}
-                      required
-                      disabled={!prevMarriageInfo?.spouse_gotra}
-                      >
-                        <option value="">Select Aakna</option>
-                      {(prevMarriageInfo?.spouse_gotra 
-                        ? (GOTRA_AAKNA_MAP[prevMarriageInfo.spouse_gotra] || AAKNA_OPTIONS)
-                          : AAKNA_OPTIONS
-                        ).map((option) => (
-                        <option key={option} value={option}>{option}</option>
-                        ))}
-                      </select>
-                    {prevMarriageErrors.spouse_akna && (
-                      <p className="text-red-500 text-xs mt-1">{prevMarriageErrors.spouse_akna}</p>
-                    )}
-                  </div>
-                ) : (
-                  prevMarriageInfo?.spouse_akna || "N/A"
-                )}
-                    </dd>
-                  </div>
+{/* Show these only if not Married to Another Caste */}
+{formData?.previous_marriage_info?.marriage_to_another_caste !== "Married to Another Caste" && (
+  <>
+    {/* Spouse Gotra */}
+    <div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
+      <dt className="text-sm font-medium text-gray-500">
+        Spouse Gotra <span className="text-red-500">*</span>
+      </dt>
+      <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+        {editMode ? (
+          <div>
+            <select
+              value={prevMarriageInfo?.spouse_gotra || ""}
+              onChange={(e) => handlePrevMarriageChange("spouse_gotra", e.target.value)}
+              className={`border ${prevMarriageErrors.spouse_gotra ? "border-red-500" : "border-gray-300"} px-2 py-1 rounded w-full`}
+              required
+            >
+              <option value="">Select Gotra</option>
+              {GOTRA_OPTIONS.map((option) => (
+                <option key={option} value={option}>{option}</option>
+              ))}
+            </select>
+            {prevMarriageErrors.spouse_gotra && (
+              <p className="text-red-500 text-xs mt-1">{prevMarriageErrors.spouse_gotra}</p>
+            )}
+          </div>
+        ) : (
+          prevMarriageInfo?.spouse_gotra || "N/A"
+        )}
+      </dd>
+    </div>
 
-            {/* Spouse DOB */}
+    {/* Spouse Akna */}
+    <div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
+      <dt className="text-sm font-medium text-gray-500">
+        Spouse Akna <span className="text-red-500">*</span>
+      </dt>
+      <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+        {editMode ? (
+          <div>
+            <select
+              value={prevMarriageInfo?.spouse_akna || ""}
+              onChange={(e) => handlePrevMarriageChange("spouse_akna", e.target.value)}
+              className={`border ${prevMarriageErrors.spouse_akna ? "border-red-500" : "border-gray-300"} px-2 py-1 rounded w-full`}
+              required
+              disabled={!prevMarriageInfo?.spouse_gotra}
+            >
+              <option value="">Select Aakna</option>
+              {(prevMarriageInfo?.spouse_gotra
+                ? (GOTRA_AAKNA_MAP[prevMarriageInfo.spouse_gotra] || AAKNA_OPTIONS)
+                : AAKNA_OPTIONS
+              ).map((option) => (
+                <option key={option} value={option}>{option}</option>
+              ))}
+            </select>
+            {prevMarriageErrors.spouse_akna && (
+              <p className="text-red-500 text-xs mt-1">{prevMarriageErrors.spouse_akna}</p>
+            )}
+          </div>
+        ) : (
+          prevMarriageInfo?.spouse_akna || "N/A"
+        )}
+      </dd>
+    </div>
+  </>
+)}
+
+ 
+ {/* Spouse DOB */}
                   <div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
               <dt className="text-sm font-medium text-gray-500">Spouse Date of Birth <span className="text-red-500">*</span></dt>
                     <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
@@ -1355,83 +1927,158 @@ const renderSectionContent = () => {
               </dd>
             </div>
 
+
+{/* Have Children */}
+<div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
+  <dt className="text-sm font-medium text-gray-500">Do you have children? <span className="text-red-500">*</span> </dt>
+  <dd className="text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+    {editMode ? (
+      <select
+        value={formData?.previous_marriage_info?.has_children || ""}
+        onChange={(e) => {
+          const value = e.target.value;
+          setFormData(prev => {
+            const updated = {
+              ...prev,
+              previous_marriage_info: {
+                ...prev.previous_marriage_info,
+                has_children: value
+              }
+            };
+
+            // If answer is not "Yes", remove number_of_children
+            if (value !== "Yes") {
+              delete updated.previous_marriage_info.number_of_children;
+            } else {
+              updated.previous_marriage_info.number_of_children =
+                prev.previous_marriage_info.number_of_children || "";
+            }
+
+            return updated;
+          });
+        }}
+        className="border border-gray-300 px-2 py-1 rounded w-full"
+      >
+        <option value="">Select</option>
+        <option value="Yes">Yes</option>
+        <option value="No">No</option>
+      </select>
+    ) : (
+      formData?.previous_marriage_info?.has_children || "N/A"
+    )}
+  </dd>
+</div>
+
+
+{/* Total Number of Children (only if has_children === 'Yes') */}
+{formData?.previous_marriage_info?.has_children === "Yes" && (
+  <div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
+    <dt className="text-sm font-medium text-gray-500">Total Number of Children</dt>
+    <dd className="text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+      {editMode ? (
+        <input
+          type="number"
+          min="1"
+          value={formData?.previous_marriage_info?.number_of_children || ""}
+          onChange={(e) => {
+            setFormData(prev => ({
+              ...prev,
+              previous_marriage_info: {
+                ...prev.previous_marriage_info,
+                number_of_children: e.target.value
+              }
+            }));
+          }}
+          className="border border-gray-300 px-2 py-1 rounded w-full"
+        />
+      ) : (
+        formData?.previous_marriage_info?.number_of_children || "N/A"
+      )}
+    </dd>
+  </div>
+)}
+
+
             {/* Children Living With */}
-            <div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
-              <dt className="text-sm font-medium text-gray-500">Children Living With <span className="text-red-500">*</span></dt>
-              <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                {editMode ? (
-                  <div>
+            {editMode || prevMarriageInfo?.children_living_with ? (
+              <div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
+                <dt className="text-sm font-medium text-gray-500">Children Living With</dt>
+                <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                  {editMode ? (
+                    <div>
                       <select
-                      value={prevMarriageInfo?.children_living_with || ""}
-                      onChange={(e) => handlePrevMarriageChange("children_living_with", e.target.value)}
-                      className={`border ${prevMarriageErrors.children_living_with ? 'border-red-500' : 'border-gray-300'} px-2 py-1 rounded w-full`}
-                      required
+                        value={prevMarriageInfo?.children_living_with || ""}
+                        onChange={(e) => handlePrevMarriageChange("children_living_with", e.target.value)}
+                        className={`border ${prevMarriageErrors.children_living_with ? 'border-red-500' : 'border-gray-300'} px-2 py-1 rounded w-full`}
                       >
                         <option value="">Select Option</option>
                         <option value="yes">Yes</option>
                         <option value="no">No</option>
                       </select>
-                    {prevMarriageErrors.children_living_with && (
-                      <p className="text-red-500 text-xs mt-1">{prevMarriageErrors.children_living_with}</p>
-                    )}
-                  </div>
-                ) : (
-                  prevMarriageInfo?.children_living_with || "N/A"
-                )}
-                    </dd>
-                  </div>
+                      {prevMarriageErrors.children_living_with && (
+                        <p className="text-red-500 text-xs mt-1">{prevMarriageErrors.children_living_with}</p>
+                      )}
+                    </div>
+                  ) : (
+                    prevMarriageInfo?.children_living_with || "N/A"
+                  )}
+                </dd>
+              </div>
+            ) : null}
 
             {/* Want Kundli Match */}
-                  <div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
-              <dt className="text-sm font-medium text-gray-500">Want Kundli Match <span className="text-red-500">*</span></dt>
-                    <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                {editMode ? (
-                  <div>
+            {editMode || prevMarriageInfo?.want_kundli_match ? (
+              <div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
+                <dt className="text-sm font-medium text-gray-500">Want Kundli Match</dt>
+                <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                  {editMode ? (
+                    <div>
                       <select
-                      value={prevMarriageInfo?.want_kundli_match || ""}
-                      onChange={(e) => handlePrevMarriageChange("want_kundli_match", e.target.value)}
-                      className={`border ${prevMarriageErrors.want_kundli_match ? 'border-red-500' : 'border-gray-300'} px-2 py-1 rounded w-full`}
-                      required
+                        value={prevMarriageInfo?.want_kundli_match || ""}
+                        onChange={(e) => handlePrevMarriageChange("want_kundli_match", e.target.value)}
+                        className={`border ${prevMarriageErrors.want_kundli_match ? 'border-red-500' : 'border-gray-300'} px-2 py-1 rounded w-full`}
                       >
                         <option value="">Select Option</option>
                         <option value="yes">Yes</option>
                         <option value="no">No</option>
                       </select>
-                    {prevMarriageErrors.want_kundli_match && (
-                      <p className="text-red-500 text-xs mt-1">{prevMarriageErrors.want_kundli_match}</p>
-                    )}
-                  </div>
-                ) : (
-                  prevMarriageInfo?.want_kundli_match || "N/A"
-                )}
-                    </dd>
-                  </div>
+                      {prevMarriageErrors.want_kundli_match && (
+                        <p className="text-red-500 text-xs mt-1">{prevMarriageErrors.want_kundli_match}</p>
+                      )}
+                    </div>
+                  ) : (
+                    prevMarriageInfo?.want_kundli_match || "N/A"
+                  )}
+                </dd>
+              </div>
+            ) : null}
 
             {/* Accept Partner With Children */}
-                  <div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
-              <dt className="text-sm font-medium text-gray-500">Accept Partner With Children <span className="text-red-500">*</span></dt>
-                    <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                {editMode ? (
-                  <div>
+            {editMode || prevMarriageInfo?.accept_partner_with_children ? (
+              <div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
+                <dt className="text-sm font-medium text-gray-500">Accept Partner With Children</dt>
+                <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                  {editMode ? (
+                    <div>
                       <select
-                      value={prevMarriageInfo?.accept_partner_with_children || ""}
-                      onChange={(e) => handlePrevMarriageChange("accept_partner_with_children", e.target.value)}
-                      className={`border ${prevMarriageErrors.accept_partner_with_children ? 'border-red-500' : 'border-gray-300'} px-2 py-1 rounded w-full`}
-                      required
+                        value={prevMarriageInfo?.accept_partner_with_children || ""}
+                        onChange={(e) => handlePrevMarriageChange("accept_partner_with_children", e.target.value)}
+                        className={`border ${prevMarriageErrors.accept_partner_with_children ? 'border-red-500' : 'border-gray-300'} px-2 py-1 rounded w-full`}
                       >
                         <option value="">Select Option</option>
                         <option value="yes">Yes</option>
                         <option value="no">No</option>
                       </select>
-                    {prevMarriageErrors.accept_partner_with_children && (
-                      <p className="text-red-500 text-xs mt-1">{prevMarriageErrors.accept_partner_with_children}</p>
-                    )}
-                  </div>
-                ) : (
-                  prevMarriageInfo?.accept_partner_with_children || "N/A"
-                )}
-              </dd>
-            </div>
+                      {prevMarriageErrors.accept_partner_with_children && (
+                        <p className="text-red-500 text-xs mt-1">{prevMarriageErrors.accept_partner_with_children}</p>
+                      )}
+                    </div>
+                  ) : (
+                    prevMarriageInfo?.accept_partner_with_children || "N/A"
+                  )}
+                </dd>
+              </div>
+            ) : null}
 
             {/* Children Section */}
             <div className="px-4 py-3">
@@ -1557,7 +2204,139 @@ const renderSectionContent = () => {
                 )}
               </div>
             </div>
+
+
+            
           </dl>
+
+{/* Documents Section */}
+<div className="px-4 py-3">
+  <h3 className="text-lg font-semibold">Documents</h3>
+  
+  {/* Aadhar Front */}
+  <div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
+    <dt className="text-sm font-medium text-gray-500">Aadhar Front</dt>
+    <dd className="text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+      {editMode ? (
+        <div className="flex flex-col space-y-2">
+          <input
+            type="file"
+            accept="image/*"
+            onChange={e => handleFileUpload(e, "aadhar_front")}
+            className="border border-gray-300 px-2 py-1 rounded w-full"
+          />
+          {currentData?.previous_marriage_info?.aadhar_front?.url && (
+            <div className="text-xs text-gray-500">Current file: {currentData.previous_marriage_info.aadhar_front.name}</div>
+          )}
+        </div>
+      ) : (
+        currentData?.previous_marriage_info?.aadhar_front?.url ? (
+          <span className="flex items-center space-x-2">
+            <a 
+              href={currentData.previous_marriage_info.aadhar_front.url.startsWith('http') 
+                ? currentData.previous_marriage_info.aadhar_front.url 
+                : `${API_BASE}${currentData.previous_marriage_info.aadhar_front.url}`}
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="inline-block"
+            >
+              <img 
+                src={currentData.previous_marriage_info.aadhar_front.url.startsWith('http')
+                  ? currentData.previous_marriage_info.aadhar_front.url
+                  : `${API_BASE}${currentData.previous_marriage_info.aadhar_front.url}`}
+                alt="Aadhar Front" 
+                className="max-w-[100px] max-h-[100px] rounded-lg border border-gray-200" 
+              />
+            </a>
+          </span>
+        ) : "N/A"
+      )}
+    </dd>
+  </div>
+
+  {/* Aadhar Back */}
+  <div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
+    <dt className="text-sm font-medium text-gray-500">Aadhar Back</dt>
+    <dd className="text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+      {editMode ? (
+        <div className="flex flex-col space-y-2">
+          <input
+            type="file"
+            accept="image/*"
+            onChange={e => handleFileUpload(e, "aadhar_back")}
+            className="border border-gray-300 px-2 py-1 rounded w-full"
+          />
+          {currentData?.previous_marriage_info?.aadhar_back?.url && (
+            <div className="text-xs text-gray-500">Current file: {currentData.previous_marriage_info.aadhar_back.name}</div>
+          )}
+        </div>
+      ) : (
+        currentData?.previous_marriage_info?.aadhar_back?.url ? (
+          <span className="flex items-center space-x-2">
+            <a 
+              href={currentData.previous_marriage_info.aadhar_back.url.startsWith('http') 
+                ? currentData.previous_marriage_info.aadhar_back.url 
+                : `${API_BASE}${currentData.previous_marriage_info.aadhar_back.url}`}
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="inline-block"
+            >
+              <img 
+                src={currentData.previous_marriage_info.aadhar_back.url.startsWith('http')
+                  ? currentData.previous_marriage_info.aadhar_back.url
+                  : `${API_BASE}${currentData.previous_marriage_info.aadhar_back.url}`}
+                alt="Aadhar Back" 
+                className="max-w-[100px] max-h-[100px] rounded-lg border border-gray-200" 
+              />
+            </a>
+          </span>
+        ) : "N/A"
+      )}
+    </dd>
+  </div>
+
+  {/* Kundali Photo */}
+  <div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
+    <dt className="text-sm font-medium text-gray-500">Kundali Photo</dt>
+    <dd className="text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+      {editMode ? (
+        <div className="flex flex-col space-y-2">
+          <input
+            type="file"
+            accept="image/*"
+            onChange={e => handleFileUpload(e, "kundali_photo")}
+            className="border border-gray-300 px-2 py-1 rounded w-full"
+          />
+          {currentData?.previous_marriage_info?.kundali_photo?.url && (
+            <div className="text-xs text-gray-500">Current file: {currentData.previous_marriage_info.kundali_photo.name}</div>
+          )}
+        </div>
+      ) : (
+        currentData?.previous_marriage_info?.kundali_photo?.url ? (
+          <span className="flex items-center space-x-2">
+            <a 
+              href={currentData.previous_marriage_info.kundali_photo.url.startsWith('http') 
+                ? currentData.previous_marriage_info.kundali_photo.url 
+                : `${API_BASE}${currentData.previous_marriage_info.kundali_photo.url}`}
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="inline-block"
+            >
+              <img 
+                src={currentData.previous_marriage_info.kundali_photo.url.startsWith('http')
+                  ? currentData.previous_marriage_info.kundali_photo.url
+                  : `${API_BASE}${currentData.previous_marriage_info.kundali_photo.url}`}
+                alt="Kundali Photo" 
+                className="max-w-[100px] max-h-[100px] rounded-lg border border-gray-200" 
+              />
+            </a>
+          </span>
+        ) : "N/A"
+      )}
+    </dd>
+  </div>
+</div>
+          
         </div>
       </section>
     );
@@ -1648,36 +2427,7 @@ const renderSectionContent = () => {
               </dd>
             </div>
 
-            {/* Married  */}
-            <div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
-              <dt className="text-sm font-medium text-gray-500">Is Married</dt>
-              <dd className="text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                {editMode ? (
-                  <select
-                    value={formData?.biographical_details?.is_married || ""}
-                    onChange={(e) => {
-                      setFormData(prev => ({
-                        ...prev,
-                        biographical_details: {
-                          ...prev.biographical_details,
-                          is_married: e.target.value
-                        }
-                      }));
-                    }}
-                    className="border border-gray-300 px-2 py-1 rounded w-full"
-                  >
-                    <option value="" disabled>Select Marital Status</option>
-                    {BIOGRAPHICAL_IS_MARRIED_OPTIONS.map((option) => (
-                      <option key={option} value={option}>
-                        {option}
-                      </option>
-                    ))}
-                  </select>
-                ) : (
-                  currentData?.biographical_details?.is_married || "N/A"
-                )}
-              </dd>
-            </div>
+         
 
             {/* Marriage To Another Caste Field */}
             {formData?.biographical_details?.is_married !== "Widow/Widower" && 
@@ -1739,6 +2489,13 @@ const renderSectionContent = () => {
       </section>
     );
   }
+
+
+
+
+
+
+
   
   return (
     <section>
@@ -1751,6 +2508,38 @@ const renderSectionContent = () => {
         <dl className="divide-y divide-gray-200">
           {activeSection === 'family' ? (
             <>
+
+               {/* Married  */}
+               <div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
+              <dt className="text-sm font-medium text-gray-500">Is Married</dt>
+              <dd className="text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                {editMode ? (
+                  <select
+                    value={formData?.biographical_details?.is_married || ""}
+                    onChange={(e) => {
+                      setFormData(prev => ({
+                        ...prev,
+                        biographical_details: {
+                          ...prev.biographical_details,
+                          is_married: e.target.value
+                        }
+                      }));
+                    }}
+                    className="border border-gray-300 px-2 py-1 rounded w-full"
+                  >
+                    <option value="" disabled>Select Marital Status</option>
+                    {BIOGRAPHICAL_IS_MARRIED_OPTIONS.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  currentData?.biographical_details?.is_married || "N/A"
+                )}
+              </dd>
+            </div>
+            
               {/* Parent Details */}
               <div className="px-4 py-3">
                 <h3 className="text-lg font-semibold mb-4">Parent Information</h3>
@@ -1781,7 +2570,7 @@ const renderSectionContent = () => {
                             currentData?.family_details?.father_name || "Not Added"
                           )}
                         </dd>
-                      </div>
+            </div>
 
                       {/* Father's Mobile */}
                       <div>
@@ -1866,7 +2655,8 @@ const renderSectionContent = () => {
               </div>
 
               {/* Spouse Details */}
-              <div className="px-4 py-3">
+   {/* Spouse Details */}
+   <div className="px-4 py-3">
                 <h3 className="text-lg font-semibold mb-4">Spouse Information</h3>
                 <div className="space-y-4">
                   {(currentData?.biographical_details?.is_married === "Married" || editMode) && (
@@ -2499,6 +3289,13 @@ const renderSectionContent = () => {
             Object.entries(currentData[sectionKey] || {})
               .filter(([key]) => key !== "id" && key !== "display_picture" && key !== "regional_information")
               .map(([key, value]) => {
+                if (
+                  sectionKey === "biographical_details" &&
+                  (key === "gotra" || key === "aakna") &&
+                  currentData.personal_information?.is_gahoi === "No"
+                ) {
+                  return renderField(sectionKey, key, "Not Available", { type: "text" });
+                }
                 const fieldConfig = getFieldType(sectionKey, key, formData);
                 return renderField(sectionKey, key, value, fieldConfig);
               })
@@ -2546,6 +3343,35 @@ const renderSectionContent = () => {
     setEditMode(true);
   };
 
+  // aahar front back file upload
+  const handleFileUpload = async (e, field) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const formDataUpload = new FormData();
+    formDataUpload.append("files", file);
+
+    const uploadRes = await fetch(`${API_BASE}/api/upload`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+      body: formDataUpload,
+    });
+    const uploadData = await uploadRes.json();
+    const fileId = uploadData[0]?.id;
+
+    setFormData(prev => ({
+      ...prev,
+      previous_marriage_info: {
+        ...prev.previous_marriage_info,
+        [field]: fileId,
+      }
+    }));
+  };
+
+
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100">
@@ -2592,10 +3418,70 @@ const renderSectionContent = () => {
 <div className="min-h-screen bg-gray-100">
   <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <div className="bg-white rounded-lg shadow-xl overflow-hidden">
+      <div className="block lg:hidden mb-6">
+        {/* Gahoi ID Card - Mobile View */}
+        <div className="px-4">
+          <div className="bg-gradient-to-r from-red-600 to-red-800 p-0.5 rounded-lg shadow-lg">
+            <div className="bg-white rounded-lg relative overflow-hidden">
+              <div className="absolute inset-0 opacity-[0.03] pointer-events-none">
+                <div className="absolute inset-0" style={{
+                  backgroundImage: "url('/decorative-pattern.png')",
+                  backgroundSize: "120px",
+                  backgroundRepeat: "repeat"
+                }}></div>
+              </div>
+
+              <div className="bg-gradient-to-r from-red-600 to-red-800 p-2 text-center relative">
+                <div className="absolute left-2 top-1/2 transform -translate-y-1/2">
+                  <img src="/gahoi-logo.png" alt="" className="h-6 w-6" />
+                </div>
+                <div>
+                  <div className="text-white text-xs font-semibold">गहोई समाज</div>
+                  <div className="text-white text-[10px]">ID Card</div>
+                </div>
+              </div>
+
+              <div className="p-3">
+                <div className="space-y-2">
+                  <div>
+                    <div className="text-[10px] text-gray-500 uppercase">Name / नाम</div>
+                    <div className="text-gray-900 text-sm font-medium">
+                      {getCurrentData()?.personal_information?.full_name || "Not Added"}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="text-[10px] text-gray-500 uppercase">Father's Name / पिता का नाम</div>
+                    <div className="text-gray-900 text-xs">
+                      {getCurrentData()?.family_details?.father_name || "Not Added"}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="text-[10px] text-gray-500 uppercase">Mobile / मोबाइल</div>
+                    <div className="text-gray-900 text-xs">
+                      {getCurrentData()?.personal_information?.mobile_number || "Not Added"}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="text-[10px] text-gray-500 uppercase">Gahoi Code / गहोई कोड</div>
+                    <div className="text-red-600 font-bold text-sm tracking-wider leading-relaxed">
+                      {getCurrentData()?.gahoi_code || "Not Added"}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="flex flex-col lg:flex-row">
         {/* Sidebar */}
         <div className="w-full lg:w-64 bg-gray-50 border-b lg:border-b-0 lg:border-r border-gray-200">
-          <nav className="flex lg:flex-col overflow-x-auto lg:overflow-x-visible py-2 lg:py-4">
+          <nav className="flex lg:flex-col overflow-x-auto lg:overflow-x-visible py-2 lg:py-4 h-full">
+            <div className="flex-1">
             {SECTIONS.map((section) => (
               <button
                 key={section.id}
@@ -2611,6 +3497,67 @@ const renderSectionContent = () => {
                 <span className="ml-3">{section.title}</span>
               </button>
             ))}
+            </div>
+
+            {/* Gahoi ID Card - Desktop */}
+            <div className="hidden lg:block mt-auto px-4 py-6">
+              <div className="bg-gradient-to-r from-red-600 to-red-800 p-0.5 rounded-lg shadow-lg">
+                <div className="bg-white rounded-lg relative overflow-hidden">
+                  {/* Background  */}
+                  <div className="absolute inset-0 opacity-[0.03] pointer-events-none">
+                    <div className="absolute inset-0" style={{
+                      backgroundImage: "url('/decorative-pattern.png')",
+                      backgroundSize: "120px",
+                      backgroundRepeat: "repeat"
+                    }}></div>
+                  </div>
+
+                  {/* Header */}
+                  <div className="bg-gradient-to-r from-red-600 to-red-800 p-2 text-center relative">
+                    <div className="absolute left-2 top-1/2 transform -translate-y-1/2">
+                      <img src="/gahoi-logo.png" alt="" className="h-6 w-6" />
+                    </div>
+                    <div>
+                      <div className="text-white text-xs font-semibold">गहोई समाज</div>
+                      <div className="text-white text-[10px]">ID Card</div>
+                    </div>
+                  </div>
+
+                  {/* Card Content */}
+                  <div className="p-3">
+                    <div className="space-y-2">
+                      <div>
+                        <div className="text-[10px] text-gray-500 uppercase">Name / नाम</div>
+                        <div className="text-gray-900 text-sm font-medium">
+                          {getCurrentData()?.personal_information?.full_name || "Not Added"}
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className="text-[10px] text-gray-500 uppercase">Father's Name / पिता का नाम</div>
+                        <div className="text-gray-900 text-xs">
+                          {getCurrentData()?.family_details?.father_name || "Not Added"}
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className="text-[10px] text-gray-500 uppercase">Mobile / मोबाइल</div>
+                        <div className="text-gray-900 text-xs">
+                         {getCurrentData()?.personal_information?.mobile_number || "Not Added"}
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className="text-[10px] text-gray-500 uppercase">Gahoi Code / गहोई कोड</div>
+                        <div className="text-red-600 font-bold text-sm tracking-wider leading-relaxed">
+                          {getCurrentData()?.gahoi_code || "Not Added"}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </nav>
         </div>
 
@@ -2634,23 +3581,24 @@ const renderSectionContent = () => {
                 </button>
               </>
             ) : (
-              activeSection !== 'regional' && activeSection !== 'work' && 
+             activeSection !== 'work' && 
              
               !(activeSection === 'previous_marriage' && 
                 (formData?.biographical_details?.is_married === "Married" || 
                  formData?.biographical_details?.is_married === "Unmarried")) && (
-                <button
+              <button
                   onClick={handleEditClick}
-                  className="text-sm bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded"
-                >
-                  Edit Profile
-                </button>
+                className="text-sm bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded"
+              >
+                Edit Profile
+              </button>
               )
             )}
           </div>
 
           {/* Sections */}
           {renderSectionContent()}
+          
         </div>
       </div>
     </div>

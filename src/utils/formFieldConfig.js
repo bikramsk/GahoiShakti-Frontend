@@ -11,6 +11,15 @@ import {
   EMPLOYMENT_TYPES
 } from "../constants/formConstants";
 
+import {
+  STATES,
+  STATE_TO_DISTRICTS,
+  DISTRICT_TO_CITIES,
+  ASHOKNAGAR_GRAM_PANCHAYATS,
+  ASHOKNAGAR_LOCAL_BODIES
+} from "../constants/locationData";
+
+
 export const FORM_FIELD_CONFIG = {
   personal_information: {
     gender: {
@@ -98,6 +107,28 @@ export const FORM_FIELD_CONFIG = {
     is_married: {
       type: "dropdown",
       options: MARITAL_STATUS_OPTIONS
+    }
+  },
+  regional_information: {
+    state: {
+      type: "dropdown",
+      options: STATES
+    },
+    district: {
+      type: "dropdown",
+      options: [] // Will be populated based on selected state
+    },
+    city: {
+      type: "dropdown",
+      options: [] // Will be populated based on selected district
+    },
+    local_body: {
+      type: "dropdown",
+      options: [] // Will be populated based on selected district
+    },
+    gram_panchayat: {
+      type: "dropdown",
+      options: [] // Will be populated based on selected local body
     }
   },
   family_details: {
