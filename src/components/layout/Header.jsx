@@ -40,8 +40,18 @@ const Header = () => {
   }, []);
 
   const handleLogout = () => {
+    // Clear all authentication-related data
     localStorage.removeItem('token');
     localStorage.removeItem('verifiedMobile');
+    localStorage.removeItem('documentId'); 
+    localStorage.removeItem('mobile');
+    localStorage.removeItem('userMobile');
+    localStorage.removeItem('authMobile');
+    localStorage.removeItem('loggedInMobile');
+
+    // Clear any session storage
+    sessionStorage.clear();
+
     setIsAuthenticated(false);
     navigate('/');
   };

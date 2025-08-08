@@ -951,7 +951,24 @@ if (
     );
 
     if (!saveResponse.ok) {
-      throw new Error(`Failed to save profile (${saveResponse.status})`);
+      const errorText = await saveResponse.text();
+
+      if (saveResponse.status === 404) {
+        localStorage.removeItem("documentId");
+        throw new Error(`Profile record not found (404). Please refresh the page and try again.`);
+      }
+
+      if (saveResponse.status === 400) {
+        // Try to parse error response for more details
+        try {
+          const errorData = JSON.parse(errorText);
+          throw new Error(`Data validation failed: ${errorData.error?.message || errorText}`);
+        } catch (parseError) {
+          throw new Error(`Data validation failed (400): ${errorText}`);
+        }
+      }
+
+      throw new Error(`Failed to save profile (${saveResponse.status}): ${errorText}`);
     }
 
     const result = await saveResponse.json();
@@ -1197,7 +1214,8 @@ const handleInputChange = (section, field, value) => {
               );
 
               if (!saveResponse.ok) {
-                throw new Error(`Failed to save profile (${saveResponse.status})`);
+                const errorText = await saveResponse.text();
+                throw new Error(`Failed to save profile (${saveResponse.status}): ${errorText}`);
               }
 
               const result = await saveResponse.json();
