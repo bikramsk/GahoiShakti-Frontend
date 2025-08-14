@@ -974,13 +974,17 @@ if (
     const result = await saveResponse.json();
     
     
-   const updatedData = {
-        ...formData,
-        ...result.data?.attributes,
-        previous_marriage_info: isWidowOrDivorced 
-          ? result.data?.attributes?.previous_marriage_info 
-          : null
-      };
+const updatedData = {
+  ...formData, 
+  ...result.data?.attributes, 
+  previous_marriage_info: isWidowOrDivorced 
+    ? { 
+        ...(formData.previous_marriage_info || {}), 
+        ...(result.data?.attributes?.previous_marriage_info || {}) 
+      }
+    : null
+};
+
 
       
     setFormData(updatedData);
