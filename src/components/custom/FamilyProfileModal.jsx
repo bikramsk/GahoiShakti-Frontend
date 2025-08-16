@@ -13,7 +13,7 @@ const FamilyProfileModal = ({ familyData, mobileNumber, onClose, role }) => {
     const sibling = f?.siblingDetails?.find(
       (s) => s.phone_number === mobileNumber
     );
-    if (sibling) return `Sibling (${s.sibling_relation})`;
+    if (sibling) return `Sibling (${sibling.sibling_relation})`;
     return "Family Member";
   };
 
@@ -85,6 +85,8 @@ const FamilyProfileModal = ({ familyData, mobileNumber, onClose, role }) => {
           </button>
           <button
             onClick={() => {
+           
+              localStorage.setItem('verifiedMobile', mobileNumber);
               onClose?.();
               navigate(`/profile/document/${familyData.documentId}`);
             }}
