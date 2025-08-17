@@ -2233,7 +2233,51 @@ Vidisha : VIDISHA_GRAM_PANCHAYATS,
 
 {/* Documents Section */}
 <div className="px-4 py-3">
-  <h3 className="text-lg font-semibold">Documents</h3>
+  <div className="flex justify-between items-center mb-4">
+    <h3 className="text-lg font-semibold">Documents</h3>
+    <button
+      onClick={async () => {
+        try {
+          const mobileNumber = localStorage.getItem("verifiedMobile");
+          const token = localStorage.getItem("token");
+          
+          if (!token || !mobileNumber) return;
+          
+       
+          const prevMarriageUrl = `${API_BASE}/api/registration-pages?filters[personal_information][mobile_number][$eq]=${mobileNumber}&populate[previous_marriage_info][populate][0]=children&populate[previous_marriage_info][populate][1]=aadhar_front&populate[previous_marriage_info][populate][2]=aadhar_back&populate[previous_marriage_info][populate][3]=kundali_photo`;
+          const prevMarriageRes = await fetch(prevMarriageUrl, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              Accept: "application/json",
+              "Content-Type": "application/json",
+            },
+          });
+          
+          if (prevMarriageRes.ok) {
+            const prevMarriageData = await prevMarriageRes.json();
+            const prevMarriageProfile = prevMarriageData.data?.[0]?.previous_marriage_info || {};
+            
+            
+            setFormData(prev => ({
+              ...prev,
+              previous_marriage_info: {
+                ...prev.previous_marriage_info,
+                ...prevMarriageProfile
+              }
+            }));
+          }
+        } catch (error) {
+          console.error("Error refreshing documents:", error);
+        }
+      }}
+      className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+    >
+      <svg className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+      </svg>
+      Refresh Documents
+    </button>
+  </div>
   
   {/* Aadhar Front */}
   <div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
