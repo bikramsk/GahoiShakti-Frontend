@@ -48,6 +48,14 @@ export default function FamilyProfilePage() {
   const [editingMother, setEditingMother] = useState(false);
   const [editMotherData, setEditMotherData] = useState({ name: '', mobile: '' });
 
+  // State for editing children
+  const [editingChildIndex, setEditingChildIndex] = useState(null);
+  const [editingChildData, setEditingChildData] = useState({
+    child_name: '',
+    phone_number: '',
+    gender: 'Male'
+  });
+
  
   const getUserFamilyAdditions = useCallback(async (mobileOverride) => {
     const effectiveMobile = mobileOverride || currentUserMobile;
@@ -412,6 +420,51 @@ export default function FamilyProfilePage() {
       cancelEditSibling();
     } else if (editingSiblingIndex !== null && editingSiblingIndex > index) {
       setEditingSiblingIndex(editingSiblingIndex - 1);
+    }
+  };
+
+  // Edit child handlers
+  const startEditChild = (index) => {
+    const child = (userFamilyAdditions?.added_children || [])[index];
+    if (!child) return;
+    setEditingChildIndex(index);
+    setEditingChildData({
+      child_name: child.child_name || '',
+      phone_number: child.phone_number || '',
+      gender: child.gender || 'Male'
+    });
+  };
+  const cancelEditChild = () => {
+    setEditingChildIndex(null);
+    setEditingChildData({ child_name: '', phone_number: '', gender: 'Male' });
+  };
+  const saveEditChild = async () => {
+    if (editingChildIndex === null) return;
+    const currentChildren = userFamilyAdditions?.added_children || [];
+    const updatedChildren = currentChildren.map((child, idx) =>
+      idx === editingChildIndex
+        ? {
+            child_name: editingChildData.child_name,
+            phone_number: editingChildData.phone_number,
+            gender: editingChildData.gender
+          }
+        : child
+    );
+    await createOrUpdateUserFamilyAdditions({ added_children: updatedChildren });
+    const refreshed = await getUserFamilyAdditions();
+    setUserFamilyAdditions(refreshed || { ...(userFamilyAdditions || {}), added_children: updatedChildren });
+    cancelEditChild();
+  };
+  const deleteChild = async (index) => {
+    const currentChildren = userFamilyAdditions?.added_children || [];
+    const updatedChildren = currentChildren.filter((_, idx) => idx !== index);
+    await createOrUpdateUserFamilyAdditions({ added_children: updatedChildren });
+    const refreshed = await getUserFamilyAdditions();
+    setUserFamilyAdditions(refreshed || { ...(userFamilyAdditions || {}), added_children: updatedChildren });
+    if (editingChildIndex === index) {
+      cancelEditChild();
+    } else if (editingChildIndex !== null && editingChildIndex > index) {
+      setEditingChildIndex(editingChildIndex - 1);
     }
   };
 
@@ -1072,19 +1125,15 @@ export default function FamilyProfilePage() {
             let childrenToShow = [];
 
             if (currentUserRole === 'father' || currentUserRole === 'mother') {
-            
               const children = [];
-
-             
+              // Add children from profile
               if (p.full_name && p.mobile_number) {
                 children.push({
                   child_name: p.full_name,
                   phone_number: p.mobile_number,
-                  gender: "Male" 
+                  gender: "Male"
                 });
               }
-
-             
               if (f.siblingDetails && f.siblingDetails.length > 0) {
                 f.siblingDetails.forEach(sibling => {
                   children.push({
@@ -1094,10 +1143,18 @@ export default function FamilyProfilePage() {
                   });
                 });
               }
-
+              // Add children from userFamilyAdditions
+              if (userFamilyAdditions?.added_children && userFamilyAdditions.added_children.length > 0) {
+                userFamilyAdditions.added_children.forEach(child => {
+                  children.push({
+                    child_name: child.child_name,
+                    phone_number: child.phone_number,
+                    gender: child.gender
+                  });
+                });
+              }
               childrenToShow = children;
             } else {
-             
               childrenToShow = [];
             }
 
@@ -1117,7 +1174,7 @@ export default function FamilyProfilePage() {
                     </button>
                   </div>
 
-                  {/* Add Child Form */}
+                  {/* Child Form */}
                   {showAddChildForm && (
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
                       <h3 className="text-sm font-medium text-blue-800 mb-3">Add Child Details</h3>
@@ -1129,7 +1186,7 @@ export default function FamilyProfilePage() {
                             value={childFormData.name}
                             onChange={(e) => {
                               setChildFormData({...childFormData, name: e.target.value});
-                              if (childError) setChildError(''); // Clear error when user types
+                              if (childError) setChildError(''); 
                             }}
                             className={`w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 ${
                               childError ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-blue-500'
@@ -1166,7 +1223,7 @@ export default function FamilyProfilePage() {
                         <button
                           onClick={async () => {
                             if (childFormData.name.trim()) {
-                              setChildError(''); // Clear any existing error
+                              setChildError('');
                                                              await addChild({
                                  child_name: childFormData.name,
                                  phone_number: childFormData.mobile,
@@ -1199,27 +1256,100 @@ export default function FamilyProfilePage() {
                     <div className="text-xs font-medium text-gray-500 uppercase">Name</div>
                     <div className="text-xs font-medium text-gray-500 uppercase">Mobile Number</div>
                     <div className="text-xs font-medium text-gray-500 uppercase">Gender</div>
-                    
+                    <div className="text-xs font-medium text-gray-500 uppercase">Actions</div>
                   </div>
-                  {childrenToShow.map((child, idx) => (
-                    <div key={idx} className="grid grid-cols-4 gap-4 py-2 border-t first:border-t-0">
-                      <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
-                          <span className="text-xs font-medium text-red-700">
-                            {(child.child_name || "C").charAt(0).toUpperCase()}
-                          </span>
+                  {childrenToShow.map((child, idx) => {
+                   
+                    const userChildren = userFamilyAdditions?.added_children || [];
+                   
+                    const userChildIdx = userChildren.findIndex(
+                      uc => uc.child_name === child.child_name && uc.phone_number === child.phone_number && uc.gender === child.gender
+                    );
+                    const isUserChild = userChildIdx !== -1;
+                   
+                    if (isUserChild && editingChildIndex === userChildIdx) {
+                      return (
+                        <div key={idx} className="grid grid-cols-4 gap-4 py-2 border-t first:border-t-0">
+                          <input
+                            type="text"
+                            value={editingChildData.child_name}
+                            onChange={e => setEditingChildData({ ...editingChildData, child_name: e.target.value })}
+                            className="w-full px-3 py-1 border border-gray-300 rounded text-sm"
+                            placeholder="Child Name"
+                          />
+                          <input
+                            type="tel"
+                            value={editingChildData.phone_number}
+                            onChange={e => setEditingChildData({ ...editingChildData, phone_number: e.target.value })}
+                            className="w-full px-3 py-1 border border-gray-300 rounded text-sm"
+                            placeholder="Mobile Number"
+                          />
+                          <select
+                            value={editingChildData.gender}
+                            onChange={e => setEditingChildData({ ...editingChildData, gender: e.target.value })}
+                            className="w-full px-3 py-1 border border-gray-300 rounded text-sm"
+                          >
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                          </select>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={saveEditChild}
+                              className="px-2 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700"
+                              title="Save"
+                            >Save</button>
+                            <button
+                              onClick={cancelEditChild}
+                              className="px-2 py-1 text-xs bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
+                              title="Cancel"
+                            >Cancel</button>
+                          </div>
                         </div>
+                      );
+                    }
+                    return (
+                      <div key={idx} className="grid grid-cols-4 gap-4 py-2 border-t first:border-t-0">
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+                            <span className="text-xs font-medium text-red-700">
+                              {(child.child_name || "C").charAt(0).toUpperCase()}
+                            </span>
+                          </div>
+                          <div className="text-sm text-gray-900">
+                            {addYouBadgeInFamilyDetails(child.child_name || "Not Added", child.phone_number)}
+                          </div>
+                        </div>
+                        <div className="text-sm text-gray-900">{child.phone_number || "Not Added"}</div>
                         <div className="text-sm text-gray-900">
-                          {addYouBadgeInFamilyDetails(child.child_name || "Not Added", child.phone_number)}
+                          {child.gender === "Male" ? "Male" : child.gender === "Female" ? "Female" : "N/A"}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {isUserChild && (
+                            <>
+                              <button
+                                onClick={() => startEditChild(userChildIdx)}
+                                className="p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded"
+                                title="Edit"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                </svg>
+                              </button>
+                              <button
+                                onClick={() => deleteChild(userChildIdx)}
+                                className="p-1 text-red-600 hover:text-red-800 hover:bg-red-50 rounded"
+                                title="Delete"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                              </button>
+                            </>
+                          )}
                         </div>
                       </div>
-                      <div className="text-sm text-gray-900">{child.phone_number || "Not Added"}</div>
-                      <div className="text-sm text-gray-900">
-                        {child.gender === "Male" ? "Male" : child.gender === "Female" ? "Female" : "N/A"}
-                      </div>
-                     
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             ) : null;
