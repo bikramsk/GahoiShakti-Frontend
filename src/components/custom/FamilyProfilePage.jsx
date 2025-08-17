@@ -25,13 +25,15 @@ export default function FamilyProfilePage() {
   const [fatherFormData, setFatherFormData] = useState({ name: '', mobile: '' });
   const [motherFormData, setMotherFormData] = useState({ name: '', mobile: '' });
   const [childFormData, setChildFormData] = useState({ name: '', mobile: '', gender: 'Male' });
-  const [siblingFormData, setSiblingFormData] = useState({ name: '', mobile: '', gender: 'Male', relation: 'Brother भाई' });
+  const [siblingFormData, setSiblingFormData] = useState({ name: '', mobile: '', gender: 'Male', relation: 'Brother भाई', age: '', marital_status: '' });
   const [editingSiblingIndex, setEditingSiblingIndex] = useState(null);
   const [editingSiblingData, setEditingSiblingData] = useState({
     sibling_name: '',
     phone_number: '',
     gender: 'Male',
-    sibling_relation: 'Brother भाई'
+    sibling_relation: 'Brother भाई',
+    age: '',
+    marital_status: ''
   });
 
   const [isSavingSibling, setIsSavingSibling] = useState(false);
@@ -80,14 +82,14 @@ export default function FamilyProfilePage() {
           } else if (Array.isArray(attributes.added_siblings)) {
             addedSiblings = attributes.added_siblings;
           } else if (typeof attributes.added_siblings === 'object') {
-            // Handle case where it might be stored as an object
+           
             addedSiblings = [];
           } else {
             addedSiblings = [];
           }
         }
 
-        // Only use localStorage as fallback if backend has NO data at all (not just empty array)
+        
         if (!attributes.added_siblings) {
           const localStorageKey = `family_siblings_${effectiveMobile}_${documentId}`;
           const localStorageSiblings = localStorage.getItem(localStorageKey);
@@ -180,10 +182,10 @@ export default function FamilyProfilePage() {
         
 
        
-        // Wait a moment for backend to process the update
+        
         await new Promise(resolve => setTimeout(resolve, 500));
         
-        // Always fetch fresh data after update to ensure consistency
+       
         const freshData = await getUserFamilyAdditions();
         
         if (!freshData) {
@@ -216,10 +218,10 @@ export default function FamilyProfilePage() {
         
 
         
-        // Wait a moment for backend to process the create
+      
         await new Promise(resolve => setTimeout(resolve, 500));
         
-        // Always fetch fresh data after create to ensure consistency
+        
         const freshData = await getUserFamilyAdditions();
         
         if (!freshData) {
@@ -234,7 +236,7 @@ export default function FamilyProfilePage() {
     }
   };
 
-  // Functions to handle adding family members
+
   const addFather = async (fatherData) => {
     try {
       await createOrUpdateUserFamilyAdditions({
@@ -289,7 +291,9 @@ export default function FamilyProfilePage() {
         sibling_name: siblingData.sibling_name,
         phone_number: siblingData.phone_number || '',
         gender: siblingData.gender,
-        sibling_relation: siblingData.sibling_relation
+        sibling_relation: siblingData.sibling_relation,
+        age: siblingData.age || '',
+        marital_status: siblingData.marital_status || ''
       };
 
       const updateData = {
@@ -298,26 +302,26 @@ export default function FamilyProfilePage() {
 
 
       
-      // Save to localStorage as backup
+     
       const localStorageKey = `family_siblings_${currentUserMobile}_${documentId}`;
       localStorage.setItem(localStorageKey, JSON.stringify(updateData.added_siblings));
 
       const result = await createOrUpdateUserFamilyAdditions(updateData);
       
-      // Clear localStorage after successful backend save to force fresh data
+      
       localStorage.removeItem(localStorageKey);
       
               if (result && result.added_siblings) {
           setUserFamilyAdditions(result);
         } else {
-          // Use the data we just sent as fallback
+        
           const tempAdditions = {
             ...userFamilyAdditions,
             added_siblings: updateData.added_siblings
           };
           setUserFamilyAdditions(tempAdditions);
           
-          // Try to refresh from backend in background
+          
           setTimeout(async () => {
             const refreshedAdditions = await getUserFamilyAdditions();
             if (refreshedAdditions && refreshedAdditions.added_siblings) {
@@ -342,7 +346,9 @@ export default function FamilyProfilePage() {
           sibling_name: target.sibling_name || '',
           phone_number: target.phone_number || '',
           gender: target.gender || 'Male',
-          sibling_relation: target.sibling_relation || 'Brother भाई'
+          sibling_relation: target.sibling_relation || 'Brother भाई',
+          age: target.age || '',
+          marital_status: target.marital_status || ''
         });
       };
 
@@ -352,7 +358,9 @@ export default function FamilyProfilePage() {
           sibling_name: '',
           phone_number: '',
           gender: 'Male',
-          sibling_relation: 'Brother भाई'
+          sibling_relation: 'Brother भाई',
+          age: '',
+          marital_status: ''
         });
       };
 
@@ -365,7 +373,9 @@ export default function FamilyProfilePage() {
                 sibling_name: editingSiblingData.sibling_name,
                 phone_number: editingSiblingData.phone_number || '',
                 gender: editingSiblingData.gender,
-                sibling_relation: editingSiblingData.sibling_relation
+                sibling_relation: editingSiblingData.sibling_relation,
+                age: editingSiblingData.age ? parseInt(editingSiblingData.age, 10) : undefined,
+                marital_status: editingSiblingData.marital_status || ''
               }
             : sibling
         );
@@ -487,7 +497,7 @@ export default function FamilyProfilePage() {
     fetchProfile();
   }, [documentId, getUserFamilyAdditions]);
 
-  // Additional effect to refresh family additions when needed
+  
   useEffect(() => {
     if (currentUserMobile && documentId) {
       const refreshData = async () => {
@@ -495,13 +505,13 @@ export default function FamilyProfilePage() {
         setUserFamilyAdditions(additions);
       };
       
-      // Refresh data after a short delay to ensure backend is ready
+     
       const timer = setTimeout(refreshData, 1000);
       return () => clearTimeout(timer);
     }
   }, [currentUserMobile, documentId, getUserFamilyAdditions]);
 
-  // Helper function to get the main profile person based on who's logged in
+
   const getMainProfilePerson = () => {
     if (!currentUserMobile || !profile) return null;
 
@@ -1237,7 +1247,7 @@ export default function FamilyProfilePage() {
               {showAddSiblingForm && (
                 <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
                   <h3 className="text-sm font-medium text-green-800 mb-3">Add Sibling Details</h3>
-                  <div className="grid grid-cols-4 gap-4">
+                  <div className="grid grid-cols-6 gap-4">
                     <div>
                       <label className="block text-xs font-medium text-gray-700 mb-1">Sibling Name</label>
                       <input
@@ -1245,7 +1255,7 @@ export default function FamilyProfilePage() {
                         value={siblingFormData.name}
                         onChange={(e) => {
                           setSiblingFormData({...siblingFormData, name: e.target.value});
-                          if (siblingError) setSiblingError(''); // Clear error when user types
+                          if (siblingError) setSiblingError('');
                         }}
                         className={`w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 ${
                           siblingError ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-green-500'
@@ -1288,19 +1298,46 @@ export default function FamilyProfilePage() {
                         <option value="Sister बहन">Sister बहन</option>
                       </select>
                     </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Age</label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={siblingFormData.age}
+                        onChange={(e) => setSiblingFormData({...siblingFormData, age: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                        placeholder="Enter age"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Marital Status</label>
+                      <select
+                        value={siblingFormData.marital_status}
+                        onChange={(e) => setSiblingFormData({...siblingFormData, marital_status: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                      >
+                        <option value="">Choose here</option>
+                        <option value="Married">Married</option>
+                        <option value="Unmarried">Unmarried</option>
+                        <option value="Widow/Widower">Widow/Widower</option>
+                        <option value="Divorced">Divorced</option>
+                      </select>
+                    </div>
                   </div>
                   <div className="flex gap-2 mt-3">
                     <button
                       onClick={async () => {
                         if (siblingFormData.name.trim()) {
-                          setSiblingError(''); 
+                          setSiblingError('');
                           await addSibling({
                             sibling_name: siblingFormData.name,
                             phone_number: siblingFormData.mobile,
                             gender: siblingFormData.gender,
-                            sibling_relation: siblingFormData.relation
+                            sibling_relation: siblingFormData.relation,
+                            age: siblingFormData.age ? parseInt(siblingFormData.age, 10) : undefined,
+                            marital_status: siblingFormData.marital_status
                           });
-                          setSiblingFormData({ name: '', mobile: '', gender: 'Male', relation: 'Brother भाई' });
+                          setSiblingFormData({ name: '', mobile: '', gender: 'Male', relation: 'Brother भाई', age: '', marital_status: '' });
                           setShowAddSiblingForm(false);
                         } else {
                           setSiblingError('Please enter sibling name');
@@ -1318,7 +1355,7 @@ export default function FamilyProfilePage() {
                     <button
                       onClick={() => {
                         setShowAddSiblingForm(false);
-                        setSiblingFormData({ name: '', mobile: '', gender: 'Male', relation: 'Brother भाई' });
+                        setSiblingFormData({ name: '', mobile: '', gender: 'Male', relation: 'Brother भाई', age: '', marital_status: '' });
                       }}
                       className="px-4 py-2 bg-gray-300 text-gray-700 text-sm rounded hover:bg-gray-400"
                     >
@@ -1329,7 +1366,7 @@ export default function FamilyProfilePage() {
               )}
 
               {(() => {
-                // Show ONLY user-added siblings from the backend user-family-additions
+                
                 // Do NOT show original siblings from profile data (f.siblingDetails)
                 const siblingsToShow = userFamilyAdditions?.added_siblings || [];
 
@@ -1338,15 +1375,17 @@ export default function FamilyProfilePage() {
 
                 return filteredSiblings.length > 0 ? (
                   <>
-                    <div className="grid grid-cols-5 gap-4 mb-2">
+                    <div className="grid grid-cols-7 gap-4 mb-2">
                       <div className="text-xs font-medium text-gray-500 uppercase">Sibling Name</div>
                       <div className="text-xs font-medium text-gray-500 uppercase">Phone Number</div>
                       <div className="text-xs font-medium text-gray-500 uppercase">Gender</div>
                       <div className="text-xs font-medium text-gray-500 uppercase">Sibling Relation</div>
+                      <div className="text-xs font-medium text-gray-500 uppercase">Age</div>
+                      <div className="text-xs font-medium text-gray-500 uppercase">Marital Status</div>
                       <div className="text-xs font-medium text-gray-500 uppercase">Actions</div>
                     </div>
                     {filteredSiblings.map((sibling, idx) => (
-                      <div key={idx} className="grid grid-cols-5 gap-4 py-2 border-t first:border-t-0">
+                      <div key={idx} className="grid grid-cols-7 gap-4 py-2 border-t first:border-t-0">
                         {editingSiblingIndex === idx ? (
                           <>
                             <div className="flex items-center gap-2">
@@ -1385,6 +1424,25 @@ export default function FamilyProfilePage() {
                             >
                               <option value="Brother भाई">Brother भाई</option>
                               <option value="Sister बहन">Sister बहन</option>
+                            </select>
+                            <input
+                              type="number"
+                              min="0"
+                              value={editingSiblingData.age}
+                              onChange={(e) => setEditingSiblingData({ ...editingSiblingData, age: e.target.value })}
+                              className="w-full px-3 py-1 border border-gray-300 rounded text-sm"
+                              placeholder="Age"
+                            />
+                            <select
+                              value={editingSiblingData.marital_status}
+                              onChange={(e) => setEditingSiblingData({ ...editingSiblingData, marital_status: e.target.value })}
+                              className="w-full px-3 py-1 border border-gray-300 rounded text-sm"
+                            >
+                              <option value="">Choose here</option>
+                              <option value="Married">Married</option>
+                              <option value="Unmarried">Unmarried</option>
+                              <option value="Widow/Widower">Widow/Widower</option>
+                              <option value="Divorced">Divorced</option>
                             </select>
                             <div className="flex items-center gap-2">
                               <button
@@ -1429,6 +1487,8 @@ export default function FamilyProfilePage() {
                               {sibling.gender === "Male" ? "Male" : sibling.gender === "Female" ? "Female" : "N/A"}
                             </div>
                             <div className="text-sm text-gray-900">{sibling.sibling_relation || "Not Added"}</div>
+                            <div className="text-sm text-gray-900">{sibling.age || "Not Added"}</div>
+                            <div className="text-sm text-gray-900">{sibling.marital_status || "Not Added"}</div>
                             <div className="flex items-center gap-2">
                               <button
                                 onClick={() => startEditSibling(idx)}
