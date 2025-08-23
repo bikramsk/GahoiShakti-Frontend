@@ -137,7 +137,7 @@ const API_BASE =
 const SECTIONS = [
   { id: "personal", title: "Personal Information", icon: "user" },
   { id: "family", title: "Family Details", icon: "users" },
-  { id: "biographical", title: "Biographical Details", icon: "book" },
+  // { id: "biographical", title: "Biographical Details", icon: "book" },
   { id: "additional", title: "Additional Details", icon: "plus" },
    { id: "regional", title: "Regional Information", icon: "map" },
   { id: "previous_marriage", title: "Previous Marriage Information", icon: "ring" },
@@ -678,7 +678,11 @@ const handleSaveProfile = async () => {
     }
 
 
-    if (formData.previous_marriage_info?.has_children !== "Yes") {
+    if (
+      formData.previous_marriage_info &&
+      typeof formData.previous_marriage_info === "object" &&
+      formData.previous_marriage_info.has_children !== "Yes"
+    ) {
       delete formData.previous_marriage_info.number_of_children;
     }
     
@@ -896,6 +900,19 @@ const handleSaveProfile = async () => {
       consider_second_marriage: formData.consider_second_marriage || false,
     };
 
+    // clear spouse and children when not married
+    const currentMaritalStatus = formData?.biographical_details?.is_married;
+    if (currentMaritalStatus === "Unmarried" || currentMaritalStatus === "Widow/Widower" || currentMaritalStatus === "Divorced") {
+      rawSaveData.child_name = [];
+      rawSaveData.family_details = {
+        ...(rawSaveData.family_details || {}),
+        spouse_name: null,
+        spouse_mobile: null,
+        spouse_gotra: null,
+        spouse_aakna: null,
+      };
+    }
+
     // Remove unwanted keys if present
     delete rawSaveData.documentId;
     delete rawSaveData.createdAt;
@@ -932,6 +949,24 @@ if (
         ? formData.previous_marriage_info || {}
         : null;
 
+    // Clear Regional Assembly related fields for states that don't have regional assembly data
+    if (rawSaveData.additional_details?.regional_information) {
+      const regionalInfo = rawSaveData.additional_details.regional_information;
+
+      // Check if the state has regional assembly data by checking if getFilteredRegionalAssemblies returns any results
+      const hasRegionalAssemblyData = getFilteredRegionalAssemblies(regionalInfo.State, regionalInfo.District).length > 0;
+
+      if (!hasRegionalAssemblyData) {
+        // Clear Regional Assembly related fields for states that don't have regional assembly data
+        regionalInfo.RegionalAssembly = "";
+        regionalInfo.LocalPanchayatName = "";
+        regionalInfo.LocalPanchayat = "";
+        regionalInfo.SubLocalPanchayat = "";
+      }
+
+      // Note: We no longer clear local_body and gram_panchayat for non-Madhya Pradesh states
+      // as they should use DISTRICT_TO_CITIES for consistency with the registration page
+    }
 
       const saveData = {
         data: stripIds(rawSaveData)
@@ -1111,11 +1146,11 @@ const handleInputChange = (section, field, value) => {
       [field]: value
     }
       };
-
   
       if (section === "biographical_details" && field === "is_married") {
+      // ------------------ Widow/Widower / Divorced ------------------
         if (value === "Widow/Widower" || value === "Divorced") {
-   
+        // keep previous marriage info (your existing code)
           newData.previous_marriage_info = {
             spouse_name: "",
             spouse_gotra: "",
@@ -1129,7 +1164,17 @@ const handleInputChange = (section, field, value) => {
      
           newData.biographical_details.marriage_to_another_caste = "";
 
- 
+        // 🔑 clear only family_details spouse + children
+        newData.family_details = {
+          ...newData.family_details,
+          spouse_name: null,
+          spouse_gotra: null,
+          spouse_aakna: null,
+          spouse_mobile: null,
+          children: [] // if children exist inside family_details
+        };
+
+        // guidance popup (unchanged)
           const guidanceMessage = document.createElement('div');
           guidanceMessage.style.cssText = `
             position: fixed;
@@ -1177,21 +1222,36 @@ const handleInputChange = (section, field, value) => {
           const okButton = guidanceMessage.querySelector('button');
           okButton.onclick = () => {
             document.body.removeChild(guidanceMessage);
-            // Navigate to previous marriage section
             setActiveSection('previous_marriage');
           };
           
           document.body.appendChild(guidanceMessage);
 
+      // ------------------ Married / Unmarried ------------------
         } else if (value === "Married" || value === "Unmarried") {
-     
           newData.previous_marriage_info = null;
       
+        if (value === "Unmarried") {
+          // clear children repeatable component
+          newData.child_name = [];
+
+          // clear spouse + children in family_details
+          newData.family_details = {
+            ...newData.family_details,
+            spouse_name: null,
+            spouse_gotra: null,
+            spouse_aakna: null,
+            spouse_mobile: null,
+            children: []
+          };
+        }
+
+        // reset validation errors
           setSpouseErrors({});
           setChildrenErrors([]);
           setPrevMarriageErrors({});
 
-       
+        // async save (unchanged)
           (async () => {
             try {
               const token = localStorage.getItem("token");
@@ -1223,7 +1283,6 @@ const handleInputChange = (section, field, value) => {
               }
 
               const result = await saveResponse.json();
-              
           
               const updatedData = {
                 ...newData,
@@ -1235,7 +1294,7 @@ const handleInputChange = (section, field, value) => {
               setOriginalData(updatedData);
               setUserData(updatedData);
 
-              // success message
+            // success popup
               const successMessage = document.createElement('div');
               successMessage.style.cssText = `
                 position: fixed;
@@ -1255,7 +1314,7 @@ const handleInputChange = (section, field, value) => {
               setTimeout(() => document.body.removeChild(successMessage), 2000);
 
             } catch (error) {
-              // error message
+            // error popup
               const errorMessage = document.createElement('div');
               errorMessage.style.cssText = `
                 position: fixed;
@@ -1281,6 +1340,8 @@ const handleInputChange = (section, field, value) => {
       return newData;
     });
 };
+
+
 
 const renderField = (section, key, value, fieldConfig) => {
  
@@ -1507,16 +1568,35 @@ Vidisha : VIDISHA_GRAM_PANCHAYATS,
    
 
     const handleRegionalChange = (updated) => {
-      setFormData(prev => ({
-        ...prev,
-        additional_details: {
-          ...prev.additional_details,
-          regional_information: {
-            ...prev.additional_details.regional_information,
-            ...updated
-          }
+      setFormData(prev => {
+        const newRegionalInfo = {
+          ...prev.additional_details.regional_information,
+          ...updated
+        };
+
+        // Clear dependent fields when State or District changes
+        if (updated.State !== undefined) {
+          // Clear all dependent fields when state changes
+          newRegionalInfo.RegionalAssembly = "";
+          newRegionalInfo.LocalPanchayatName = "";
+          newRegionalInfo.LocalPanchayat = "";
+          newRegionalInfo.SubLocalPanchayat = "";
+        } else if (updated.District !== undefined) {
+          // Clear Regional Assembly and its dependent fields when district changes
+          newRegionalInfo.RegionalAssembly = "";
+          newRegionalInfo.LocalPanchayatName = "";
+          newRegionalInfo.LocalPanchayat = "";
+          newRegionalInfo.SubLocalPanchayat = "";
         }
-      }));
+
+        return {
+          ...prev,
+          additional_details: {
+            ...prev.additional_details,
+            regional_information: newRegionalInfo
+          }
+        };
+      });
     };
 
     return (
@@ -1561,135 +1641,148 @@ Vidisha : VIDISHA_GRAM_PANCHAYATS,
                 </div>
               </>
             )}
-            {/* Other text fields */}
-            <div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
-              <dt className="text-sm font-medium text-gray-500">Regional Assembly</dt>
-              <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                {editMode ? (
-                  <select
-                    value={regional.RegionalAssembly || ''}
-                    onChange={e => setFormData(prev => ({
-                      ...prev,
-                      additional_details: {
-                        ...prev.additional_details,
-                        regional_information: {
-                          ...prev.additional_details.regional_information,
-                          RegionalAssembly: e.target.value
-                        }
-                      }
-                    }))}
-                    className="border border-gray-300 px-2 py-1 rounded w-full"
-                  >
-                    <option value="">Select Regional Assembly</option>
-                    {getFilteredRegionalAssemblies(
-                      regional.State,
-                      regional.District
-                    ).map((assembly) => (
-                      <option key={assembly} value={assembly}>{assembly}</option>
-                    ))}
-                  </select>
-                ) : (
-                  regional.RegionalAssembly || 'N/A'
-                )}
-              </dd>
-            </div>
-            <div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
-              <dt className="text-sm font-medium text-gray-500">Local Panchayat Name</dt>
-              <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                {editMode ? (
-                  <select
-                    value={regional.LocalPanchayatName || ''}
-                    onChange={e => setFormData(prev => ({
-                      ...prev,
-                      additional_details: {
-                        ...prev.additional_details,
-                        regional_information: {
-                          ...prev.additional_details.regional_information,
-                          LocalPanchayatName: e.target.value
-                        }
-                      }
-                    }))}
-                    className="border border-gray-300 px-2 py-1 rounded w-full"
-                  >
-                    <option value="">Select Local Panchayat Name</option>
-                    {getFilteredLocalPanchayatNames({
-                      state: regional.State,
-                      district: regional.District,
-                      city: regional.City,
-                      regionalAssembly: regional.RegionalAssembly
-                    }).map((name) => (
-                      <option key={name} value={name}>{name}</option>
-                    ))}
-                  </select>
-                ) : (
-                  regional.LocalPanchayatName || 'N/A'
-                )}
-              </dd>
-            </div>
-            <div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
-              <dt className="text-sm font-medium text-gray-500">Local Panchayat</dt>
-              <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                {editMode ? (
-                  <select
-                    value={regional.LocalPanchayat || ''}
-                    onChange={e => setFormData(prev => ({
-                      ...prev,
-                      additional_details: {
-                        ...prev.additional_details,
-                        regional_information: {
-                          ...prev.additional_details.regional_information,
-                          LocalPanchayat: e.target.value
-                        }
-                      }
-                    }))}
-                    className="border border-gray-300 px-2 py-1 rounded w-full"
-                  >
-                    <option value="">Select Local Panchayat</option>
-                    {getFilteredLocalPanchayat({
-                      state: regional.State,
-                      district: regional.District,
-                      city: regional.City,
-                      regionalAssembly: regional.RegionalAssembly,
-                      localPanchayatName: regional.LocalPanchayatName
-                    }).map((name) => (
-                      <option key={name} value={name}>{name}</option>
-                    ))}
-                  </select>
-                ) : (
-                  regional.LocalPanchayat || 'N/A'
-                )}
-              </dd>
-            </div>
-            <div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
-              <dt className="text-sm font-medium text-gray-500">Sub Local Panchayat</dt>
-              <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                {editMode ? (
-                  <select
-                    value={regional.SubLocalPanchayat || ''}
-                    onChange={e => setFormData(prev => ({
-                      ...prev,
-                      additional_details: {
-                        ...prev.additional_details,
-                        regional_information: {
-                          ...prev.additional_details.regional_information,
-                          SubLocalPanchayat: e.target.value
-                        }
-                      }
-                    }))}
-                    className="border border-gray-300 px-2 py-1 rounded w-full"
-                  >
-                    <option value="">Select Sub Local Panchayat</option>
-                    {getFilteredSubLocalPanchayat({
-                      localPanchayat: regional.LocalPanchayat
-                    }).map((name) => (
-                      <option key={name} value={name}>{name}</option>
-                    ))}
-                  </select>
-                ) : (
-                  regional.SubLocalPanchayat || 'N/A'
-                )}
-              </dd>
-            </div>
+            {/* Regional Assembly related fields - only show for states that have regional assembly data */}
+            {getFilteredRegionalAssemblies(regional.State, regional.District).length > 0 && (
+              <>
+                <div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
+                  <dt className="text-sm font-medium text-gray-500">Regional Assembly</dt>
+                  <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                    {editMode ? (
+                      <select
+                        value={regional.RegionalAssembly || ''}
+                        onChange={e => setFormData(prev => ({
+                          ...prev,
+                          additional_details: {
+                            ...prev.additional_details,
+                            regional_information: {
+                              ...prev.additional_details.regional_information,
+                              RegionalAssembly: e.target.value,
+                              // Clear dependent fields when Regional Assembly changes
+                              LocalPanchayatName: "",
+                              LocalPanchayat: "",
+                              SubLocalPanchayat: ""
+                            }
+                          }
+                        }))}
+                        className="border border-gray-300 px-2 py-1 rounded w-full"
+                      >
+                        <option value="">Select Regional Assembly</option>
+                        {getFilteredRegionalAssemblies(
+                          regional.State,
+                          regional.District
+                        ).map((assembly) => (
+                          <option key={assembly} value={assembly}>{assembly}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      regional.RegionalAssembly || 'N/A'
+                    )}
+                  </dd>
+                </div>
+                <div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
+                  <dt className="text-sm font-medium text-gray-500">Local Panchayat Name</dt>
+                  <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                    {editMode ? (
+                      <select
+                        value={regional.LocalPanchayatName || ''}
+                        onChange={e => setFormData(prev => ({
+                          ...prev,
+                          additional_details: {
+                            ...prev.additional_details,
+                            regional_information: {
+                              ...prev.additional_details.regional_information,
+                              LocalPanchayatName: e.target.value,
+                              // Clear dependent fields when Local Panchayat Name changes
+                              LocalPanchayat: "",
+                              SubLocalPanchayat: ""
+                            }
+                          }
+                        }))}
+                        className="border border-gray-300 px-2 py-1 rounded w-full"
+                      >
+                        <option value="">Select Local Panchayat Name</option>
+                        {getFilteredLocalPanchayatNames({
+                          state: regional.State,
+                          district: regional.District,
+                          city: regional.City,
+                          regionalAssembly: regional.RegionalAssembly
+                        }).map((name) => (
+                          <option key={name} value={name}>{name}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      regional.LocalPanchayatName || 'N/A'
+                    )}
+                  </dd>
+                </div>
+                <div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
+                  <dt className="text-sm font-medium text-gray-500">Local Panchayat</dt>
+                  <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                    {editMode ? (
+                      <select
+                        value={regional.LocalPanchayat || ''}
+                        onChange={e => setFormData(prev => ({
+                          ...prev,
+                          additional_details: {
+                            ...prev.additional_details,
+                            regional_information: {
+                              ...prev.additional_details.regional_information,
+                              LocalPanchayat: e.target.value,
+                              // Clear dependent field when Local Panchayat changes
+                              SubLocalPanchayat: ""
+                            }
+                          }
+                        }))}
+                        className="border border-gray-300 px-2 py-1 rounded w-full"
+                      >
+                        <option value="">Select Local Panchayat</option>
+                        {getFilteredLocalPanchayat({
+                          state: regional.State,
+                          district: regional.District,
+                          city: regional.City,
+                          regionalAssembly: regional.RegionalAssembly,
+                          localPanchayatName: regional.LocalPanchayatName
+                        }).map((name) => (
+                          <option key={name} value={name}>{name}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      regional.LocalPanchayat || 'N/A'
+                    )}
+                  </dd>
+                </div>
+                <div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
+                  <dt className="text-sm font-medium text-gray-500">Sub Local Panchayat</dt>
+                  <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                    {editMode ? (
+                      <select
+                        value={regional.SubLocalPanchayat || ''}
+                        onChange={e => setFormData(prev => ({
+                          ...prev,
+                          additional_details: {
+                            ...prev.additional_details,
+                            regional_information: {
+                              ...prev.additional_details.regional_information,
+                              SubLocalPanchayat: e.target.value
+                            }
+                          }
+                        }))}
+                        className="border border-gray-300 px-2 py-1 rounded w-full"
+                      >
+                        <option value="">Select Sub Local Panchayat</option>
+                        {getFilteredSubLocalPanchayat({
+                          localPanchayat: regional.LocalPanchayat
+                        }).map((name) => (
+                          <option key={name} value={name}>{name}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      regional.SubLocalPanchayat || 'N/A'
+                    )}
+                  </dd>
+                </div>
+              </>
+            )}
           </dl>
         </div>
       </section>
@@ -2408,18 +2501,30 @@ Vidisha : VIDISHA_GRAM_PANCHAYATS,
     );
   }
   
-  // for biographical details section
-  if (activeSection === 'biographical') {
-    return (
-      <section>
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl sm:text-2xl font-bold text-gray-800">
-            Biographical Details
-          </h2>
-        </div>
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          <dl className="divide-y divide-gray-200">
-            {/* Gotra Field */}
+ 
+
+
+
+
+
+
+
+  
+  return (
+    <section>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-800">
+          {SECTIONS.find(s => s.id === activeSection)?.title}
+        </h2>
+      </div>
+      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        <dl className="divide-y divide-gray-200">
+
+
+          {activeSection === 'family' ? (
+            <>
+
+                    {/* Gotra Field */}
             <div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
               <dt className="text-sm font-medium text-gray-500">Gotra</dt>
               <dd className="text-sm text-gray-900 sm:mt-0 sm:col-span-2">
@@ -2528,53 +2633,6 @@ Vidisha : VIDISHA_GRAM_PANCHAYATS,
               </dd>
             </div>
             )}
-
-            {/* Render other biographical fields */}
-            {Object.entries(currentData?.biographical_details || {})
-              .filter(([key]) => 
-                key !== "id" && 
-                key !== "Gotra" && 
-                key !== "Aakna" && 
-                key !== "gotra" && 
-                key !== "aakna" &&
-                key !== "is_married" && 
-                key !== "marriage_to_another_caste")
-              .map(([key, value]) => {
-                
-                if (key.toLowerCase() === "gotra" || 
-                    key.toLowerCase() === "aakna" || 
-                    key.toLowerCase() === "is_married" || 
-                    key.toLowerCase() === "marriage_to_another_caste") {
-                  return null;
-                }
-                const fieldConfig = getFieldType(sectionKey, key, formData);
-                return renderField(sectionKey, key, value, fieldConfig);
-              })}
-          </dl>
-        </div>
-      </section>
-    );
-  }
-
-
-
-
-
-
-
-  
-  return (
-    <section>
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl sm:text-2xl font-bold text-gray-800">
-          {SECTIONS.find(s => s.id === activeSection)?.title}
-        </h2>
-      </div>
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-        <dl className="divide-y divide-gray-200">
-          {activeSection === 'family' ? (
-            <>
-
                {/* Married  */}
                <div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
               <dt className="text-sm font-medium text-gray-500">Is Married</dt>
@@ -2720,12 +2778,13 @@ Vidisha : VIDISHA_GRAM_PANCHAYATS,
                 </div>
               </div>
 
+
               {/* Spouse Details */}
-   {/* Spouse Details */}
+   {(currentData?.biographical_details?.is_married === "Married" || editMode) && (
    <div className="px-4 py-3">
                 <h3 className="text-lg font-semibold mb-4">Spouse Information</h3>
                 <div className="space-y-4">
-                  {(currentData?.biographical_details?.is_married === "Married" || editMode) && (
+                 
                     <>
                       <div className="bg-gray-50 p-4 rounded-lg">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -2864,56 +2923,27 @@ Vidisha : VIDISHA_GRAM_PANCHAYATS,
                         </div>
                       </div>
 
-                      {/* {currentData?.biographical_details?.is_married === "Married" && (
-                        <div className="bg-gray-50 p-4 rounded-lg">
-                          <div>
-                            <dt className="text-sm font-medium text-gray-500">Marriage Type</dt>
-                            <dd className="mt-1 text-sm text-gray-900">
-                              {editMode ? (
-                                <select
-                                  value={formData?.biographical_details?.marriage_to_another_caste || ""}
-                                  onChange={(e) => {
-                                    setFormData(prev => ({
-                                      ...prev,
-                                      biographical_details: {
-                                        ...prev.biographical_details,
-                                        marriage_to_another_caste: e.target.value
-                                      }
-                                    }));
-                                  }}
-                                  className="border border-gray-300 px-2 py-1 rounded w-full"
-                                >
-                                  <option value="">Select Marriage Type</option>
-                                  <option value="Same Caste Marriage">Same Caste Marriage</option>
-                                  <option value="Married to Another Caste">Married to Another Caste</option>
-                                </select>
-                              ) : (
-                                currentData?.biographical_details?.marriage_to_another_caste || "Not Specified"
-                              )}
-                            </dd>
-                          </div>
-                        </div>
-                      )} */}
+                      
                     </>
-                  )}
+                  
                   {!currentData?.biographical_details?.is_married && !editMode && (
                     <div className="text-sm text-gray-500">
                       Spouse information will be available after marriage status is updated
                     </div>
                   )}
                 </div>
-              </div>
+              </div>)}
 
               {/* Children Details */}
+{(currentData?.biographical_details?.is_married === "Married" || editMode) && (
               <div className="px-4 py-3">
                 <h3 className="text-lg font-semibold mb-4">Children Information</h3>
                 <div className="space-y-4">
                   {(formData?.child_name || []).map((child, index) => (
                     <div key={index} className="bg-gray-50 p-4 rounded-lg">
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        {/* Child Name */}
                         <div>
-                          <dt className="text-sm font-medium text-gray-500">Name <span className="text-red-500">*</span></dt>
+                          <dt className="text-sm font-medium text-gray-500">Name</dt>
                           <dd className="mt-1 text-sm text-gray-900">
                             {editMode ? (
                               <div>
@@ -2922,17 +2952,10 @@ Vidisha : VIDISHA_GRAM_PANCHAYATS,
                                   value={child?.child_name || ""}
                                   onChange={(e) => {
                                     const newChildren = [...(formData?.child_name || [])];
-                                    newChildren[index] = {
-                                      ...newChildren[index],
-                                      child_name: e.target.value
-                                    };
-                                    setFormData(prev => ({
-                                      ...prev,
-                                      child_name: newChildren
-                                    }));
-                                    // Clear error when user starts typing
+                        newChildren[index] = { ...newChildren[index], child_name: e.target.value };
+                        setFormData(prev => ({ ...prev, child_name: newChildren }));
                                     const newErrors = [...childrenErrors];
-                                    newErrors[index] = {...newErrors[index], name: null};
+                        newErrors[index] = { ...newErrors[index], name: null };
                                     setChildrenErrors(newErrors);
                                   }}
                                   className={`border ${childrenErrors[index]?.name ? 'border-red-500' : 'border-gray-300'} px-2 py-1 rounded w-full`}
@@ -2948,9 +2971,8 @@ Vidisha : VIDISHA_GRAM_PANCHAYATS,
                           </dd>
                         </div>
 
-                        {/* Gender */}
                         <div>
-                          <dt className="text-sm font-medium text-gray-500">Gender <span className="text-red-500">*</span></dt>
+                          <dt className="text-sm font-medium text-gray-500">Gender</dt>
                           <dd className="mt-1 text-sm text-gray-900">
                             {editMode ? (
                               <div>
@@ -2958,17 +2980,10 @@ Vidisha : VIDISHA_GRAM_PANCHAYATS,
                                   value={child?.gender || ""}
                                   onChange={(e) => {
                                     const newChildren = [...(formData?.child_name || [])];
-                                    newChildren[index] = {
-                                      ...newChildren[index],
-                                      gender: e.target.value
-                                    };
-                                    setFormData(prev => ({
-                                      ...prev,
-                                      child_name: newChildren
-                                    }));
-                                   
+                        newChildren[index] = { ...newChildren[index], gender: e.target.value };
+                        setFormData(prev => ({ ...prev, child_name: newChildren }));
                                     const newErrors = [...childrenErrors];
-                                    newErrors[index] = {...newErrors[index], gender: null};
+                        newErrors[index] = { ...newErrors[index], gender: null };
                                     setChildrenErrors(newErrors);
                                   }}
                                   className={`border ${childrenErrors[index]?.gender ? 'border-red-500' : 'border-gray-300'} px-2 py-1 rounded w-full`}
@@ -2977,6 +2992,7 @@ Vidisha : VIDISHA_GRAM_PANCHAYATS,
                                   <option value="Male">Male</option>
                                   <option value="Female">Female</option>
                                 </select>
+                                
                                 {childrenErrors[index]?.gender && (
                                   <p className="text-red-500 text-xs mt-1">{childrenErrors[index].gender}</p>
                                 )}
@@ -2987,7 +3003,6 @@ Vidisha : VIDISHA_GRAM_PANCHAYATS,
                           </dd>
                         </div>
 
-                        {/* Phone Number */}
                         <div>
                           <dt className="text-sm font-medium text-gray-500">Phone Number (Optional)</dt>
                           <dd className="mt-1 text-sm text-gray-900">
@@ -2997,14 +3012,8 @@ Vidisha : VIDISHA_GRAM_PANCHAYATS,
                                 value={child?.phone_number || ""}
                                 onChange={(e) => {
                                   const newChildren = [...(formData?.child_name || [])];
-                                  newChildren[index] = {
-                                    ...newChildren[index],
-                                    phone_number: e.target.value
-                                  };
-                                  setFormData(prev => ({
-                                    ...prev,
-                                    child_name: newChildren
-                                  }));
+                      newChildren[index] = { ...newChildren[index], phone_number: e.target.value };
+                      setFormData(prev => ({ ...prev, child_name: newChildren }));
                                 }}
                                 className="border border-gray-300 px-2 py-1 rounded w-full"
                                 placeholder="Enter phone number"
@@ -3016,17 +3025,13 @@ Vidisha : VIDISHA_GRAM_PANCHAYATS,
                         </div>
                       </div>
 
-                      {/* Delete */}
                       {editMode && (
                         <div className="mt-4 flex justify-end">
                           <button
                             onClick={() => {
                               const newChildren = [...(formData?.child_name || [])];
                               newChildren.splice(index, 1);
-                              setFormData(prev => ({
-                                ...prev,
-                                child_name: newChildren
-                              }));
+                  setFormData(prev => ({ ...prev, child_name: newChildren }));
                             }}
                             className="text-red-600 hover:text-red-800"
                           >
@@ -3040,15 +3045,11 @@ Vidisha : VIDISHA_GRAM_PANCHAYATS,
                   ))}
                 </div>
 
-                {/* Add Child */}
                 {editMode && (
                   <button
                     onClick={() => {
-                      const newChild = { child_name: "", gender: "", phone_number: "" };
-                      setFormData(prev => ({
-                        ...prev,
-                        child_name: [...(prev.child_name || []), newChild]
-                      }));
+                      const newChild = { child_name: "", gender: null, phone_number: "" };
+          setFormData(prev => ({ ...prev, child_name: [...(prev.child_name || []), newChild] }));
                     }}
                     className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                   >
@@ -3059,6 +3060,7 @@ Vidisha : VIDISHA_GRAM_PANCHAYATS,
                   </button>
                 )}
               </div>
+)}
 
               {/* Siblings Details */}
               <div className="px-4 py-3">
@@ -3449,7 +3451,7 @@ Vidisha : VIDISHA_GRAM_PANCHAYATS,
   if (error) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 p-4">
-        <span>Log out and log in again to complete your profile</span>
+        <span>Failed to fetch</span>
       </div>
     );
   }
