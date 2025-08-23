@@ -1,7 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import ReactDOM from 'react-dom';
+import { useReactToPrint } from 'react-to-print';
 
 import { FORM_FIELD_CONFIG } from "../../utils/formFieldConfig";
+import PrintProfile from './PrintProfile';
+import '../../styles/print.css';
 import { getFilteredRegionalAssemblies } from "../../constants/regionalAssemblies";
 import { getFilteredLocalPanchayatNames } from "../../constants/localPanchayatNames";
 import { getFilteredLocalPanchayat } from "../../constants/localPanchayat";
@@ -290,6 +294,11 @@ const getFieldType = (section, field, formData) => {
 const UserProfile = () => {
   const navigate = useNavigate();
   const [, forceUpdate] = useState({});
+  const componentRef = useRef(null);
+  const handlePrint = useReactToPrint({
+    contentRef: componentRef,
+    documentTitle: 'GahoiShakti Profile',
+  });
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -305,10 +314,11 @@ const UserProfile = () => {
   // Update districts when state changes
   useEffect(() => {
     const state = formData?.additional_details?.regional_information?.state;
+    const district = formData?.additional_details?.regional_information?.district;
     if (state) {
       FORM_FIELD_CONFIG.regional_information.district.options = STATE_TO_DISTRICTS[state] || [];
       // Reset dependent fields
-      if (formData.additional_details.regional_information.district) {
+      if (district) {
         setFormData(prev => ({
           ...prev,
           additional_details: {
@@ -330,6 +340,9 @@ const UserProfile = () => {
   // Update cities and local bodies when district changes
   useEffect(() => {
     const district = formData?.additional_details?.regional_information?.district;
+    const currentCity = formData?.additional_details?.regional_information?.city;
+    const currentLocalBody = formData?.additional_details?.regional_information?.local_body;
+    
     if (district) {
       // Update city options
       FORM_FIELD_CONFIG.regional_information.city.options = DISTRICT_TO_CITIES[district] || [];
@@ -353,7 +366,7 @@ const UserProfile = () => {
       FORM_FIELD_CONFIG.regional_information.local_body.options = localBodies;
 
       // Reset dependent fields
-      if (formData.additional_details.regional_information.city || formData.additional_details.regional_information.local_body) {
+      if (currentCity || currentLocalBody) {
         setFormData(prev => ({
           ...prev,
           additional_details: {
@@ -3482,10 +3495,31 @@ Vidisha : VIDISHA_GRAM_PANCHAYATS,
     publishedAt: "",
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-600"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 p-4">
+        <span>Failed to fetch</span>
+      </div>
+    );
+  }
+
   return (
-<div className="min-h-screen bg-gray-100">
-  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <div className="bg-white rounded-lg shadow-xl overflow-hidden">
+    <div className="min-h-screen bg-gray-100">
+      <div style={{ display: 'none', width: '210mm', height: '297mm', position: 'absolute', left: '-9999px' }}>
+        <div ref={componentRef}>
+          <PrintProfile userData={getCurrentData()} />
+        </div>
+      </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="bg-white rounded-lg shadow-xl overflow-hidden">
       <div className="block lg:hidden mb-6">
         {/* Gahoi ID Card - Mobile View */}
         <div className="px-4">
@@ -3633,6 +3667,17 @@ Vidisha : VIDISHA_GRAM_PANCHAYATS,
         <div className="flex-1 p-4 lg:p-6">
           
           <div className="flex justify-end mb-4 space-x-2">
+            {/* Print Button */}
+            <button
+              onClick={handlePrint}
+              className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded flex items-center"
+            >
+              <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+              </svg>
+              Print Profile
+            </button>
+
             {editMode ? (
               <>
                 <button
