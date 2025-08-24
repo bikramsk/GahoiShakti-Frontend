@@ -42,7 +42,8 @@
     "requests": "Fund Requests",
     "team": "Our Team",
     "myProfile": "My Profile",
-    "logout": "Logout"
+    "logout": "Logout",
+    "search": "Search People"
   },
   "errors": {
     "required": "This field is required",
@@ -1418,7 +1419,42 @@
       "invalidDate": "Please enter a valid date",
       "fileRequired": "Please upload required document"
     }
+  },
+  "search": {
+    "title": "Search People",
+    "subtitle": "Find and connect with community members based on various criteria",
+    "namePlaceholder": "Search by name...",
+    "filters": "Filters",
+    "searching": "Searching...",
+    "search": "Search",
+    "gender": "Gender",
+    "selectGender": "Select Gender",
+    "ageRange": "Age Range",
+    "maritalStatus": "Marital Status",
+    "selectMaritalStatus": "Select Status",
+    "gotra": "Gotra",
+    "selectGotra": "Select Gotra",
+    "industrySector": "Industry Sector",
+    "selectIndustry": "Select Industry",
+    "workType": "Work Type",
+    "selectWorkType": "Select Work Type",
+    "state": "State",
+    "statePlaceholder": "Enter state...",
+    "education": "Education",
+    "educationPlaceholder": "Enter education...",
+    "clearFilters": "Clear Filters",
+    "results": "Search Results",
+    "loading": "Searching...",
+    "noResults": "No results found",
+    "noResultsDesc": "Try adjusting your search criteria or filters",
+    "viewProfile": "View Profile",
+    "previous": "Previous",
+    "next": "Next",
+    "validationMessage": "Please enter at least one search criteria (name, gender, age, or marital status)",
+    "ageMin": "Min",
+    "ageMax": "Max",
+    "loginRequired": "Please login to search for people"
   }
-} 
+}
 
 

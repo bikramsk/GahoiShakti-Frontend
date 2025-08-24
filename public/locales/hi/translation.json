@@ -39,7 +39,8 @@
     "requests": "सहायता अनुरोध",
     "team": "हमारी टीम",
     "myProfile": "मेरी प्रोफाइल",
-    "logout": "लॉग आउट"
+    "logout": "लॉग आउट",
+    "search": "लोग खोजें"
   },
   "errors": {
     "required": "यह फ़ील्ड आवश्यक है",
@@ -1565,8 +1566,43 @@
       "invalidDate": "कृपया एक वैध तिथि दर्ज करें",
       "fileRequired": "कृपया आवश्यक दस्तावेज अपलोड करें"
     }
+  },
+  "search": {
+    "title": "लोग खोजें",
+    "subtitle": "विभिन्न मानदंडों के आधार पर समुदाय के सदस्यों को खोजें और जुड़ें",
+    "namePlaceholder": "नाम से खोजें...",
+    "filters": "फिल्टर",
+    "searching": "खोज रहे हैं...",
+    "search": "खोजें",
+    "gender": "लिंग",
+    "selectGender": "लिंग चुनें",
+    "ageRange": "आयु सीमा",
+    "maritalStatus": "वैवाहिक स्थिति",
+    "selectMaritalStatus": "स्थिति चुनें",
+    "gotra": "गोत्र",
+    "selectGotra": "गोत्र चुनें",
+    "industrySector": "उद्योग क्षेत्र",
+    "selectIndustry": "उद्योग चुनें",
+    "workType": "कार्य प्रकार",
+    "selectWorkType": "कार्य प्रकार चुनें",
+    "state": "राज्य",
+    "statePlaceholder": "राज्य दर्ज करें...",
+    "education": "शिक्षा",
+    "educationPlaceholder": "शिक्षा दर्ज करें...",
+    "clearFilters": "फिल्टर साफ़ करें",
+    "results": "खोज परिणाम",
+    "loading": "खोज रहे हैं...",
+    "noResults": "कोई परिणाम नहीं मिला",
+    "noResultsDesc": "अपने खोज मानदंड या फिल्टर को समायोजित करने का प्रयास करें",
+    "viewProfile": "प्रोफाइल देखें",
+    "previous": "पिछला",
+    "next": "अगला",
+    "validationMessage": "कृपया खोजने के लिए कम से कम एक मापदंड दर्ज करें (नाम, लिंग, आयु या वैवाहिक स्थिति)",
+    "ageMin": "न्यूनतम",
+    "ageMax": "अधिकतम",
+    "loginRequired": "कृपया लोगों को खोजने के लिए लॉगिन करें"
   }
-} 
+}
 
 
 

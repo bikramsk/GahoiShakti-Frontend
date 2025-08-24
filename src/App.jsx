@@ -20,6 +20,7 @@ import OurTeam from "./components/custom/OurTeam";
 import Gallery from "./components/custom/Gallery";
 import GahoiSammelan from "./components/custom/GahoiSammelan";
 import FamilyProfilePage from "./components/custom/FamilyProfilePage";
+import PeopleSearch from "./components/custom/PeopleSearch";
 
 function App() {
   return (
@@ -42,6 +43,7 @@ function App() {
           <Route path="/community-funds" element={<CommunityFunds />} />
           <Route path="/gallery" element={<Gallery />} />
           <Route path="/gahoi-sammelan" element={<GahoiSammelan />} />
+          <Route path="/find-people" element={<PeopleSearch />} />
          <Route path="/profile/document/:documentId" element={<FamilyProfilePage />} />
 
           {/* 404 route*/}

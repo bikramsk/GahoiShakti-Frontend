@@ -83,6 +83,7 @@ const Header = () => {
     { to: '/contact-us', label: t('navigation.contact') },
     { to: '/gau-seva', label: t('navigation.gauseva') },
     { to: '/gotra-aankna', label: t('navigation.gotraankna') },
+     ...(isAuthenticated ? [{ to: '/find-people', label: t('navigation.search', 'Search People') }] : []),
   ];
 
   return (
