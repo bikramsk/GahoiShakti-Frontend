@@ -1257,9 +1257,11 @@ const handleInputChange = (section, field, value) => {
             spouse_mobile: null,
             children: []
           };
+          // clear selection when Unmarried
+          newData.biographical_details.marriage_to_another_caste = "";
         }
 
-        // reset validation errors
+        
           setSpouseErrors({});
           setChildrenErrors([]);
           setPrevMarriageErrors({});
@@ -2614,8 +2616,7 @@ Vidisha : VIDISHA_GRAM_PANCHAYATS,
          
 
             {/* Marriage To Another Caste Field */}
-            {formData?.biographical_details?.is_married !== "Widow/Widower" && 
-             formData?.biographical_details?.is_married !== "Divorced" && (
+            {formData?.biographical_details?.is_married === "Married" && (
             <div className="px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-gray-50">
               <dt className="text-sm font-medium text-gray-500">Marriage To Another Caste</dt>
               <dd className="text-sm text-gray-900 sm:mt-0 sm:col-span-2">
