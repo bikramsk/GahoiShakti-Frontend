@@ -1,7 +1,8 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from '../custom/LanguageSwitcher';
+import { checkAuthenticationStatus, clearAuthenticationState, getMyAccountLink } from '../../utils/authUtils';
 
 const API_BASE = import.meta.env.MODE === 'production' 
   ? 'https://admin.gahoishakti.in'
@@ -19,33 +20,16 @@ const Header = () => {
     ? "text-base lg:text-lg font-hindi" 
     : "text-sm md:text-xs lg:text-base font-english";
 
+  const location = useLocation();
+
   useEffect(() => {
-    const checkAuth = () => {
-      const token = localStorage.getItem('token');
-      const verifiedMobile = localStorage.getItem('verifiedMobile');
-      
-      // Check if user is viewing a family profile (which means they're effectively "logged in")
-      const currentPath = window.location.pathname;
-      const isFamilyProfilePage = currentPath.includes('/profile/document/');
-      
-      // Consider user authenticated if they have token/mobile OR are viewing a family profile
-      if ((token && verifiedMobile) || isFamilyProfilePage) {
-        setIsAuthenticated(true);
-      } else {
-        setIsAuthenticated(false);
-      }
+    const updateAuthState = () => {
+      const authStatus = checkAuthenticationStatus();
+      setIsAuthenticated(authStatus.isAuthenticated);
     };
     
-    checkAuth();
-    
-    // Listen for route changes to update auth state
-    const handleRouteChange = () => {
-      checkAuth();
-    };
-    
-    window.addEventListener('popstate', handleRouteChange);
-    return () => window.removeEventListener('popstate', handleRouteChange);
-  }, []);
+    updateAuthState();
+  }, [location.pathname]); // Re-check auth when route changes
 
   useEffect(() => {
     const handleScroll = () => {
@@ -93,21 +77,21 @@ const Header = () => {
   }, []);
 
   
- 
+  // Helper function to get the appropriate "My Account" link
   const getMyAccountLink = () => {
     const currentPath = window.location.pathname;
     const isFamilyProfilePage = currentPath.includes('/profile/document/');
     
     if (isFamilyProfilePage) {
-      
+      // If viewing a family profile, link to the current profile
       return currentPath;
     } else {
-     
+      // Check if user has viewed a family profile in this session
       const lastFamilyProfilePath = sessionStorage.getItem('lastFamilyProfilePath');
       const hasViewedFamilyProfile = sessionStorage.getItem('hasViewedFamilyProfile') === 'true';
       
       if (hasViewedFamilyProfile && lastFamilyProfilePath) {
-       
+        // Link back to the last viewed family profile
         return lastFamilyProfilePath;
       } else {
         // Otherwise, link to regular my-account page

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Search, Filter, User, MapPin, Phone, Mail, Calendar, Users, Briefcase, X, ChevronDown } from 'lucide-react';
+import { checkAuthenticationStatus } from '../../utils/authUtils';
 
 const API_BASE = import.meta.env.VITE_PUBLIC_STRAPI_API_URL || "http://localhost:1340";
 
@@ -72,15 +73,16 @@ const PeopleSearch = () => {
     setLoading(true);
     setValidationMessage('');
     try {
-      const token = localStorage.getItem('token');
-      const hasViewedFamilyProfile = sessionStorage.getItem('hasViewedFamilyProfile') === 'true';
+      const authStatus = checkAuthenticationStatus();
       
-      // Allow search if user has token OR has viewed a family profile
-      if (!token && !hasViewedFamilyProfile) {
+      // Allow search if user is authenticated (either regular auth or family profile viewer)
+      if (!authStatus.isAuthenticated) {
         setValidationMessage(t('search.loginRequired', 'Please login to search for people'));
         setLoading(false);
         return;
       }
+      
+      const token = localStorage.getItem('token');
 
 
     
@@ -121,7 +123,7 @@ const PeopleSearch = () => {
 
       const searchUrl = `${API_BASE}/api/people-search?${queryParams}`;
 
-      
+      // Prepare headers - only add Authorization if token exists
       const headers = {
         'Content-Type': 'application/json'
       };
