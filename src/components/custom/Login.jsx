@@ -594,23 +594,28 @@ const [matchedProfileId, setMatchedProfileId] = useState(null);
 if (!showOtpInput && !showMpinInput) {
   setLoading(true);
   try {
+    console.log('Checking family match for:', formData.mobileNumber);
     const familyResult = await checkMobile(formData.mobileNumber);
+    console.log('Family check result:', familyResult);
 
     if (familyResult.matchFound) {
+      console.log('Family match found! Role:', familyResult.role);
       setMatchedFamilyData(familyResult.familyData);
       setMatchedRole(familyResult.role);
       setMatchedProfileId(familyResult.mainProfileId);
       setShowFamilyModal(true);
       setLoading(false);
       return;
+    } else {
+      console.log('No family match found');
     }
   } catch (error) {
+    console.error("Error in family check:", error);
     // Continue with normal flow if family check fails
   } finally {
     setLoading(false);
   }
 }
-
 
     // Existing User Flow - MPIN Login
     if (userExists && hasMpin && showMpinInput) {
