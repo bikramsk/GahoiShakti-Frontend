@@ -23,11 +23,28 @@ const Header = () => {
     const checkAuth = () => {
       const token = localStorage.getItem('token');
       const verifiedMobile = localStorage.getItem('verifiedMobile');
-      if (token && verifiedMobile) {
+      
+      // Check if user is viewing a family profile (which means they're effectively "logged in")
+      const currentPath = window.location.pathname;
+      const isFamilyProfilePage = currentPath.includes('/profile/document/');
+      
+      // Consider user authenticated if they have token/mobile OR are viewing a family profile
+      if ((token && verifiedMobile) || isFamilyProfilePage) {
         setIsAuthenticated(true);
+      } else {
+        setIsAuthenticated(false);
       }
     };
+    
     checkAuth();
+    
+    // Listen for route changes to update auth state
+    const handleRouteChange = () => {
+      checkAuth();
+    };
+    
+    window.addEventListener('popstate', handleRouteChange);
+    return () => window.removeEventListener('popstate', handleRouteChange);
   }, []);
 
   useEffect(() => {
@@ -75,15 +92,29 @@ const Header = () => {
     };
   }, []);
 
+  
+  const getMyAccountLink = () => {
+    const currentPath = window.location.pathname;
+    const isFamilyProfilePage = currentPath.includes('/profile/document/');
+    
+    if (isFamilyProfilePage) {
+      
+      return currentPath;
+    } else {
+      
+      return '/my-account';
+    }
+  };
+
   const menuItems = [
     { to: '/', label: t('navigation.home') },
-    // ...(isAuthenticated ? [] : [{ to: '/login', label: t('navigation.login') }]),
     { to: '/about-us', label: t('navigation.about') },
     { to: '/our-team', label: t('navigation.team', 'Our Team') },
     { to: '/contact-us', label: t('navigation.contact') },
     { to: '/gau-seva', label: t('navigation.gauseva') },
     { to: '/gotra-aankna', label: t('navigation.gotraankna') },
-     ...(isAuthenticated ? [{ to: '/find-people', label: t('navigation.search', 'Search People') }] : []),
+    // Always show Search People for authenticated users (including family profile )
+    ...(isAuthenticated ? [{ to: '/find-people', label: t('navigation.search', 'Search People') }] : []),
   ];
 
   return (
@@ -104,13 +135,13 @@ const Header = () => {
             {isAuthenticated ? (
               <div className="flex items-center space-x-3 text-sm">
                 <Link
-                  to="/my-account"
+                  to={getMyAccountLink()}
                   className="text-white hover:text-yellow-300 transition-colors duration-300 flex items-center space-x-2"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                   </svg>
-                  <span>{t('navigation.myProfile')}</span>
+                  <span>{t('navigation.myAccount', 'My Account')}</span>
                 </Link>
                 <div className="h-4 w-px bg-white/40"></div>
                 <button
@@ -210,14 +241,14 @@ const Header = () => {
                     {isAuthenticated ? (
                       <div className="mt-6 pt-6 border-t border-white/20 space-y-3">
                         <Link 
-                          to="/my-account" 
+                          to={getMyAccountLink()} 
                           onClick={() => setIsMenuOpen(false)}
                           className="flex items-center text-white hover:text-yellow-300 px-4 py-3 rounded-lg transition-all duration-300 hover:bg-white/10"
                         >
                           <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                           </svg>
-                          {t('navigation.myProfile')}
+                          {t('navigation.myAccount', 'My Account')}
                         </Link>
                         <button 
                           onClick={() => { setIsMenuOpen(false); handleLogout(); }}
@@ -259,4 +290,3 @@ const Header = () => {
 };
 
 export default Header;
-
