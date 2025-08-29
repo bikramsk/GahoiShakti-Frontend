@@ -900,8 +900,24 @@ export default function FamilyProfilePage() {
               {(() => {
                 const mainPersonName = mainPerson?.name || p.full_name;
                 const spouseName = f.spouse_name;
-                const fatherName = userFamilyAdditions?.added_father_name;
-                const motherName = userFamilyAdditions?.added_mother_name;
+
+               
+                let fatherName, fatherMobile, motherName, motherMobile;
+
+                if (currentUserRole && currentUserRole.startsWith('sibling')) {
+                  
+                  fatherName = f.father_name || userFamilyAdditions?.added_father_name;
+                  fatherMobile = f.father_mobile || userFamilyAdditions?.added_father_mobile;
+                  motherName = f.mother_name || userFamilyAdditions?.added_mother_name;
+                  motherMobile = f.mother_mobile || userFamilyAdditions?.added_mother_mobile;
+                } else {
+                 
+                  fatherName = userFamilyAdditions?.added_father_name;
+                  fatherMobile = userFamilyAdditions?.added_father_mobile;
+                  motherName = userFamilyAdditions?.added_mother_name;
+                  motherMobile = userFamilyAdditions?.added_mother_mobile;
+                }
+
                 const showFather = fatherName && fatherName !== mainPersonName;
                 const showMother = motherName && motherName !== spouseName;
 
@@ -918,7 +934,7 @@ export default function FamilyProfilePage() {
                           placeholder="Father Name"
                         />
                       ) : (
-                          <span className="text-sm">{showFather ? addYouBadgeInFamilyDetails(fatherName, userFamilyAdditions?.added_father_mobile) : "Not Added"}</span>
+                          <span className="text-sm">{showFather ? addYouBadgeInFamilyDetails(fatherName, fatherMobile) : "Not Added"}</span>
                       )}
                     </div>
                     <div>
@@ -931,7 +947,7 @@ export default function FamilyProfilePage() {
                           placeholder="Father Mobile"
                         />
                       ) : (
-                          <span className="text-sm">{showFather ? (userFamilyAdditions?.added_father_mobile || 'Not Added') : "Not Added"}</span>
+                          <span className="text-sm">{showFather ? (fatherMobile || 'Not Added') : "Not Added"}</span>
                       )}
                     </div>
                     <div className="flex items-center gap-2">
@@ -1003,7 +1019,7 @@ export default function FamilyProfilePage() {
                           placeholder="Mother Name"
                         />
                       ) : (
-                          <span className="text-sm">{showMother ? addYouBadgeInFamilyDetails(motherName, userFamilyAdditions?.added_mother_mobile) : "Not Added"}</span>
+                          <span className="text-sm">{showMother ? addYouBadgeInFamilyDetails(motherName, motherMobile) : "Not Added"}</span>
                       )}
                     </div>
                     <div>
@@ -1016,7 +1032,7 @@ export default function FamilyProfilePage() {
                           placeholder="Mother Mobile"
                         />
                       ) : (
-                          <span className="text-sm">{showMother ? (userFamilyAdditions?.added_mother_mobile || 'Not Added') : "Not Added"}</span>
+                          <span className="text-sm">{showMother ? (motherMobile || 'Not Added') : "Not Added"}</span>
                       )}
                     </div>
                     <div className="flex items-center gap-2">
@@ -1077,11 +1093,12 @@ export default function FamilyProfilePage() {
 
               {/* Spouse  */}
               {(() => {
-               
+
                 // When viewing a child's profile, show the father's spouse (mother)
                 // When viewing own profile, show own spouse
+                // When viewing as sibling, show sibling's own spouse (not main profile owner's spouse)
                 let spouseName, spouseMobile;
-                
+
                 if (currentUserRole === 'father') {
                   // Viewing child's profile - show the mother (father's spouse)
                   spouseName = f.mother_name;
@@ -1090,6 +1107,17 @@ export default function FamilyProfilePage() {
                   // Viewing child's profile - show the father (mother's spouse)
                   spouseName = f.father_name;
                   spouseMobile = f.father_mobile;
+                } else if (currentUserRole && currentUserRole.startsWith('sibling')) {
+                  // For siblings, find their own spouse from sibling details
+                  const currentSibling = f.siblingDetails?.find(s => s.phone_number === currentUserMobile);
+                  if (currentSibling && currentSibling.marital_status === 'Married') {
+                    // For now, siblings don't have spouse details stored, so show "Not Added"
+                    spouseName = null;
+                    spouseMobile = null;
+                  } else {
+                    spouseName = null;
+                    spouseMobile = null;
+                  }
                 } else {
                   // Viewing own profile - show own spouse
                   spouseName = f.spouse_name;
