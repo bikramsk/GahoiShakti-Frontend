@@ -158,8 +158,7 @@ const HeroSection = () => {
 
 {currentImageIndex === 0 ? (
   <a
-    href="https://forms.gle/pUzLxYCfeFhWGtKe6"
-    // href="https://docs.google.com/forms/d/e/1FAIpQLSfm9qnGFfnsv8lPHN8cJM3t52T4qXOXE7THz_F9CycXaewGdA/viewform?usp=header"
+    href="/Add_GahoiShakti3.pdf"  
     target="_blank"
     rel="noopener noreferrer"
   >
@@ -186,6 +185,7 @@ const HeroSection = () => {
     aria-label={currentBanner.altText}
   />
 )}
+
 
       {/* <div 
         className="absolute inset-0 bg-center bg-no-repeat mt-24 lg:mt-32"
