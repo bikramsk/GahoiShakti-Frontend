@@ -73,11 +73,14 @@ const PeopleSearch = () => {
     setValidationMessage('');
     try {
       const token = localStorage.getItem('token');
-if (!token) {
-  setValidationMessage(t('search.loginRequired', 'Please login to search for people'));
-  setLoading(false);
-  return;
-}
+      const hasViewedFamilyProfile = sessionStorage.getItem('hasViewedFamilyProfile') === 'true';
+      
+      // Allow search if user has token OR has viewed a family profile
+      if (!token && !hasViewedFamilyProfile) {
+        setValidationMessage(t('search.loginRequired', 'Please login to search for people'));
+        setLoading(false);
+        return;
+      }
 
 
     
@@ -118,11 +121,17 @@ if (!token) {
 
       const searchUrl = `${API_BASE}/api/people-search?${queryParams}`;
 
+      
+      const headers = {
+        'Content-Type': 'application/json'
+      };
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const response = await fetch(searchUrl, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
+        headers
       });
 
       if (!response.ok) {

@@ -93,6 +93,7 @@ const Header = () => {
   }, []);
 
   
+ 
   const getMyAccountLink = () => {
     const currentPath = window.location.pathname;
     const isFamilyProfilePage = currentPath.includes('/profile/document/');
@@ -101,8 +102,17 @@ const Header = () => {
       
       return currentPath;
     } else {
+     
+      const lastFamilyProfilePath = sessionStorage.getItem('lastFamilyProfilePath');
+      const hasViewedFamilyProfile = sessionStorage.getItem('hasViewedFamilyProfile') === 'true';
       
-      return '/my-account';
+      if (hasViewedFamilyProfile && lastFamilyProfilePath) {
+       
+        return lastFamilyProfilePath;
+      } else {
+        // Otherwise, link to regular my-account page
+        return '/my-account';
+      }
     }
   };
 
