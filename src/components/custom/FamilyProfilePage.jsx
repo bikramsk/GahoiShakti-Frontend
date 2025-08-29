@@ -42,6 +42,16 @@ export default function FamilyProfilePage() {
   const [motherError, setMotherError] = useState('');
   const [childError, setChildError] = useState('');
   const [siblingError, setSiblingError] = useState('');
+  const [siblingFormErrors, setSiblingFormErrors] = useState({
+    name: '',
+    age: '',
+    marital_status: ''
+  });
+  const [editSiblingErrors, setEditSiblingErrors] = useState({
+    sibling_name: '',
+    age: '',
+    marital_status: ''
+  });
 
   const [editingFather, setEditingFather] = useState(false);
   const [editFatherData, setEditFatherData] = useState({ name: '', mobile: '' });
@@ -290,6 +300,62 @@ export default function FamilyProfilePage() {
     }
   };
 
+  // Validate sibling form fields
+  const validateSiblingForm = (formData) => {
+    const errors = {
+      name: '',
+      age: '',
+      marital_status: ''
+    };
+
+    if (!formData.name || !formData.name.trim()) {
+      errors.name = 'Sibling name is required';
+    }
+
+    if (!formData.age || !formData.age.trim()) {
+      errors.age = 'Age is required';
+    } else {
+      const ageNum = parseInt(formData.age, 10);
+      if (isNaN(ageNum) || ageNum < 0 || ageNum > 120) {
+        errors.age = 'Please enter a valid age (0-120)';
+      }
+    }
+
+    if (!formData.marital_status || !formData.marital_status.trim()) {
+      errors.marital_status = 'Marital status is required';
+    }
+
+    return errors;
+  };
+
+  // Validate edit sibling form fields
+  const validateEditSiblingForm = (formData) => {
+    const errors = {
+      sibling_name: '',
+      age: '',
+      marital_status: ''
+    };
+
+    if (!formData.sibling_name || !formData.sibling_name.trim()) {
+      errors.sibling_name = 'Sibling name is required';
+    }
+
+    if (!formData.age || !formData.age.trim()) {
+      errors.age = 'Age is required';
+    } else {
+      const ageNum = parseInt(formData.age, 10);
+      if (isNaN(ageNum) || ageNum < 0 || ageNum > 120) {
+        errors.age = 'Please enter a valid age (0-120)';
+      }
+    }
+
+    if (!formData.marital_status || !formData.marital_status.trim()) {
+      errors.marital_status = 'Marital status is required';
+    }
+
+    return errors;
+  };
+
   const addSibling = async (siblingData) => {
     try {
       setIsSavingSibling(true);
@@ -308,38 +374,31 @@ export default function FamilyProfilePage() {
         added_siblings: [...currentAdditions, formattedSibling]
       };
 
-
-      
-     
       const localStorageKey = `family_siblings_${currentUserMobile}_${documentId}`;
       localStorage.setItem(localStorageKey, JSON.stringify(updateData.added_siblings));
 
       const result = await createOrUpdateUserFamilyAdditions(updateData);
       
-      
       localStorage.removeItem(localStorageKey);
       
-              if (result && result.added_siblings) {
-          setUserFamilyAdditions(result);
-        } else {
+      if (result && result.added_siblings) {
+        setUserFamilyAdditions(result);
+      } else {
+        const tempAdditions = {
+          ...userFamilyAdditions,
+          added_siblings: updateData.added_siblings
+        };
+        setUserFamilyAdditions(tempAdditions);
         
-          const tempAdditions = {
-            ...userFamilyAdditions,
-            added_siblings: updateData.added_siblings
-          };
-          setUserFamilyAdditions(tempAdditions);
-          
-          
-          setTimeout(async () => {
-            const refreshedAdditions = await getUserFamilyAdditions();
-            if (refreshedAdditions && refreshedAdditions.added_siblings) {
-              setUserFamilyAdditions(refreshedAdditions);
-            }
-          }, 2000);
-        }
+        setTimeout(async () => {
+          const refreshedAdditions = await getUserFamilyAdditions();
+          if (refreshedAdditions && refreshedAdditions.added_siblings) {
+            setUserFamilyAdditions(refreshedAdditions);
+          }
+        }, 2000);
+      }
     } catch (error) {
       console.error('Error adding sibling:', error);
-
     } finally {
       setIsSavingSibling(false);
     }
@@ -370,30 +429,51 @@ export default function FamilyProfilePage() {
           age: '',
           marital_status: ''
         });
+        setEditSiblingErrors({
+          sibling_name: '',
+          age: '',
+          marital_status: ''
+        });
       };
 
   const saveEditSibling = async () => {
     if (editingSiblingIndex === null) return;
+    
+    // Validate the edit form
+    const errors = validateEditSiblingForm(editingSiblingData);
+    const hasErrors = Object.values(errors).some(error => error !== '');
+    
+    if (hasErrors) {
+      setEditSiblingErrors(errors);
+      return;
+    }
+
+    // Clear any previous errors
+    setEditSiblingErrors({
+      sibling_name: '',
+      age: '',
+      marital_status: ''
+    });
+
     const currentSiblings = userFamilyAdditions?.added_siblings || [];
-            const updatedSiblings = currentSiblings.map((sibling, idx) =>
-          idx === editingSiblingIndex
-            ? {
-                sibling_name: editingSiblingData.sibling_name,
-                phone_number: editingSiblingData.phone_number || '',
-                gender: editingSiblingData.gender,
-                sibling_relation: editingSiblingData.sibling_relation,
-                age: editingSiblingData.age ? parseInt(editingSiblingData.age, 10) : undefined,
-                marital_status: editingSiblingData.marital_status || ''
-              }
-            : sibling
-        );
+    const updatedSiblings = currentSiblings.map((sibling, idx) =>
+      idx === editingSiblingIndex
+        ? {
+            sibling_name: editingSiblingData.sibling_name,
+            phone_number: editingSiblingData.phone_number || '',
+            gender: editingSiblingData.gender,
+            sibling_relation: editingSiblingData.sibling_relation,
+            age: editingSiblingData.age ? parseInt(editingSiblingData.age, 10) : undefined,
+            marital_status: editingSiblingData.marital_status || ''
+          }
+        : sibling
+    );
 
     const localStorageKey = `family_siblings_${currentUserMobile}_${documentId}`;
     localStorage.setItem(localStorageKey, JSON.stringify(updatedSiblings));
 
     await createOrUpdateUserFamilyAdditions({ added_siblings: updatedSiblings });
     
-    // Clear localStorage after successful backend save
     localStorage.removeItem(localStorageKey);
     
     const refreshed = await getUserFamilyAdditions();
@@ -1407,21 +1487,23 @@ export default function FamilyProfilePage() {
                   <h3 className="text-sm font-medium text-green-800 mb-3">Add Sibling Details</h3>
                   <div className="grid grid-cols-6 gap-4">
                     <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">Sibling Name</label>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Sibling Name <span className="text-red-500">*</span></label>
                       <input
                         type="text"
                         value={siblingFormData.name}
                         onChange={(e) => {
                           setSiblingFormData({...siblingFormData, name: e.target.value});
-                          if (siblingError) setSiblingError('');
+                          if (siblingFormErrors.name) {
+                            setSiblingFormErrors({...siblingFormErrors, name: ''});
+                          }
                         }}
                         className={`w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 ${
-                          siblingError ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-green-500'
+                          siblingFormErrors.name ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-green-500'
                         }`}
                         placeholder="Enter sibling name"
                       />
-                      {siblingError && (
-                        <p className="text-red-500 text-xs mt-1">{siblingError}</p>
+                      {siblingFormErrors.name && (
+                        <p className="text-red-500 text-xs mt-1">{siblingFormErrors.name}</p>
                       )}
                     </div>
                     <div>
@@ -1461,20 +1543,36 @@ export default function FamilyProfilePage() {
                       <input
                         type="number"
                         min="0"
+                        max="120"
                         value={siblingFormData.age}
-                        onChange={(e) => setSiblingFormData({...siblingFormData, age: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                        onChange={(e) => {
+                          setSiblingFormData({...siblingFormData, age: e.target.value});
+                          if (siblingFormErrors.age) {
+                            setSiblingFormErrors({...siblingFormErrors, age: ''});
+                          }
+                        }}
+                        className={`w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 ${
+                          siblingFormErrors.age ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-green-500'
+                        }`}
                         placeholder="Enter age"
-                        required
                       />
+                      {siblingFormErrors.age && (
+                        <p className="text-red-500 text-xs mt-1">{siblingFormErrors.age}</p>
+                      )}
                     </div>
                     <div>
                       <label className="block text-xs font-medium text-gray-700 mb-1">Marital Status <span className="text-red-500">*</span></label>
                       <select
                         value={siblingFormData.marital_status}
-                        onChange={(e) => setSiblingFormData({...siblingFormData, marital_status: e.target.value})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-                        required
+                        onChange={(e) => {
+                          setSiblingFormData({...siblingFormData, marital_status: e.target.value});
+                          if (siblingFormErrors.marital_status) {
+                            setSiblingFormErrors({...siblingFormErrors, marital_status: ''});
+                          }
+                        }}
+                        className={`w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 ${
+                          siblingFormErrors.marital_status ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-green-500'
+                        }`}
                       >
                         <option value="">Choose here</option>
                         <option value="Married">Married</option>
@@ -1482,26 +1580,30 @@ export default function FamilyProfilePage() {
                         <option value="Widow/Widower">Widow/Widower</option>
                         <option value="Divorced">Divorced</option>
                       </select>
+                      {siblingFormErrors.marital_status && (
+                        <p className="text-red-500 text-xs mt-1">{siblingFormErrors.marital_status}</p>
+                      )}
                     </div>
                   </div>
                   <div className="flex gap-2 mt-3">
                     <button
                       onClick={async () => {
-                        // Validate required fields
-                        if (!siblingFormData.name.trim()) {
-                          setSiblingError('Please enter sibling name');
-                          return;
-                        }
-                        if (!siblingFormData.age.trim()) {
-                          setSiblingError('Please enter age');
-                          return;
-                        }
-                        if (!siblingFormData.marital_status.trim()) {
-                          setSiblingError('Please select marital status');
+                        // Validate all required fields
+                        const errors = validateSiblingForm(siblingFormData);
+                        const hasErrors = Object.values(errors).some(error => error !== '');
+                        
+                        if (hasErrors) {
+                          setSiblingFormErrors(errors);
                           return;
                         }
 
-                        setSiblingError('');
+                        // Clear any previous errors
+                        setSiblingFormErrors({
+                          name: '',
+                          age: '',
+                          marital_status: ''
+                        });
+
                         await addSibling({
                           sibling_name: siblingFormData.name,
                           phone_number: siblingFormData.mobile,
@@ -1513,19 +1615,24 @@ export default function FamilyProfilePage() {
                         setSiblingFormData({ name: '', mobile: '', gender: 'Male', relation: 'Brother भाई', age: '', marital_status: '' });
                         setShowAddSiblingForm(false);
                       }}
-                          disabled={isSavingSibling}
-                          className={`px-4 py-2 text-sm rounded ${
-                            isSavingSibling 
-                              ? 'bg-gray-400 cursor-not-allowed' 
-                              : 'bg-green-600 hover:bg-green-700'
-                          } text-white`}
-                        >
-                          {isSavingSibling ? 'Saving...' : 'Save Sibling'}
+                      disabled={isSavingSibling}
+                      className={`px-4 py-2 text-sm rounded ${
+                        isSavingSibling 
+                          ? 'bg-gray-400 cursor-not-allowed' 
+                          : 'bg-green-600 hover:bg-green-700'
+                      } text-white`}
+                    >
+                      {isSavingSibling ? 'Saving...' : 'Save Sibling'}
                     </button>
                     <button
                       onClick={() => {
                         setShowAddSiblingForm(false);
                         setSiblingFormData({ name: '', mobile: '', gender: 'Male', relation: 'Brother भाई', age: '', marital_status: '' });
+                        setSiblingFormErrors({
+                          name: '',
+                          age: '',
+                          marital_status: ''
+                        });
                       }}
                       className="px-4 py-2 bg-gray-300 text-gray-700 text-sm rounded hover:bg-gray-400"
                     >
@@ -1567,10 +1674,20 @@ export default function FamilyProfilePage() {
                               <input
                                 type="text"
                                 value={editingSiblingData.sibling_name}
-                                onChange={(e) => setEditingSiblingData({ ...editingSiblingData, sibling_name: e.target.value })}
-                                className="w-full px-3 py-1 border border-gray-300 rounded text-sm"
+                                onChange={(e) => {
+                                  setEditingSiblingData({ ...editingSiblingData, sibling_name: e.target.value });
+                                  if (editSiblingErrors.sibling_name) {
+                                    setEditSiblingErrors({...editSiblingErrors, sibling_name: ''});
+                                  }
+                                }}
+                                className={`w-full px-3 py-1 border rounded text-sm ${
+                                  editSiblingErrors.sibling_name ? 'border-red-500' : 'border-gray-300'
+                                }`}
                                 placeholder="Sibling Name"
                               />
+                              {editSiblingErrors.sibling_name && (
+                                <p className="text-red-500 text-xs mt-1">{editSiblingErrors.sibling_name}</p>
+                              )}
                             </div>
                             <input
                               type="tel"
@@ -1595,25 +1712,50 @@ export default function FamilyProfilePage() {
                               <option value="Brother भाई">Brother भाई</option>
                               <option value="Sister बहन">Sister बहन</option>
                             </select>
-                            <input
-                              type="number"
-                              min="0"
-                              value={editingSiblingData.age}
-                              onChange={(e) => setEditingSiblingData({ ...editingSiblingData, age: e.target.value })}
-                              className="w-full px-3 py-1 border border-gray-300 rounded text-sm"
-                              placeholder="Age"
-                            />
-                            <select
-                              value={editingSiblingData.marital_status}
-                              onChange={(e) => setEditingSiblingData({ ...editingSiblingData, marital_status: e.target.value })}
-                              className="w-full px-3 py-1 border border-gray-300 rounded text-sm"
-                            >
-                              <option value="">Choose here</option>
-                              <option value="Married">Married</option>
-                              <option value="Unmarried">Unmarried</option>
-                              <option value="Widow/Widower">Widow/Widower</option>
-                              <option value="Divorced">Divorced</option>
-                            </select>
+                            <div>
+                              <input
+                                type="number"
+                                min="0"
+                                max="120"
+                                value={editingSiblingData.age}
+                                onChange={(e) => {
+                                  setEditingSiblingData({ ...editingSiblingData, age: e.target.value });
+                                  if (editSiblingErrors.age) {
+                                    setEditSiblingErrors({...editSiblingErrors, age: ''});
+                                  }
+                                }}
+                                className={`w-full px-3 py-1 border rounded text-sm ${
+                                  editSiblingErrors.age ? 'border-red-500' : 'border-gray-300'
+                                }`}
+                                placeholder="Age"
+                              />
+                              {editSiblingErrors.age && (
+                                <p className="text-red-500 text-xs mt-1">{editSiblingErrors.age}</p>
+                              )}
+                            </div>
+                            <div>
+                              <select
+                                value={editingSiblingData.marital_status}
+                                onChange={(e) => {
+                                  setEditingSiblingData({ ...editingSiblingData, marital_status: e.target.value });
+                                  if (editSiblingErrors.marital_status) {
+                                    setEditSiblingErrors({...editSiblingErrors, marital_status: ''});
+                                  }
+                                }}
+                                className={`w-full px-3 py-1 border rounded text-sm ${
+                                  editSiblingErrors.marital_status ? 'border-red-500' : 'border-gray-300'
+                                }`}
+                              >
+                                <option value="">Choose here</option>
+                                <option value="Married">Married</option>
+                                <option value="Unmarried">Unmarried</option>
+                                <option value="Widow/Widower">Widow/Widower</option>
+                                <option value="Divorced">Divorced</option>
+                              </select>
+                              {editSiblingErrors.marital_status && (
+                                <p className="text-red-500 text-xs mt-1">{editSiblingErrors.marital_status}</p>
+                              )}
+                            </div>
                             <div className="flex items-center gap-2">
                               <button
                                 onClick={saveEditSibling}
@@ -1695,4 +1837,3 @@ export default function FamilyProfilePage() {
     </div>
   );
 }
-
