@@ -309,21 +309,32 @@ const [matchedProfileId, setMatchedProfileId] = useState(null);
           });
 
           const result = await response.json();
-         
+
 
           if (result.exists) {
-            // Existing user - must have MPIN
+            // Existing user - may or may not have MPIN
             setUserExists(true);
-            setHasMpin(true);
-            setAuthMode('mpin');
-            setShowMpinInput(true);
-            setShowOtpInput(false);
+            const hasMPIN = !!(result.hasMpin ?? result.hasMPIN ?? result.has_mpin);
+            setUserHasMPIN(hasMPIN);
+            setHasMpin(hasMPIN);
+            if (hasMPIN) {
+              setAuthMode('mpin');
+              setShowMpinInput(true);
+              setShowOtpInput(false);
+            } else {
+              // Existing user without MPIN -> OTP flow only
+              setAuthMode('otp');
+              setShowMpinInput(false);
+              setShowOtpInput(false);
+            }
           } else {
             // New user - needs OTP and MPIN creation
             setUserExists(false);
+            setUserHasMPIN(false);
             setHasMpin(false);
             setAuthMode('otp');
             setShowMpinInput(false);
+            setShowOtpInput(false);
           }
         } catch (error) {
           console.error('Error checking user:', error);
