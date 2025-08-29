@@ -439,46 +439,71 @@ export default function FamilyProfilePage() {
   const saveEditSibling = async () => {
     if (editingSiblingIndex === null) return;
     
-    // Validate the edit form
-    const errors = validateEditSiblingForm(editingSiblingData);
-    const hasErrors = Object.values(errors).some(error => error !== '');
-    
-    if (hasErrors) {
-      setEditSiblingErrors(errors);
-      return;
+    try {
+      // Validate the edit form
+      const errors = validateEditSiblingForm(editingSiblingData);
+      const hasErrors = Object.values(errors).some(error => error !== '');
+      
+      if (hasErrors) {
+        setEditSiblingErrors(errors);
+        return;
+      }
+
+      // Clear any previous errors
+      setEditSiblingErrors({
+        sibling_name: '',
+        age: '',
+        marital_status: ''
+      });
+
+      const currentSiblings = userFamilyAdditions?.added_siblings || [];
+      const updatedSiblings = currentSiblings.map((sibling, idx) =>
+        idx === editingSiblingIndex
+          ? {
+              sibling_name: editingSiblingData.sibling_name,
+              phone_number: editingSiblingData.phone_number || '',
+              gender: editingSiblingData.gender,
+              sibling_relation: editingSiblingData.sibling_relation,
+              age: editingSiblingData.age ? parseInt(editingSiblingData.age, 10) : undefined,
+              marital_status: editingSiblingData.marital_status || ''
+            }
+          : sibling
+      );
+
+      const localStorageKey = `family_siblings_${currentUserMobile}_${documentId}`;
+      localStorage.setItem(localStorageKey, JSON.stringify(updatedSiblings));
+
+      const result = await createOrUpdateUserFamilyAdditions({ added_siblings: updatedSiblings });
+      
+      localStorage.removeItem(localStorageKey);
+      
+      if (result) {
+        const refreshed = await getUserFamilyAdditions();
+        setUserFamilyAdditions(refreshed || { ...(userFamilyAdditions || {}), added_siblings: updatedSiblings });
+      } else {
+        // Still update local state as fallback
+        setUserFamilyAdditions({ ...(userFamilyAdditions || {}), added_siblings: updatedSiblings });
+      }
+      
+      cancelEditSibling();
+    } catch (error) {
+      // Show error to user but still try to update local state
+      const currentSiblings = userFamilyAdditions?.added_siblings || [];
+      const updatedSiblings = currentSiblings.map((sibling, idx) =>
+        idx === editingSiblingIndex
+          ? {
+              sibling_name: editingSiblingData.sibling_name,
+              phone_number: editingSiblingData.phone_number || '',
+              gender: editingSiblingData.gender,
+              sibling_relation: editingSiblingData.sibling_relation,
+              age: editingSiblingData.age ? parseInt(editingSiblingData.age, 10) : undefined,
+              marital_status: editingSiblingData.marital_status || ''
+            }
+          : sibling
+      );
+      setUserFamilyAdditions({ ...(userFamilyAdditions || {}), added_siblings: updatedSiblings });
+      cancelEditSibling();
     }
-
-    // Clear any previous errors
-    setEditSiblingErrors({
-      sibling_name: '',
-      age: '',
-      marital_status: ''
-    });
-
-    const currentSiblings = userFamilyAdditions?.added_siblings || [];
-    const updatedSiblings = currentSiblings.map((sibling, idx) =>
-      idx === editingSiblingIndex
-        ? {
-            sibling_name: editingSiblingData.sibling_name,
-            phone_number: editingSiblingData.phone_number || '',
-            gender: editingSiblingData.gender,
-            sibling_relation: editingSiblingData.sibling_relation,
-            age: editingSiblingData.age ? parseInt(editingSiblingData.age, 10) : undefined,
-            marital_status: editingSiblingData.marital_status || ''
-          }
-        : sibling
-    );
-
-    const localStorageKey = `family_siblings_${currentUserMobile}_${documentId}`;
-    localStorage.setItem(localStorageKey, JSON.stringify(updatedSiblings));
-
-    await createOrUpdateUserFamilyAdditions({ added_siblings: updatedSiblings });
-    
-    localStorage.removeItem(localStorageKey);
-    
-    const refreshed = await getUserFamilyAdditions();
-    setUserFamilyAdditions(refreshed || { ...(userFamilyAdditions || {}), added_siblings: updatedSiblings });
-    cancelEditSibling();
   };
 
   const deleteSibling = async (index) => {
