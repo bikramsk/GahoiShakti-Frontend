@@ -590,6 +590,28 @@ const [matchedProfileId, setMatchedProfileId] = useState(null);
 
     if (!validateForm()) return;
 
+ // Check for family match FIRST
+if (!showOtpInput && !showMpinInput) {
+  setLoading(true);
+  try {
+    const familyResult = await checkMobile(formData.mobileNumber);
+
+    if (familyResult.matchFound) {
+      setMatchedFamilyData(familyResult.familyData);
+      setMatchedRole(familyResult.role);
+      setMatchedProfileId(familyResult.mainProfileId);
+      setShowFamilyModal(true);
+      setLoading(false);
+      return;
+    }
+  } catch (error) {
+    // Continue with normal flow if family check fails
+  } finally {
+    setLoading(false);
+  }
+}
+
+
     // Existing User Flow - MPIN Login
     if (userExists && hasMpin && showMpinInput) {
       setLoading(true);
@@ -613,19 +635,7 @@ const [matchedProfileId, setMatchedProfileId] = useState(null);
 if (!showOtpInput) {
   setLoading(true);
   try {
-   
-    const familyResult = await checkMobile(formData.mobileNumber);
-
-    if (familyResult.matchFound) {
-      setMatchedFamilyData(familyResult.familyData);
-      setMatchedRole(familyResult.role);
-      setMatchedProfileId(familyResult.mainProfileId); 
-      setShowFamilyModal(true);
-      setLoading(false);
-      return; 
-    }
-
-    // If no match, proceed to send OTP
+    // Family check already done above, proceed to send OTP
     const result = await sendWhatsAppOTP(formData.mobileNumber);
 
     if (result.success !== false) {
