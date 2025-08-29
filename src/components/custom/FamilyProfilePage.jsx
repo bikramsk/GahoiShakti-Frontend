@@ -1457,7 +1457,7 @@ export default function FamilyProfilePage() {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">Age</label>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Age <span className="text-red-500">*</span></label>
                       <input
                         type="number"
                         min="0"
@@ -1465,14 +1465,16 @@ export default function FamilyProfilePage() {
                         onChange={(e) => setSiblingFormData({...siblingFormData, age: e.target.value})}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                         placeholder="Enter age"
+                        required
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">Marital Status</label>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Marital Status <span className="text-red-500">*</span></label>
                       <select
                         value={siblingFormData.marital_status}
                         onChange={(e) => setSiblingFormData({...siblingFormData, marital_status: e.target.value})}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                        required
                       >
                         <option value="">Choose here</option>
                         <option value="Married">Married</option>
@@ -1485,21 +1487,31 @@ export default function FamilyProfilePage() {
                   <div className="flex gap-2 mt-3">
                     <button
                       onClick={async () => {
-                        if (siblingFormData.name.trim()) {
-                          setSiblingError('');
-                          await addSibling({
-                            sibling_name: siblingFormData.name,
-                            phone_number: siblingFormData.mobile,
-                            gender: siblingFormData.gender,
-                            sibling_relation: siblingFormData.relation,
-                            age: siblingFormData.age ? parseInt(siblingFormData.age, 10) : undefined,
-                            marital_status: siblingFormData.marital_status
-                          });
-                          setSiblingFormData({ name: '', mobile: '', gender: 'Male', relation: 'Brother भाई', age: '', marital_status: '' });
-                          setShowAddSiblingForm(false);
-                        } else {
+                        // Validate required fields
+                        if (!siblingFormData.name.trim()) {
                           setSiblingError('Please enter sibling name');
+                          return;
                         }
+                        if (!siblingFormData.age.trim()) {
+                          setSiblingError('Please enter age');
+                          return;
+                        }
+                        if (!siblingFormData.marital_status.trim()) {
+                          setSiblingError('Please select marital status');
+                          return;
+                        }
+
+                        setSiblingError('');
+                        await addSibling({
+                          sibling_name: siblingFormData.name,
+                          phone_number: siblingFormData.mobile,
+                          gender: siblingFormData.gender,
+                          sibling_relation: siblingFormData.relation,
+                          age: parseInt(siblingFormData.age, 10),
+                          marital_status: siblingFormData.marital_status
+                        });
+                        setSiblingFormData({ name: '', mobile: '', gender: 'Male', relation: 'Brother भाई', age: '', marital_status: '' });
+                        setShowAddSiblingForm(false);
                       }}
                           disabled={isSavingSibling}
                           className={`px-4 py-2 text-sm rounded ${
