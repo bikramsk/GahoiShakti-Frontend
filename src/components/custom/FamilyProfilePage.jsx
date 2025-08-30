@@ -361,6 +361,7 @@ export default function FamilyProfilePage() {
      
       setSpouseError('Failed to save spouse information. Please try again.');
       throw error; 
+    }
   };
 
   // Validate sibling form fields
