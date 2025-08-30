@@ -202,7 +202,14 @@ export default function FamilyProfilePage() {
         });
         
         if (!response.ok) {
-          throw new Error(`PUT request failed with status: ${response.status}`);
+          const errorText = await response.text();
+          console.error('PUT request failed:', {
+            status: response.status,
+            statusText: response.statusText,
+            body: errorText,
+            sentData: putData
+          });
+          throw new Error(`PUT request failed with status: ${response.status} - ${errorText}`);
         }
         
 
@@ -222,23 +229,32 @@ export default function FamilyProfilePage() {
         // Create new record
 
         
+        const postData = {
+          data: {
+            user_mobile: currentUserMobile,
+            viewed_profile_document_id: documentId,
+            ...updateData
+          }
+        };
+        
         const response = await fetch(`${baseUrl}/api/user-family-additions`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             ...authHeader
           },
-          body: JSON.stringify({
-            data: {
-              user_mobile: currentUserMobile,
-              viewed_profile_document_id: documentId,
-              ...updateData
-            }
-          })
+          body: JSON.stringify(postData)
         });
         
         if (!response.ok) {
-          throw new Error(`POST request failed with status: ${response.status}`);
+          const errorText = await response.text();
+          console.error('POST request failed:', {
+            status: response.status,
+            statusText: response.statusText,
+            body: errorText,
+            sentData: postData
+          });
+          throw new Error(`POST request failed with status: ${response.status} - ${errorText}`);
         }
         
 
@@ -1327,13 +1343,18 @@ export default function FamilyProfilePage() {
                     <button
                       onClick={async () => {
                         if (spouseFormData.name.trim()) {
-                          setSpouseError('');
-                          await addSpouse({
-                            name: spouseFormData.name,
-                            mobile: spouseFormData.mobile.trim() || null
-                          });
-                          setSpouseFormData({ name: '', mobile: '' });
-                          setShowAddSpouseForm(false);
+                          try {
+                            setSpouseError('');
+                            await addSpouse({
+                              name: spouseFormData.name,
+                              mobile: spouseFormData.mobile.trim() || null
+                            });
+                            setSpouseFormData({ name: '', mobile: '' });
+                            setShowAddSpouseForm(false);
+                          } catch (error) {
+                            console.error('Failed to save spouse:', error);
+                            setSpouseError('Failed to save spouse information. Please try again.');
+                          }
                         } else {
                           setSpouseError('Please enter spouse name');
                         }
