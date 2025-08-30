@@ -135,8 +135,6 @@ export default function FamilyProfilePage() {
           added_mother_mobile: attributes.added_mother_mobile,
           added_children: attributes.added_children || [],
           added_siblings: addedSiblings,
-          added_spouse_name: attributes.added_spouse_name,
-          added_spouse_mobile: attributes.added_spouse_mobile
         };
 
 
@@ -169,9 +167,7 @@ export default function FamilyProfilePage() {
           added_mother_name: Object.prototype.hasOwnProperty.call(updateData, 'added_mother_name') ? (updateData.added_mother_name === '' ? null : updateData.added_mother_name) : existingRecord.added_mother_name,
           added_mother_mobile: Object.prototype.hasOwnProperty.call(updateData, 'added_mother_mobile') ? (updateData.added_mother_mobile === '' ? null : updateData.added_mother_mobile) : existingRecord.added_mother_mobile,
           added_children: Object.prototype.hasOwnProperty.call(updateData, 'added_children') ? updateData.added_children : (existingRecord.added_children || []),
-          added_siblings: Object.prototype.hasOwnProperty.call(updateData, 'added_siblings') ? updateData.added_siblings : (existingRecord.added_siblings || []),
-          added_spouse_name: Object.prototype.hasOwnProperty.call(updateData, 'added_spouse_name') ? (updateData.added_spouse_name === '' ? null : updateData.added_spouse_name) : existingRecord.added_spouse_name,
-          added_spouse_mobile: Object.prototype.hasOwnProperty.call(updateData, 'added_spouse_mobile') ? (updateData.added_spouse_mobile === '' ? null : updateData.added_spouse_mobile) : existingRecord.added_spouse_mobile
+          added_siblings: Object.prototype.hasOwnProperty.call(updateData, 'added_siblings') ? updateData.added_siblings : (existingRecord.added_siblings || [])
         };
 
      
@@ -309,9 +305,23 @@ export default function FamilyProfilePage() {
 
   const addSpouse = async (spouseData) => {
     try {
+      // Store spouse as a special sibling entry with relation "Spouse"
+      const currentSiblings = userFamilyAdditions?.added_siblings || [];
+      
+     
+      const siblingsWithoutSpouse = currentSiblings.filter(s => s.sibling_relation !== 'Spouse');
+      
+      const spouseEntry = {
+        sibling_name: spouseData.name,
+        phone_number: spouseData.mobile || '',
+        gender: 'Male', 
+        sibling_relation: 'Spouse',
+        age: '',
+        marital_status: 'Married'
+      };
+      
       await createOrUpdateUserFamilyAdditions({
-        added_spouse_name: spouseData.name,
-        added_spouse_mobile: spouseData.mobile
+        added_siblings: [...siblingsWithoutSpouse, spouseEntry]
       });
       const refreshedAdditions = await getUserFamilyAdditions();
       setUserFamilyAdditions(refreshedAdditions);
@@ -1237,9 +1247,10 @@ export default function FamilyProfilePage() {
                   
                   const siblingData = currentSibling || addedSibling;
                   if (siblingData && siblingData.marital_status === 'Married') {
-                    // Check if spouse is already added in userFamilyAdditions
-                    spouseName = userFamilyAdditions?.added_spouse_name;
-                    spouseMobile = userFamilyAdditions?.added_spouse_mobile;
+                    // Check if spouse is already added in siblings array with relation "Spouse"
+                    const spouseEntry = userFamilyAdditions?.added_siblings?.find(s => s.sibling_relation === 'Spouse');
+                    spouseName = spouseEntry?.sibling_name;
+                    spouseMobile = spouseEntry?.phone_number;
                     canAddSpouse = true;
                     showAddSpouseButton = !spouseName; // Show button only if no spouse added yet
                   }
@@ -1813,10 +1824,13 @@ export default function FamilyProfilePage() {
                   }
                 }
                 
-                // Add user-added siblings
+                // Add user-added siblings (but exclude spouse entries)
                 if (userFamilyAdditions?.added_siblings && userFamilyAdditions.added_siblings.length > 0) {
                   userFamilyAdditions.added_siblings.forEach(sibling => {
-                    siblingsToShow.push(sibling);
+                    // Don't show spouse in siblings list
+                    if (sibling.sibling_relation !== 'Spouse') {
+                      siblingsToShow.push(sibling);
+                    }
                   });
                 }
 
