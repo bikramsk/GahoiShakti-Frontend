@@ -2023,6 +2023,34 @@ export default function FamilyProfilePage() {
           </div>
         </div>
       </div>
+      {/* Siblings Section End */}
+
+      {/* Sibling's Spouse Section */}
+      {(() => {
+        let siblingSpouse = null;
+        if (currentUserRole === 'sibling' && userFamilyAdditions?.added_siblings) {
+          siblingSpouse = userFamilyAdditions.added_siblings.find(
+            s => s.sibling_relation === 'Spouse'
+          );
+        }
+        return (currentUserRole === 'sibling' && siblingSpouse) ? (
+          <div className="border-b">
+            <div className="px-6 py-4">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Your Spouse</h2>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-medium text-gray-500 uppercase">Spouse Name</label>
+                  <p className="mt-1 text-sm text-gray-900">{siblingSpouse.sibling_name || "Not Added"}</p>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-gray-500 uppercase">Mobile Number</label>
+                  <p className="mt-1 text-sm text-gray-900">{siblingSpouse.phone_number || "Not Added"}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : null;
+      })()}
     </div>
   );
 }
