@@ -341,18 +341,11 @@ export default function FamilyProfilePage() {
         sibling_spouse_mobile: spouseData.mobile || null
       };
       
-      console.log('Adding spouse with data:', updateData);
-      console.log('Current user mobile:', currentUserMobile);
-      console.log('Document ID:', documentId);
-      
       const result = await createOrUpdateUserFamilyAdditions(updateData);
       
       if (result) {
-        console.log('Spouse added successfully:', result);
         setUserFamilyAdditions(result);
       } else {
-        
-        console.log('No result returned, refreshing data...');
         const refreshedAdditions = await getUserFamilyAdditions();
         setUserFamilyAdditions(refreshedAdditions);
       }
