@@ -43,7 +43,7 @@ export default function FamilyProfilePage() {
   const [fatherError, setFatherError] = useState('');
   const [motherError, setMotherError] = useState('');
   const [childError, setChildError] = useState('');
-  const [siblingError, setSiblingError] = useState('');
+
   const [spouseError, setSpouseError] = useState('');
   const [siblingFormErrors, setSiblingFormErrors] = useState({
     name: '',
@@ -135,8 +135,6 @@ export default function FamilyProfilePage() {
           added_mother_mobile: attributes.added_mother_mobile,
           added_children: attributes.added_children || [],
           added_siblings: addedSiblings,
-          added_spouse_name: attributes.added_spouse_name,
-          added_spouse_mobile: attributes.added_spouse_mobile,
           sibling_spouse_name: attributes.sibling_spouse_name,
           sibling_spouse_mobile: attributes.sibling_spouse_mobile
         };
@@ -172,8 +170,6 @@ export default function FamilyProfilePage() {
           added_mother_mobile: Object.prototype.hasOwnProperty.call(updateData, 'added_mother_mobile') ? (updateData.added_mother_mobile === '' ? null : updateData.added_mother_mobile) : existingRecord.added_mother_mobile,
           added_children: Object.prototype.hasOwnProperty.call(updateData, 'added_children') ? updateData.added_children : (existingRecord.added_children || []),
           added_siblings: Object.prototype.hasOwnProperty.call(updateData, 'added_siblings') ? updateData.added_siblings : (existingRecord.added_siblings || []),
-          added_spouse_name: Object.prototype.hasOwnProperty.call(updateData, 'added_spouse_name') ? (updateData.added_spouse_name === '' ? null : updateData.added_spouse_name) : existingRecord.added_spouse_name,
-          added_spouse_mobile: Object.prototype.hasOwnProperty.call(updateData, 'added_spouse_mobile') ? (updateData.added_spouse_mobile === '' ? null : updateData.added_spouse_mobile) : existingRecord.added_spouse_mobile,
           sibling_spouse_name: Object.prototype.hasOwnProperty.call(updateData, 'sibling_spouse_name') ? (updateData.sibling_spouse_name === '' ? null : updateData.sibling_spouse_name) : existingRecord.sibling_spouse_name,
           sibling_spouse_mobile: Object.prototype.hasOwnProperty.call(updateData, 'sibling_spouse_mobile') ? (updateData.sibling_spouse_mobile === '' ? null : updateData.sibling_spouse_mobile) : existingRecord.sibling_spouse_mobile
         };
@@ -313,16 +309,11 @@ export default function FamilyProfilePage() {
 
   const addSpouse = async (spouseData) => {
     try {
-      // Check if current user is a sibling to use appropriate fields
-      const updateData = currentUserRole === 'sibling' 
-        ? {
-            sibling_spouse_name: spouseData.name,
-            sibling_spouse_mobile: spouseData.mobile
-          }
-        : {
-            added_spouse_name: spouseData.name,
-            added_spouse_mobile: spouseData.mobile
-          };
+      // Use sibling spouse fields for all users
+      const updateData = {
+        sibling_spouse_name: spouseData.name,
+        sibling_spouse_mobile: spouseData.mobile
+      };
       
       await createOrUpdateUserFamilyAdditions(updateData);
       const refreshedAdditions = await getUserFamilyAdditions();
@@ -518,7 +509,7 @@ export default function FamilyProfilePage() {
       }
       
       cancelEditSibling();
-    } catch (error) {
+    } catch {
       // Show error to user but still try to update local state
       const currentSiblings = userFamilyAdditions?.added_siblings || [];
       const updatedSiblings = currentSiblings.map((sibling, idx) =>
@@ -1253,12 +1244,14 @@ export default function FamilyProfilePage() {
                     spouseName = userFamilyAdditions?.sibling_spouse_name;
                     spouseMobile = userFamilyAdditions?.sibling_spouse_mobile;
                     canAddSpouse = true;
-                    showAddSpouseButton = !spouseName; // Show button only if no spouse added yet
+                    showAddSpouseButton = !spouseName; 
                   }
                 } else {
-                  // Viewing own profile - show own spouse
-                  spouseName = f.spouse_name;
-                  spouseMobile = f.spouse_mobile;
+                  // For all other users, use sibling spouse fields
+                  spouseName = userFamilyAdditions?.sibling_spouse_name;
+                  spouseMobile = userFamilyAdditions?.sibling_spouse_mobile;
+                  canAddSpouse = true;
+                  showAddSpouseButton = !spouseName;
                 }
                 
                 // Show spouse section if spouse exists or if sibling can add spouse
