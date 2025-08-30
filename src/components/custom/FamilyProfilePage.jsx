@@ -22,10 +22,12 @@ export default function FamilyProfilePage() {
   const [showAddMotherForm, setShowAddMotherForm] = useState(false);
   const [showAddChildForm, setShowAddChildForm] = useState(false);
   const [showAddSiblingForm, setShowAddSiblingForm] = useState(false);
+  const [showAddSpouseForm, setShowAddSpouseForm] = useState(false);
   const [fatherFormData, setFatherFormData] = useState({ name: '', mobile: '' });
   const [motherFormData, setMotherFormData] = useState({ name: '', mobile: '' });
   const [childFormData, setChildFormData] = useState({ name: '', mobile: '', gender: 'Male' });
   const [siblingFormData, setSiblingFormData] = useState({ name: '', mobile: '', gender: 'Male', relation: 'Brother भाई', age: '', marital_status: '' });
+  const [spouseFormData, setSpouseFormData] = useState({ name: '', mobile: '' });
   const [editingSiblingIndex, setEditingSiblingIndex] = useState(null);
   const [editingSiblingData, setEditingSiblingData] = useState({
     sibling_name: '',
@@ -42,6 +44,7 @@ export default function FamilyProfilePage() {
   const [motherError, setMotherError] = useState('');
   const [childError, setChildError] = useState('');
   const [siblingError, setSiblingError] = useState('');
+  const [spouseError, setSpouseError] = useState('');
   const [siblingFormErrors, setSiblingFormErrors] = useState({
     name: '',
     age: '',
@@ -131,7 +134,9 @@ export default function FamilyProfilePage() {
           added_mother_name: attributes.added_mother_name,
           added_mother_mobile: attributes.added_mother_mobile,
           added_children: attributes.added_children || [],
-          added_siblings: addedSiblings
+          added_siblings: addedSiblings,
+          added_spouse_name: attributes.added_spouse_name,
+          added_spouse_mobile: attributes.added_spouse_mobile
         };
 
 
@@ -164,7 +169,9 @@ export default function FamilyProfilePage() {
           added_mother_name: Object.prototype.hasOwnProperty.call(updateData, 'added_mother_name') ? (updateData.added_mother_name === '' ? null : updateData.added_mother_name) : existingRecord.added_mother_name,
           added_mother_mobile: Object.prototype.hasOwnProperty.call(updateData, 'added_mother_mobile') ? (updateData.added_mother_mobile === '' ? null : updateData.added_mother_mobile) : existingRecord.added_mother_mobile,
           added_children: Object.prototype.hasOwnProperty.call(updateData, 'added_children') ? updateData.added_children : (existingRecord.added_children || []),
-          added_siblings: Object.prototype.hasOwnProperty.call(updateData, 'added_siblings') ? updateData.added_siblings : (existingRecord.added_siblings || [])
+          added_siblings: Object.prototype.hasOwnProperty.call(updateData, 'added_siblings') ? updateData.added_siblings : (existingRecord.added_siblings || []),
+          added_spouse_name: Object.prototype.hasOwnProperty.call(updateData, 'added_spouse_name') ? (updateData.added_spouse_name === '' ? null : updateData.added_spouse_name) : existingRecord.added_spouse_name,
+          added_spouse_mobile: Object.prototype.hasOwnProperty.call(updateData, 'added_spouse_mobile') ? (updateData.added_spouse_mobile === '' ? null : updateData.added_spouse_mobile) : existingRecord.added_spouse_mobile
         };
 
      
@@ -297,6 +304,19 @@ export default function FamilyProfilePage() {
       setUserFamilyAdditions(refreshedAdditions);
     } catch (error) {
       console.error('Error adding child:', error);
+    }
+  };
+
+  const addSpouse = async (spouseData) => {
+    try {
+      await createOrUpdateUserFamilyAdditions({
+        added_spouse_name: spouseData.name,
+        added_spouse_mobile: spouseData.mobile
+      });
+      const refreshedAdditions = await getUserFamilyAdditions();
+      setUserFamilyAdditions(refreshedAdditions);
+    } catch (error) {
+      console.error('Error adding spouse:', error);
     }
   };
 
@@ -1196,13 +1216,11 @@ export default function FamilyProfilePage() {
                 );
               })()}
 
-              {/* Spouse  */}
+              {/* Spouse Section */}
               {(() => {
-
-                // When viewing a child's profile, show the father's spouse (mother)
-                // When viewing own profile, show own spouse
-                // When viewing as sibling, show sibling's own spouse (not main profile owner's spouse)
                 let spouseName, spouseMobile;
+                let canAddSpouse = false;
+                let showAddSpouseButton = false;
 
                 if (currentUserRole === 'father') {
                   // Viewing child's profile - show the mother (father's spouse)
@@ -1212,16 +1230,18 @@ export default function FamilyProfilePage() {
                   // Viewing child's profile - show the father (mother's spouse)
                   spouseName = f.father_name;
                   spouseMobile = f.father_mobile;
-                } else if (currentUserRole && currentUserRole.startsWith('sibling')) {
-                  // For siblings, find their own spouse from sibling details
+                } else if (currentUserRole === 'sibling') {
+                  // For siblings, check if they can add spouse (if married)
                   const currentSibling = f.siblingDetails?.find(s => s.phone_number === currentUserMobile);
-                  if (currentSibling && currentSibling.marital_status === 'Married') {
-                    // For now, siblings don't have spouse details stored, so show "Not Added"
-                    spouseName = null;
-                    spouseMobile = null;
-                  } else {
-                    spouseName = null;
-                    spouseMobile = null;
+                  const addedSibling = userFamilyAdditions?.added_siblings?.find(s => s.phone_number === currentUserMobile);
+                  
+                  const siblingData = currentSibling || addedSibling;
+                  if (siblingData && siblingData.marital_status === 'Married') {
+                    // Check if spouse is already added in userFamilyAdditions
+                    spouseName = userFamilyAdditions?.added_spouse_name;
+                    spouseMobile = userFamilyAdditions?.added_spouse_mobile;
+                    canAddSpouse = true;
+                    showAddSpouseButton = !spouseName; // Show button only if no spouse added yet
                   }
                 } else {
                   // Viewing own profile - show own spouse
@@ -1229,25 +1249,106 @@ export default function FamilyProfilePage() {
                   spouseMobile = f.spouse_mobile;
                 }
                 
-                // Show spouse if it exists
-                if (!spouseName && !spouseMobile) return null;
+                // Show spouse section if spouse exists or if sibling can add spouse
+                if (!spouseName && !spouseMobile && !canAddSpouse) return null;
                 
                 return (
-                  <div className="grid grid-cols-2 gap-6 mb-4">
-                    <div>
-                      <label className="text-xs font-medium text-gray-500 uppercase">Spouse</label>
-                      <p className="mt-1 text-sm text-gray-900">
-                        {addYouBadgeInFamilyDetails(spouseName || "Not Added", spouseMobile)}
-                      </p>
+                  <div className="mb-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="text-md font-medium text-gray-900">Spouse</h3>
+                      {showAddSpouseButton && (
+                        <button
+                          onClick={() => setShowAddSpouseForm(!showAddSpouseForm)}
+                          className="px-3 py-1 text-sm bg-purple-600 text-white rounded hover:bg-purple-700 flex items-center gap-1"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                          </svg>
+                          Add Spouse
+                        </button>
+                      )}
                     </div>
-                    <div>
-                      <label className="text-xs font-medium text-gray-500 uppercase">Mobile Number</label>
-                      <p className="mt-1 text-sm text-gray-900">{spouseMobile || "Not Added"}</p>
+                    <div className="grid grid-cols-2 gap-6">
+                      <div>
+                        <label className="text-xs font-medium text-gray-500 uppercase">Spouse Name</label>
+                        <p className="mt-1 text-sm text-gray-900">
+                          {addYouBadgeInFamilyDetails(spouseName || "Not Added", spouseMobile)}
+                        </p>
+                      </div>
+                      <div>
+                        <label className="text-xs font-medium text-gray-500 uppercase">Mobile Number</label>
+                        <p className="mt-1 text-sm text-gray-900">{spouseMobile || "Not Added"}</p>
+                      </div>
                     </div>
                   </div>
                 );
               })()}
 
+              {/* Add Spouse Form */}
+              {showAddSpouseForm && (
+                <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-4">
+                  <h3 className="text-sm font-medium text-purple-800 mb-3">Add Spouse Details</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Spouse Name</label>
+                      <input
+                        type="text"
+                        value={spouseFormData.name}
+                        onChange={(e) => {
+                          setSpouseFormData({...spouseFormData, name: e.target.value});
+                          if (spouseError) setSpouseError('');
+                        }}
+                        className={`w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 ${
+                          spouseError ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-purple-500'
+                        }`}
+                        placeholder="Enter spouse name"
+                      />
+                      {spouseError && (
+                        <p className="text-red-500 text-xs mt-1">{spouseError}</p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Spouse Mobile (Optional)</label>
+                      <input
+                        type="tel"
+                        value={spouseFormData.mobile}
+                        onChange={(e) => setSpouseFormData({...spouseFormData, mobile: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        placeholder="Enter spouse mobile (optional)"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex gap-2 mt-3">
+                    <button
+                      onClick={async () => {
+                        if (spouseFormData.name.trim()) {
+                          setSpouseError('');
+                          await addSpouse({
+                            name: spouseFormData.name,
+                            mobile: spouseFormData.mobile.trim() || null
+                          });
+                          setSpouseFormData({ name: '', mobile: '' });
+                          setShowAddSpouseForm(false);
+                        } else {
+                          setSpouseError('Please enter spouse name');
+                        }
+                      }}
+                      className="px-4 py-2 bg-purple-600 text-white text-sm rounded hover:bg-purple-700"
+                    >
+                      Save Spouse
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowAddSpouseForm(false);
+                        setSpouseFormData({ name: '', mobile: '' });
+                      }}
+                      className="px-4 py-2 bg-gray-300 text-gray-700 text-sm rounded hover:bg-gray-400"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
              
             </div>
           </div>
@@ -1256,6 +1357,7 @@ export default function FamilyProfilePage() {
           {(() => {
            
             let childrenToShow = [];
+            let canAddChildren = false;
 
             if (currentUserRole === 'father' || currentUserRole === 'mother') {
               const children = [];
@@ -1287,24 +1389,33 @@ export default function FamilyProfilePage() {
                 });
               }
               childrenToShow = children;
+              canAddChildren = true;
+            } else if (currentUserRole === 'sibling') {
+              // Siblings can also add their own children
+              if (userFamilyAdditions?.added_children && userFamilyAdditions.added_children.length > 0) {
+                childrenToShow = userFamilyAdditions.added_children;
+              }
+              canAddChildren = true;
             } else {
               childrenToShow = [];
             }
 
-            return childrenToShow.length > 0 ? (
+            return (childrenToShow.length > 0 || canAddChildren) ? (
               <div className="border-b">
                 <div className="px-6 py-4">
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-lg font-semibold text-gray-900">Children</h2>
-                    <button
-                      onClick={() => setShowAddChildForm(!showAddChildForm)}
-                      className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-1"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-                      </svg>
-                      Add Child
-                    </button>
+                    {canAddChildren && (
+                      <button
+                        onClick={() => setShowAddChildForm(!showAddChildForm)}
+                        className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-1"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                        Add Child
+                      </button>
+                    )}
                   </div>
 
                   {/* Child Form */}
@@ -1668,14 +1779,53 @@ export default function FamilyProfilePage() {
               )}
 
               {(() => {
+                let siblingsToShow = [];
                 
-                // Do NOT show original siblings from profile data (f.siblingDetails)
-                const siblingsToShow = userFamilyAdditions?.added_siblings || [];
+                // If current user is a sibling, show the profile owner as a sibling
+                if (currentUserRole === 'sibling') {
+                  // Add the profile owner as a sibling
+                  if (p.full_name && p.mobile_number) {
+                    siblingsToShow.push({
+                      sibling_name: p.full_name,
+                      phone_number: p.mobile_number,
+                      gender: "Male", // Default, could be enhanced
+                      sibling_relation: "Sibling",
+                      age: "", // Not available from profile
+                      marital_status: f.spouse_name ? "Married" : "Unmarried"
+                    });
+                  }
+                  
+                  // Add other siblings from original profile data
+                  if (f.siblingDetails && f.siblingDetails.length > 0) {
+                    f.siblingDetails.forEach(sibling => {
+                      // Don't add the current user as their own sibling
+                      if (sibling.phone_number !== currentUserMobile) {
+                        siblingsToShow.push({
+                          sibling_name: sibling.sibling_name,
+                          phone_number: sibling.phone_number,
+                          gender: sibling.gender || "Male",
+                          sibling_relation: sibling.sibling_relation || "Sibling",
+                          age: sibling.age || "",
+                          marital_status: sibling.marital_status || "Unmarried"
+                        });
+                      }
+                    });
+                  }
+                }
+                
+                // Add user-added siblings
+                if (userFamilyAdditions?.added_siblings && userFamilyAdditions.added_siblings.length > 0) {
+                  userFamilyAdditions.added_siblings.forEach(sibling => {
+                    siblingsToShow.push(sibling);
+                  });
+                }
 
-                // Show all added siblings without filtering
-                const filteredSiblings = siblingsToShow;
+                // Remove duplicates based on phone number
+                const uniqueSiblings = siblingsToShow.filter((sibling, index, self) => 
+                  index === self.findIndex(s => s.phone_number === sibling.phone_number)
+                );
 
-                return filteredSiblings.length > 0 ? (
+                return uniqueSiblings.length > 0 ? (
                   <>
                     <div className="grid grid-cols-7 gap-4 mb-2">
                       <div className="text-xs font-medium text-gray-500 uppercase">Sibling Name</div>
@@ -1686,7 +1836,7 @@ export default function FamilyProfilePage() {
                       <div className="text-xs font-medium text-gray-500 uppercase">Marital Status</div>
                       <div className="text-xs font-medium text-gray-500 uppercase">Actions</div>
                     </div>
-                    {filteredSiblings.map((sibling, idx) => (
+                    {uniqueSiblings.map((sibling, idx) => (
                       <div key={idx} className="grid grid-cols-7 gap-4 py-2 border-t first:border-t-0">
                         {editingSiblingIndex === idx ? (
                           <>
