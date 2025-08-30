@@ -136,7 +136,9 @@ export default function FamilyProfilePage() {
           added_children: attributes.added_children || [],
           added_siblings: addedSiblings,
           added_spouse_name: attributes.added_spouse_name,
-          added_spouse_mobile: attributes.added_spouse_mobile
+          added_spouse_mobile: attributes.added_spouse_mobile,
+          sibling_spouse_name: attributes.sibling_spouse_name,
+          sibling_spouse_mobile: attributes.sibling_spouse_mobile
         };
 
 
@@ -171,7 +173,9 @@ export default function FamilyProfilePage() {
           added_children: Object.prototype.hasOwnProperty.call(updateData, 'added_children') ? updateData.added_children : (existingRecord.added_children || []),
           added_siblings: Object.prototype.hasOwnProperty.call(updateData, 'added_siblings') ? updateData.added_siblings : (existingRecord.added_siblings || []),
           added_spouse_name: Object.prototype.hasOwnProperty.call(updateData, 'added_spouse_name') ? (updateData.added_spouse_name === '' ? null : updateData.added_spouse_name) : existingRecord.added_spouse_name,
-          added_spouse_mobile: Object.prototype.hasOwnProperty.call(updateData, 'added_spouse_mobile') ? (updateData.added_spouse_mobile === '' ? null : updateData.added_spouse_mobile) : existingRecord.added_spouse_mobile
+          added_spouse_mobile: Object.prototype.hasOwnProperty.call(updateData, 'added_spouse_mobile') ? (updateData.added_spouse_mobile === '' ? null : updateData.added_spouse_mobile) : existingRecord.added_spouse_mobile,
+          sibling_spouse_name: Object.prototype.hasOwnProperty.call(updateData, 'sibling_spouse_name') ? (updateData.sibling_spouse_name === '' ? null : updateData.sibling_spouse_name) : existingRecord.sibling_spouse_name,
+          sibling_spouse_mobile: Object.prototype.hasOwnProperty.call(updateData, 'sibling_spouse_mobile') ? (updateData.sibling_spouse_mobile === '' ? null : updateData.sibling_spouse_mobile) : existingRecord.sibling_spouse_mobile
         };
 
      
@@ -309,10 +313,18 @@ export default function FamilyProfilePage() {
 
   const addSpouse = async (spouseData) => {
     try {
-      await createOrUpdateUserFamilyAdditions({
-        added_spouse_name: spouseData.name,
-        added_spouse_mobile: spouseData.mobile
-      });
+      // Check if current user is a sibling to use appropriate fields
+      const updateData = currentUserRole === 'sibling' 
+        ? {
+            sibling_spouse_name: spouseData.name,
+            sibling_spouse_mobile: spouseData.mobile
+          }
+        : {
+            added_spouse_name: spouseData.name,
+            added_spouse_mobile: spouseData.mobile
+          };
+      
+      await createOrUpdateUserFamilyAdditions(updateData);
       const refreshedAdditions = await getUserFamilyAdditions();
       setUserFamilyAdditions(refreshedAdditions);
     } catch (error) {
@@ -1237,9 +1249,9 @@ export default function FamilyProfilePage() {
                   
                   const siblingData = currentSibling || addedSibling;
                   if (siblingData && siblingData.marital_status === 'Married') {
-                    // Check if spouse is already added in userFamilyAdditions
-                    spouseName = userFamilyAdditions?.added_spouse_name;
-                    spouseMobile = userFamilyAdditions?.added_spouse_mobile;
+                    // Check if spouse is already added in userFamilyAdditions (use sibling-specific fields)
+                    spouseName = userFamilyAdditions?.sibling_spouse_name;
+                    spouseMobile = userFamilyAdditions?.sibling_spouse_mobile;
                     canAddSpouse = true;
                     showAddSpouseButton = !spouseName; // Show button only if no spouse added yet
                   }
