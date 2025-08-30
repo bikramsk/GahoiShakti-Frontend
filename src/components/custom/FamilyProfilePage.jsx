@@ -174,7 +174,15 @@ export default function FamilyProfilePage() {
           sibling_spouse_mobile: Object.prototype.hasOwnProperty.call(updateData, 'sibling_spouse_mobile') ? (updateData.sibling_spouse_mobile === '' ? null : updateData.sibling_spouse_mobile) : existingRecord.sibling_spouse_mobile
         };
 
-     
+        // Clean up added_children to remove any id fields that might cause issues
+        if (mergedData.added_children && Array.isArray(mergedData.added_children)) {
+          mergedData.added_children = mergedData.added_children.map(child => {
+            const { id: _id, ...rest } = child;
+            return rest;
+          });
+        }
+
+       
         if (mergedData.added_siblings && Array.isArray(mergedData.added_siblings)) {
           mergedData.added_siblings = mergedData.added_siblings.map(sib => {
             const { id: _id, ...rest } = sib;
@@ -185,9 +193,11 @@ export default function FamilyProfilePage() {
         
         const targetId = existingRecord.documentId || existingRecord.id;
 
+     
+        const { id: _id, documentId: _docId, createdAt: _createdAt, updatedAt: _updatedAt, ...cleanData } = mergedData;
         
         const putData = {
-          data: mergedData
+          data: cleanData
         };
         
 
@@ -325,18 +335,32 @@ export default function FamilyProfilePage() {
 
   const addSpouse = async (spouseData) => {
     try {
-      // Use sibling spouse fields for all users
+     
       const updateData = {
         sibling_spouse_name: spouseData.name,
-        sibling_spouse_mobile: spouseData.mobile
+        sibling_spouse_mobile: spouseData.mobile || null
       };
       
-      await createOrUpdateUserFamilyAdditions(updateData);
-      const refreshedAdditions = await getUserFamilyAdditions();
-      setUserFamilyAdditions(refreshedAdditions);
+      console.log('Adding spouse with data:', updateData);
+      console.log('Current user mobile:', currentUserMobile);
+      console.log('Document ID:', documentId);
+      
+      const result = await createOrUpdateUserFamilyAdditions(updateData);
+      
+      if (result) {
+        console.log('Spouse added successfully:', result);
+        setUserFamilyAdditions(result);
+      } else {
+        
+        console.log('No result returned, refreshing data...');
+        const refreshedAdditions = await getUserFamilyAdditions();
+        setUserFamilyAdditions(refreshedAdditions);
+      }
     } catch (error) {
       console.error('Error adding spouse:', error);
-    }
+     
+      setSpouseError('Failed to save spouse information. Please try again.');
+      throw error; 
   };
 
   // Validate sibling form fields
